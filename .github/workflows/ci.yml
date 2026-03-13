@@ -1,0 +1,120 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── 1단계: 코드 품질 ─────────────────────────────────────
+  quality:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint — Frontend
+        run: npm run lint --workspace=frontend
+
+      - name: ESLint — Backend
+        run: npm run lint --workspace=backend
+
+      - name: TypeScript type check
+        run: npm run type-check --workspaces --if-present
+
+  # ─── 2단계: 테스트 ────────────────────────────────────────
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/pharmweave_test
+      NODE_ENV: test
+      JWT_SECRET: test-secret-key-for-ci-minimum-32-chars
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: pharmweave_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma migrate (test DB)
+        run: npx prisma migrate deploy
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/pharmweave_test
+
+      - name: Run unit tests (Domain Layer)
+        run: npm run test:unit --workspace=backend -- --coverage
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: backend/coverage/
+
+  # ─── 3단계: 빌드 ──────────────────────────────────────────
+  build:
+    name: Build Validation
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Frontend
+        run: npm run build --workspace=frontend
+        env:
+          VITE_API_BASE_URL: https://pharmweave.vercel.app/api
+
+      - name: Build Backend
+        run: npm run build --workspace=backend
+
+  # ─── 4단계: Vercel 배포 (main 브랜치 push만) ─────────────
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Vercel (Production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: --prod

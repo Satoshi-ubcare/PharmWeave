@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WorkflowStage {
+  reception
+  prescription
+  dispensing
+  review
+  payment
+  claim
+  completed
+}
+
+enum PaymentMethod {
+  cash
+  card
+  transfer
+}
+
+enum ClaimStatus {
+  pending
+  submitted
+  approved
+  rejected
+}
+
+model User {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username      String   @unique @db.VarChar(50)
+  password_hash String   @db.VarChar(255)
+  created_at    DateTime @default(now()) @db.Timestamptz
+
+  visits Visit[]
+
+  @@map("users")
+}
+
+model Patient {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String   @db.VarChar(50)
+  birth_date DateTime @db.Date
+  phone      String?  @db.VarChar(11)
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  visits Visit[]
+
+  @@unique([name, birth_date])
+  @@map("patients")
+}
+
+model Visit {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patient_id     String        @db.Uuid
+  created_by     String?       @db.Uuid
+  workflow_stage WorkflowStage @default(reception)
+  visited_at     DateTime      @default(now()) @db.Timestamptz
+  created_at     DateTime      @default(now()) @db.Timestamptz
+  updated_at     DateTime      @updatedAt @db.Timestamptz
+
+  patient      Patient       @relation(fields: [patient_id], references: [id])
+  creator      User?         @relation(fields: [created_by], references: [id])
+  prescription Prescription?
+  payment      Payment?
+  claim        Claim?
+
+  @@map("visits")
+}
+
+model Prescription {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visit_id     String   @unique @db.Uuid
+  clinic_name  String   @db.VarChar(100)
+  doctor_name  String?  @db.VarChar(50)
+  prescribed_at DateTime @db.Date
+  created_at   DateTime @default(now()) @db.Timestamptz
+  updated_at   DateTime @updatedAt @db.Timestamptz
+
+  visit Visit              @relation(fields: [visit_id], references: [id])
+  items PrescriptionItem[]
+
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  prescription_id String   @db.Uuid
+  drug_code       String   @db.VarChar(20)
+  drug_name       String   @db.VarChar(100)
+  unit_price      Int
+  quantity        Int
+  days            Int
+  created_at      DateTime @default(now()) @db.Timestamptz
+
+  prescription Prescription @relation(fields: [prescription_id], references: [id], onDelete: Cascade)
+
+  @@map("prescription_items")
+}
+
+model Drug {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  drug_code  String   @unique @db.VarChar(20)
+  drug_name  String   @db.VarChar(100)
+  unit_price Int
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  @@map("drugs")
+}
+
+model Payment {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visit_id          String        @unique @db.Uuid
+  total_drug_cost   Int
+  copay_amount      Int
+  insurance_coverage Int
+  payment_method    PaymentMethod
+  paid_at           DateTime      @default(now()) @db.Timestamptz
+
+  visit Visit @relation(fields: [visit_id], references: [id])
+
+  @@map("payments")
+}
+
+model Claim {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visit_id     String      @unique @db.Uuid
+  claim_data   Json
+  claim_status ClaimStatus @default(pending)
+  created_at   DateTime    @default(now()) @db.Timestamptz
+
+  visit Visit @relation(fields: [visit_id], references: [id])
+
+  @@map("claims")
+}
+
+model PluginConfig {
+  id          String  @id @db.VarChar(50)
+  name        String  @db.VarChar(100)
+  description String  @db.VarChar(255)
+  enabled     Boolean @default(false)
+
+  @@map("plugin_configs")
+}

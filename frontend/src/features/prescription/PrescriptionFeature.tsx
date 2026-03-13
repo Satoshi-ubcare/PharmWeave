@@ -1,0 +1,219 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { prescriptionApi, drugApi, visitApi } from '@/api/endpoints'
+import { useWorkflowStore } from '@/stores/workflowStore'
+import type { Drug } from '@/types'
+
+interface ItemInput {
+  drug_code: string
+  drug_name: string
+  unit_price: number
+  quantity: number
+  days: number
+}
+
+export default function PrescriptionFeature() {
+  const navigate = useNavigate()
+  const { visitId, setStage } = useWorkflowStore()
+
+  const [clinicName, setClinicName] = useState('')
+  const [doctorName, setDoctorName] = useState('')
+  const [prescribedAt, setPrescribedAt] = useState(new Date().toISOString().split('T')[0])
+  const [items, setItems] = useState<ItemInput[]>([])
+
+  const [drugQuery, setDrugQuery] = useState('')
+  const [drugResults, setDrugResults] = useState<Drug[]>([])
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleDrugSearch = async () => {
+    if (!drugQuery.trim()) return
+    const res = await drugApi.search(drugQuery)
+    setDrugResults(res.data)
+  }
+
+  const addItem = (drug: Drug) => {
+    if (items.find((i) => i.drug_code === drug.drug_code)) return
+    setItems([...items, { drug_code: drug.drug_code, drug_name: drug.drug_name, unit_price: drug.unit_price, quantity: 1, days: 1 }])
+    setDrugResults([])
+    setDrugQuery('')
+  }
+
+  const updateItem = (idx: number, field: keyof ItemInput, value: number) => {
+    setItems(items.map((item, i) => i === idx ? { ...item, [field]: value } : item))
+  }
+
+  const removeItem = (idx: number) => setItems(items.filter((_, i) => i !== idx))
+
+  const handleSave = async () => {
+    if (!visitId || !clinicName || items.length === 0) {
+      setError('의료기관명과 처방 항목 1개 이상이 필요합니다.')
+      return
+    }
+    setSaving(true)
+    setError('')
+    try {
+      await prescriptionApi.create(visitId, {
+        clinic_name: clinicName,
+        doctor_name: doctorName || undefined,
+        prescribed_at: prescribedAt,
+        items,
+      })
+      await visitApi.transitionStage(visitId, 'dispensing')
+      setStage('dispensing')
+      navigate('/dispensing')
+    } catch {
+      setError('처방 저장에 실패했습니다.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!visitId) {
+    return <p className="text-gray-500">먼저 접수 단계에서 방문을 시작해주세요.</p>
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">처방</h1>
+        <p className="text-gray-500 text-sm mt-1">처방전 정보와 약품 항목을 입력합니다.</p>
+      </div>
+
+      {/* 처방전 정보 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <h2 className="font-semibold text-gray-800">처방전 정보</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">의료기관명 *</label>
+            <input
+              type="text"
+              value={clinicName}
+              onChange={(e) => setClinicName(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">처방 의사명</label>
+            <input
+              type="text"
+              value={doctorName}
+              onChange={(e) => setDoctorName(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">처방일 *</label>
+            <input
+              type="date"
+              value={prescribedAt}
+              onChange={(e) => setPrescribedAt(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 약품 검색 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <h2 className="font-semibold text-gray-800">약품 추가</h2>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={drugQuery}
+            onChange={(e) => setDrugQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleDrugSearch()}
+            placeholder="약품명 또는 코드 검색"
+            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={handleDrugSearch}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+          >
+            검색
+          </button>
+        </div>
+        {drugResults.length > 0 && (
+          <ul className="border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
+            {drugResults.map((drug) => (
+              <li key={drug.id}>
+                <button
+                  onClick={() => addItem(drug)}
+                  className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm transition-colors"
+                >
+                  <span className="font-medium">{drug.drug_name}</span>
+                  <span className="text-gray-500 ml-2">({drug.drug_code})</span>
+                  <span className="text-gray-400 ml-2">{drug.unit_price.toLocaleString()}원</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* 처방 항목 목록 */}
+      {items.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+          <h2 className="font-semibold text-gray-800">처방 항목 ({items.length})</h2>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-500 text-xs border-b border-gray-100">
+                <th className="text-left pb-2">약품명</th>
+                <th className="text-center pb-2 w-20">수량</th>
+                <th className="text-center pb-2 w-20">일수</th>
+                <th className="text-right pb-2 w-28">금액</th>
+                <th className="w-8" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {items.map((item, idx) => (
+                <tr key={item.drug_code}>
+                  <td className="py-2">
+                    <div className="font-medium">{item.drug_name}</div>
+                    <div className="text-gray-400 text-xs">{item.drug_code}</div>
+                  </td>
+                  <td className="py-2 text-center">
+                    <input
+                      type="number"
+                      min={1}
+                      value={item.quantity}
+                      onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))}
+                      className="w-16 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                    />
+                  </td>
+                  <td className="py-2 text-center">
+                    <input
+                      type="number"
+                      min={1}
+                      value={item.days}
+                      onChange={(e) => updateItem(idx, 'days', Number(e.target.value))}
+                      className="w-16 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                    />
+                  </td>
+                  <td className="py-2 text-right text-gray-700">
+                    {(item.unit_price * item.quantity * item.days).toLocaleString()}원
+                  </td>
+                  <td className="py-2 text-center">
+                    <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600 text-xs">✕</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {error && <p role="alert" className="text-red-600 text-sm">{error}</p>}
+
+      <div className="flex justify-end">
+        <button
+          onClick={handleSave}
+          disabled={saving || items.length === 0}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        >
+          {saving ? '저장 중...' : '처방 저장 → 조제'}
+        </button>
+      </div>
+    </div>
+  )
+}
