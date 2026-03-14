@@ -29,7 +29,10 @@ app.use('/api/plugins', pluginsRouter)
 
 app.use(errorHandler)
 
-const PORT = Number(process.env.PORT ?? 3000)
-app.listen(PORT, () => console.log(`🚀 PharmWeave API running on port ${PORT}`))
-
 export default app
+
+// 로컬 개발 환경에서만 서버 직접 실행
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = Number(process.env.PORT ?? 3000)
+  app.listen(PORT, () => console.log(`🚀 PharmWeave API running on port ${PORT}`))
+}

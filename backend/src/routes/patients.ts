@@ -14,12 +14,15 @@ const createPatientSchema = z.object({
 
 router.get('/', async (req, res) => {
   const q = String(req.query.q ?? '')
+  const dateCandidate = new Date(q)
+  const isValidDate = q.match(/^\d{4}-\d{2}-\d{2}$/) && !isNaN(dateCandidate.getTime())
+
   const patients = await prisma.patient.findMany({
     where: q
       ? {
           OR: [
             { name: { contains: q, mode: 'insensitive' } },
-            { birth_date: { equals: new Date(q) } },
+            ...(isValidDate ? [{ birth_date: { equals: dateCandidate } }] : []),
           ],
         }
       : undefined,

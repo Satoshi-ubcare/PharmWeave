@@ -45,7 +45,8 @@ export default function ReceptionFeature() {
     setError('')
     try {
       const res = await visitApi.create(selected.id)
-      setVisit(res.data, selected)
+      await visitApi.transitionStage(res.data.id, 'prescription')
+      setVisit({ ...res.data, workflow_stage: 'prescription' }, selected)
       navigate('/prescription')
     } catch {
       setError('방문 생성에 실패했습니다.')
