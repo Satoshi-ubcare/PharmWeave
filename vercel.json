@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build:vercel",
+  "buildCommand": "npm install --workspaces && cd backend && npx prisma generate && cd ../frontend && npm run build",
   "outputDirectory": "frontend/dist",
   "installCommand": "npm install",
   "rewrites": [
