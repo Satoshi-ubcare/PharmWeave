@@ -1,26 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { prescriptionApi, visitApi } from '@/api/endpoints'
 import { useWorkflowStore } from '@/stores/workflowStore'
-import type { Prescription } from '@/types'
+import { usePrescription } from '@/hooks/usePrescription'
+import { useWorkflowStage } from '@/hooks/useVisit'
 
 export default function DispensingFeature() {
   const navigate = useNavigate()
   const { visitId, setStage } = useWorkflowStore()
-  const [prescription, setPrescription] = useState<Prescription | null>(null)
+  const { prescription, loading } = usePrescription(visitId)
+  const { loading: submitting, transition } = useWorkflowStage()
   const [checked, setChecked] = useState<Record<string, boolean>>({})
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!visitId) return
-    prescriptionApi.get(visitId).then((res) => {
-      setPrescription(res.data)
-      const init: Record<string, boolean> = {}
-      res.data.items.forEach((item) => { init[item.id] = false })
-      setChecked(init)
-    }).finally(() => setLoading(false))
-  }, [visitId])
+    if (!prescription) return
+    const init: Record<string, boolean> = {}
+    prescription.items.forEach((item) => { init[item.id] = false })
+    setChecked(init)
+  }, [prescription])
 
   const allChecked = prescription
     ? prescription.items.every((item) => checked[item.id])
@@ -28,14 +24,9 @@ export default function DispensingFeature() {
 
   const handleComplete = async () => {
     if (!visitId || !allChecked) return
-    setSubmitting(true)
-    try {
-      await visitApi.transitionStage(visitId, 'review')
-      setStage('review')
-      navigate('/review')
-    } finally {
-      setSubmitting(false)
-    }
+    await transition(visitId, 'review')
+    setStage('review')
+    navigate('/review')
   }
 
   if (!visitId) return <p className="text-gray-500">먼저 접수 단계에서 방문을 시작해주세요.</p>

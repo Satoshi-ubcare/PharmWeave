@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { patientApi, visitApi } from '@/api/endpoints'
 import { useWorkflowStore } from '@/stores/workflowStore'
+import { usePatientSearch, usePatientCreate } from '@/hooks/usePatient'
+import { useVisitCreate, useWorkflowStage } from '@/hooks/useVisit'
 import type { Patient } from '@/types'
 
 export default function ReceptionFeature() {
@@ -9,51 +10,36 @@ export default function ReceptionFeature() {
   const { setVisit } = useWorkflowStore()
 
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<Patient[]>([])
-  const [searching, setSearching] = useState(false)
   const [selected, setSelected] = useState<Patient | null>(null)
-  const [starting, setStarting] = useState(false)
-  const [error, setError] = useState('')
-
   const [showNewForm, setShowNewForm] = useState(false)
   const [newPatient, setNewPatient] = useState({ name: '', birth_date: '', phone: '' })
 
-  const handleSearch = async () => {
-    if (!query.trim()) return
-    setSearching(true)
-    try {
-      const res = await patientApi.search(query)
-      setResults(res.data)
-    } finally {
-      setSearching(false)
-    }
-  }
+  const { results, loading: searching, search, clear: clearResults } = usePatientSearch()
+  const { loading: creating, create: createPatient } = usePatientCreate()
+  const { loading: starting, create: createVisit } = useVisitCreate()
+  const { transition } = useWorkflowStage()
+
+  const handleSearch = () => search(query)
 
   const handleCreatePatient = async () => {
-    try {
-      const res = await patientApi.create(newPatient)
-      setSelected(res.data)
+    const patient = await createPatient(newPatient)
+    if (patient) {
+      setSelected(patient)
       setShowNewForm(false)
-    } catch {
-      setError('환자 등록에 실패했습니다.')
+      clearResults()
     }
   }
 
   const handleStartVisit = async () => {
     if (!selected) return
-    setStarting(true)
-    setError('')
-    try {
-      const res = await visitApi.create(selected.id)
-      await visitApi.transitionStage(res.data.id, 'prescription')
-      setVisit({ ...res.data, workflow_stage: 'prescription' }, selected)
-      navigate('/prescription')
-    } catch {
-      setError('방문 생성에 실패했습니다.')
-    } finally {
-      setStarting(false)
-    }
+    const visit = await createVisit(selected.id)
+    if (!visit) return
+    await transition(visit.id, 'prescription')
+    setVisit({ ...visit, workflow_stage: 'prescription' }, selected)
+    navigate('/prescription')
   }
+
+  const error = ''
 
   return (
     <div className="space-y-6">
@@ -76,7 +62,7 @@ export default function ReceptionFeature() {
           />
           <button
             onClick={handleSearch}
-            disabled={searching}
+            disabled={searching || creating}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
             검색

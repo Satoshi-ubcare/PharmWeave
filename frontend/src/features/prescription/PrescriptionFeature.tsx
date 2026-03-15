@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { prescriptionApi, drugApi, visitApi } from '@/api/endpoints'
 import { useWorkflowStore } from '@/stores/workflowStore'
+import { usePrescriptionSave, useDrugSearch } from '@/hooks/usePrescription'
+import { useWorkflowStage } from '@/hooks/useVisit'
 import type { Drug } from '@/types'
 
 interface ItemInput {
@@ -22,20 +23,18 @@ export default function PrescriptionFeature() {
   const [items, setItems] = useState<ItemInput[]>([])
 
   const [drugQuery, setDrugQuery] = useState('')
-  const [drugResults, setDrugResults] = useState<Drug[]>([])
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const handleDrugSearch = async () => {
-    if (!drugQuery.trim()) return
-    const res = await drugApi.search(drugQuery)
-    setDrugResults(res.data)
-  }
+  const { results: drugResults, search: searchDrug, clear: clearDrug } = useDrugSearch()
+  const { loading: saving, save } = usePrescriptionSave()
+  const { transition } = useWorkflowStage()
+
+  const handleDrugSearch = () => searchDrug(drugQuery)
 
   const addItem = (drug: Drug) => {
     if (items.find((i) => i.drug_code === drug.drug_code)) return
     setItems([...items, { drug_code: drug.drug_code, drug_name: drug.drug_name, unit_price: drug.unit_price, quantity: 1, days: 1 }])
-    setDrugResults([])
+    clearDrug()
     setDrugQuery('')
   }
 
@@ -50,23 +49,17 @@ export default function PrescriptionFeature() {
       setError('의료기관명과 처방 항목 1개 이상이 필요합니다.')
       return
     }
-    setSaving(true)
     setError('')
-    try {
-      await prescriptionApi.create(visitId, {
-        clinic_name: clinicName,
-        doctor_name: doctorName || undefined,
-        prescribed_at: prescribedAt,
-        items,
-      })
-      await visitApi.transitionStage(visitId, 'dispensing')
-      setStage('dispensing')
-      navigate('/dispensing')
-    } catch {
-      setError('처방 저장에 실패했습니다.')
-    } finally {
-      setSaving(false)
-    }
+    const result = await save(visitId, {
+      clinic_name: clinicName,
+      doctor_name: doctorName || undefined,
+      prescribed_at: prescribedAt,
+      items,
+    })
+    if (!result) return
+    await transition(visitId, 'dispensing')
+    setStage('dispensing')
+    navigate('/dispensing')
   }
 
   if (!visitId) {

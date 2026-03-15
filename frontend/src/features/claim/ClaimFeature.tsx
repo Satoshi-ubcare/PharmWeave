@@ -1,41 +1,34 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { claimApi, visitApi } from '@/api/endpoints'
+import { claimApi } from '@/api/endpoints'
 import { useWorkflowStore } from '@/stores/workflowStore'
+import { useWorkflowStage } from '@/hooks/useVisit'
 import type { Claim } from '@/types'
 
 export default function ClaimFeature() {
   const navigate = useNavigate()
   const { visitId, setStage, reset, patient } = useWorkflowStore()
+  const { loading: submitting, transition } = useWorkflowStage()
   const [claim, setClaim] = useState<Claim | null>(null)
-  const [submitting, setSubmitting] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [error, setError] = useState('')
 
   const handleCreateClaim = async () => {
     if (!visitId) return
-    setSubmitting(true)
     setError('')
     try {
       const res = await claimApi.create(visitId)
       setClaim(res.data)
     } catch {
       setError('청구 생성에 실패했습니다.')
-    } finally {
-      setSubmitting(false)
     }
   }
 
   const handleComplete = async () => {
     if (!visitId) return
-    setSubmitting(true)
-    try {
-      await visitApi.transitionStage(visitId, 'completed')
-      setStage('completed')
-      setCompleted(true)
-    } finally {
-      setSubmitting(false)
-    }
+    await transition(visitId, 'completed')
+    setStage('completed')
+    setCompleted(true)
   }
 
   const handleNewVisit = () => {

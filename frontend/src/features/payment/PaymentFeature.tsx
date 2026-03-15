@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { prescriptionApi, paymentApi, visitApi } from '@/api/endpoints'
+import { useState } from 'react'
 import { useWorkflowStore } from '@/stores/workflowStore'
+import { usePrescription } from '@/hooks/usePrescription'
+import { usePaymentCreate } from '@/hooks/usePayment'
+import { useWorkflowStage } from '@/hooks/useVisit'
 
 function calcCopay(totalDrugCost: number): { copayAmount: number; insuranceCoverage: number } {
   const rate = totalDrugCost < 10000 ? 0.2 : 0.3
@@ -12,38 +14,25 @@ function calcCopay(totalDrugCost: number): { copayAmount: number; insuranceCover
 export default function PaymentFeature() {
   const navigate = useNavigate()
   const { visitId, setStage } = useWorkflowStore()
-  const [totalDrugCost, setTotalDrugCost] = useState(0)
+  const { prescription } = usePrescription(visitId)
+  const { loading: submitting, error, process } = usePaymentCreate()
+  const { transition } = useWorkflowStage()
   const [method, setMethod] = useState<'cash' | 'card' | 'transfer'>('card')
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (!visitId) return
-    prescriptionApi.get(visitId).then((res) => {
-      const total = res.data.items.reduce(
-        (sum, item) => sum + item.unit_price * item.quantity * item.days,
-        0,
-      )
-      setTotalDrugCost(total)
-    })
-  }, [visitId])
+  const totalDrugCost = prescription?.items.reduce(
+    (sum, item) => sum + item.unit_price * item.quantity * item.days,
+    0,
+  ) ?? 0
 
   const { copayAmount, insuranceCoverage } = calcCopay(totalDrugCost)
 
   const handlePay = async () => {
     if (!visitId) return
-    setSubmitting(true)
-    setError('')
-    try {
-      await paymentApi.create(visitId, method)
-      await visitApi.transitionStage(visitId, 'claim')
-      setStage('claim')
-      navigate('/claim')
-    } catch {
-      setError('수납 처리에 실패했습니다.')
-    } finally {
-      setSubmitting(false)
-    }
+    const payment = await process(visitId, method)
+    if (!payment) return
+    await transition(visitId, 'claim')
+    setStage('claim')
+    navigate('/claim')
   }
 
   if (!visitId) return <p className="text-gray-500">먼저 접수 단계에서 방문을 시작해주세요.</p>

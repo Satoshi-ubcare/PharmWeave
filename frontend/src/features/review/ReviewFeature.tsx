@@ -1,20 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { prescriptionApi, visitApi } from '@/api/endpoints'
 import { useWorkflowStore } from '@/stores/workflowStore'
-import type { Prescription } from '@/types'
+import { usePrescription } from '@/hooks/usePrescription'
+import { useWorkflowStage } from '@/hooks/useVisit'
 
 export default function ReviewFeature() {
   const navigate = useNavigate()
   const { visitId, patient, setStage } = useWorkflowStore()
-  const [prescription, setPrescription] = useState<Prescription | null>(null)
+  const { prescription } = usePrescription(visitId)
+  const { loading: submitting, transition } = useWorkflowStage()
   const [memo, setMemo] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (!visitId) return
-    prescriptionApi.get(visitId).then((res) => setPrescription(res.data))
-  }, [visitId])
 
   const totalCost = prescription?.items.reduce(
     (sum, item) => sum + item.unit_price * item.quantity * item.days,
@@ -23,14 +18,9 @@ export default function ReviewFeature() {
 
   const handleApprove = async () => {
     if (!visitId) return
-    setSubmitting(true)
-    try {
-      await visitApi.transitionStage(visitId, 'payment')
-      setStage('payment')
-      navigate('/payment')
-    } finally {
-      setSubmitting(false)
-    }
+    await transition(visitId, 'payment')
+    setStage('payment')
+    navigate('/payment')
   }
 
   if (!visitId) return <p className="text-gray-500">먼저 접수 단계에서 방문을 시작해주세요.</p>

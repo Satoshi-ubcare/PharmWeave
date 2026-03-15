@@ -1,28 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { pluginApi } from '@/api/endpoints'
 import { usePluginStore } from '@/stores/pluginStore'
+import { usePluginList, usePluginToggle } from '@/hooks/usePlugin'
 import type { Plugin } from '@/types'
 
 export default function PluginManageFeature() {
   const { plugins, setPlugins, togglePlugin } = usePluginStore()
-  const [loading, setLoading] = useState(true)
-  const [toggling, setToggling] = useState<string | null>(null)
+  const { plugins: fetched, loading } = usePluginList()
+  const { toggling, toggle } = usePluginToggle()
 
   useEffect(() => {
-    pluginApi.list().then((res) => {
-      setPlugins(res.data)
-    }).finally(() => setLoading(false))
-  }, [setPlugins])
+    if (fetched.length > 0) setPlugins(fetched)
+  }, [fetched, setPlugins])
 
   const handleToggle = async (plugin: Plugin) => {
-    setToggling(plugin.id)
-    try {
-      await pluginApi.toggle(plugin.id, !plugin.enabled)
-      togglePlugin(plugin.id, !plugin.enabled)
-    } finally {
-      setToggling(null)
-    }
+    const updated = await toggle(plugin.id, !plugin.enabled)
+    if (updated) togglePlugin(plugin.id, !plugin.enabled)
   }
 
   if (loading) return <p className="text-gray-400 text-sm">플러그인 목록을 불러오는 중...</p>
