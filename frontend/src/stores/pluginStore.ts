@@ -1,3 +1,8 @@
+/**
+ * [전역 상태 — Zustand]
+ * Plugin 활성화 여부는 헤더·각 단계 UI(PluginSlot) 모두에서 참조하므로 전역 관리.
+ * Plugin 목록 로딩/에러는 usePluginList 훅이 로컬에서 처리.
+ */
 import { create } from 'zustand'
 import type { Plugin } from '@/types'
 

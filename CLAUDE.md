@@ -194,7 +194,26 @@ POST   /api/plugins/:id/execute   Plugin 실행 { visitId }
 - 컴포넌트 파일명: PascalCase (`WorkflowStepper.tsx`)
 - 훅 파일명: camelCase + `use` 접두사 (`useWorkflowStage.ts`)
 - API 호출은 `hooks/` 에서만 (`features/` 컴포넌트에서 Axios 직접 호출 금지)
-- Tailwind 클래스: 인라인 선호, 반복 패턴은 `cn()` 유틸리티로 조합
+- Tailwind 클래스: 인라인 선호, 조건부 조합은 `cn()` 유틸리티 (`src/lib/cn.ts`) 사용
+- 에러 catch: `extractApiError(err, fallback)` (`src/lib/apiError.ts`)로 서버 메시지 우선 표시
+
+### 상태 관리 경계 (Zustand vs 로컬 훅)
+
+| 종류 | 위치 | 경계 기준 |
+|------|------|-----------|
+| **전역 — Zustand** | `stores/` | 여러 페이지/컴포넌트가 공유하거나 페이지 이동 후에도 유지 필요 |
+| **로컬 — 훅** | `hooks/` | 단일 API 요청의 loading/error/data — 컴포넌트 언마운트 시 자동 폐기 |
+
+**전역 상태로 관리하는 이유:**
+- `workflowStore` (visitId·stage·patient): 6단계 전체에서 동일 방문 상태 공유
+- `pluginStore` (plugins): 헤더·각 단계 UI에서 Plugin 활성화 여부 동시 참조
+- `toastStore` (toasts): 어느 컴포넌트에서든 알림 발생, 최상단 레이아웃에서 렌더링
+- `themeStore` (theme): html 클래스 조작 + localStorage 영속 필요
+
+**로컬 상태로 유지하는 이유:**
+- API loading/error는 해당 요청이 활성화된 컴포넌트에만 의미 있음
+- 전역화 시 스토어가 비대해지고 불필요한 리렌더 발생
+- 훅 단위로 독립 테스트 가능 (Zustand mock 불필요)
 
 ### Git 커밋 메시지 규칙
 ```

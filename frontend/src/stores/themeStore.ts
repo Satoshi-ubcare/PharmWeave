@@ -1,3 +1,8 @@
+/**
+ * [전역 상태 — Zustand]
+ * 다크/라이트 테마는 앱 전체에 영향하며 localStorage에 영구 저장.
+ * html 클래스 직접 조작이 필요하므로 훅보다 store에서 관리.
+ */
 import { create } from 'zustand'
 
 type Theme = 'light' | 'dark'
