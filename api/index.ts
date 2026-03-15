@@ -116,12 +116,16 @@ app.post('/api/visits', async (req, res) => {
   res.status(201).json(visit)
 })
 
-app.get('/api/visits/today', async (_req, res) => {
+app.get('/api/visits/today', async (req, res) => {
   const start = new Date(); start.setHours(0,0,0,0)
   const end = new Date(); end.setHours(23,59,59,999)
+  const stage = req.query.stage as WorkflowStage | undefined
   const visits = await prisma.visit.findMany({
-    where: { visited_at: { gte: start, lte: end } },
-    include: { patient: true }, orderBy: { visited_at: 'desc' },
+    where: {
+      visited_at: { gte: start, lte: end },
+      ...(stage ? { workflow_stage: stage } : {}),
+    },
+    include: { patient: true }, orderBy: { visited_at: 'asc' },
   })
   res.json(visits)
 })
