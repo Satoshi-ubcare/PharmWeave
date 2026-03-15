@@ -97,6 +97,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prisma generate (for backend build)
+        run: npx prisma generate --schema=backend/prisma/schema.prisma
+
       - name: Build Frontend
         run: npm run build --workspace=frontend
         env:
