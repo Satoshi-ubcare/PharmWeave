@@ -1,9 +1,17 @@
+import { useEffect } from 'react'
 import { Outlet, Link } from 'react-router-dom'
 import WorkflowStepper from './WorkflowStepper'
 import { useWorkflowStore } from '@/stores/workflowStore'
+import { usePluginStore } from '@/stores/pluginStore'
+import { pluginApi } from '@/api/endpoints'
 
 export default function WorkflowLayout() {
   const { currentStage, visitId, patient } = useWorkflowStore()
+  const { setPlugins } = usePluginStore()
+
+  useEffect(() => {
+    pluginApi.list().then((res) => setPlugins(res.data)).catch(() => {})
+  }, [setPlugins])
 
   return (
     <div className="min-h-screen flex flex-col">

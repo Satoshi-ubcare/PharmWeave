@@ -4,6 +4,7 @@ import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
 import StagePatientList from '@/components/StagePatientList'
+import PluginSlot from '@/components/PluginSlot'
 
 export default function ReviewFeature() {
   const navigate = useNavigate()
@@ -76,6 +77,14 @@ export default function ReviewFeature() {
               </tr>
             </tfoot>
           </table>
+        </div>
+      )}
+
+      {visitId && (
+        <div className="space-y-3">
+          <h2 className="font-semibold text-gray-700 text-sm">Plugin 검사</h2>
+          <PluginSlot pluginId="dur" visitId={visitId} />
+          <PluginSlot pluginId="medication-guide" visitId={visitId} />
         </div>
       )}
 
