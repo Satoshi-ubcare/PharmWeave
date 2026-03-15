@@ -6,7 +6,14 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { z, ZodError } from 'zod'
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+})
 const app = express()
 
 app.use(cors({ origin: process.env.CORS_ORIGIN ?? '*' }))
@@ -28,8 +35,9 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
     res.status(err.statusCode).json({ error: err.message })
     return
   }
-  console.error(err)
-  res.status(500).json({ error: 'Internal server error' })
+  console.error('[UnhandledError]', err)
+  const message = err instanceof Error ? err.message : 'Internal server error'
+  res.status(500).json({ error: 'Internal server error', details: process.env.NODE_ENV !== 'production' ? message : undefined })
 })
 
 function validate(schema: z.ZodSchema) {
