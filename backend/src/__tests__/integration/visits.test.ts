@@ -1,29 +1,22 @@
 import request from 'supertest'
 import jwt from 'jsonwebtoken'
 import app from '../../index'
+import { prisma } from '../../lib/prisma'
 
 jest.mock('../../lib/prisma', () => ({
   prisma: {
-    patient: {
-      findUnique: jest.fn(),
-    },
-    visit: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-    },
-    prescription: {
-      findUnique: jest.fn(),
-    },
-    payment: {
-      findUnique: jest.fn(),
-    },
+    patient: { findUnique: jest.fn() },
+    visit: { create: jest.fn(), findUnique: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+    prescription: { findUnique: jest.fn() },
+    payment: { findUnique: jest.fn() },
   },
 }))
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { prisma } = require('../../lib/prisma')
+type MockModel<T extends string> = Record<T, jest.Mock>
+const mockVisitModel = prisma.visit as unknown as MockModel<'create' | 'findUnique' | 'findMany' | 'update'>
+const mockPatientModel = prisma.patient as unknown as MockModel<'findUnique'>
+const mockPrescriptionModel = prisma.prescription as unknown as MockModel<'findUnique'>
+const mockPaymentModel = prisma.payment as unknown as MockModel<'findUnique'>
 
 const JWT_SECRET = 'test-secret-key-for-integration-32chars'
 let authToken: string
@@ -57,8 +50,8 @@ const mockVisit = {
 
 describe('POST /api/visits', () => {
   it('방문을 생성하고 201을 반환한다', async () => {
-    prisma.patient.findUnique.mockResolvedValue(mockPatient)
-    prisma.visit.create.mockResolvedValue(mockVisit)
+    mockPatientModel.findUnique.mockResolvedValue(mockPatient)
+    mockVisitModel.create.mockResolvedValue(mockVisit)
 
     const res = await request(app)
       .post('/api/visits')
@@ -70,7 +63,7 @@ describe('POST /api/visits', () => {
   })
 
   it('존재하지 않는 환자로 방문 생성 시 404를 반환한다', async () => {
-    prisma.patient.findUnique.mockResolvedValue(null)
+    mockPatientModel.findUnique.mockResolvedValue(null)
 
     const res = await request(app)
       .post('/api/visits')
@@ -92,7 +85,7 @@ describe('POST /api/visits', () => {
 
 describe('GET /api/visits/today', () => {
   it('오늘의 방문 목록을 반환한다', async () => {
-    prisma.visit.findMany.mockResolvedValue([mockVisit])
+    mockVisitModel.findMany.mockResolvedValue([mockVisit])
 
     const res = await request(app)
       .get('/api/visits/today')
@@ -105,8 +98,8 @@ describe('GET /api/visits/today', () => {
 
 describe('PATCH /api/visits/:id/stage', () => {
   it('reception → prescription 전환이 성공한다', async () => {
-    prisma.visit.findUnique.mockResolvedValue(mockVisit)
-    prisma.visit.update.mockResolvedValue({ ...mockVisit, workflow_stage: 'prescription' })
+    mockVisitModel.findUnique.mockResolvedValue(mockVisit)
+    mockVisitModel.update.mockResolvedValue({ ...mockVisit, workflow_stage: 'prescription' })
 
     const res = await request(app)
       .patch('/api/visits/b2c3d4e5-f6a7-8901-bcde-f12345678901/stage')
@@ -118,7 +111,7 @@ describe('PATCH /api/visits/:id/stage', () => {
   })
 
   it('단계를 건너뛰는 전환은 422를 반환한다', async () => {
-    prisma.visit.findUnique.mockResolvedValue(mockVisit) // workflow_stage: 'reception'
+    mockVisitModel.findUnique.mockResolvedValue(mockVisit) // workflow_stage: 'reception'
 
     const res = await request(app)
       .patch('/api/visits/b2c3d4e5-f6a7-8901-bcde-f12345678901/stage')
@@ -130,8 +123,8 @@ describe('PATCH /api/visits/:id/stage', () => {
   })
 
   it('처방 항목 없이 review 진입 시 422를 반환한다', async () => {
-    prisma.visit.findUnique.mockResolvedValue({ ...mockVisit, workflow_stage: 'dispensing' })
-    prisma.prescription.findUnique.mockResolvedValue({ items: [] })
+    mockVisitModel.findUnique.mockResolvedValue({ ...mockVisit, workflow_stage: 'dispensing' })
+    mockPrescriptionModel.findUnique.mockResolvedValue({ items: [] })
 
     const res = await request(app)
       .patch('/api/visits/b2c3d4e5-f6a7-8901-bcde-f12345678901/stage')
@@ -142,8 +135,8 @@ describe('PATCH /api/visits/:id/stage', () => {
   })
 
   it('수납 없이 claim 진입 시 422를 반환한다', async () => {
-    prisma.visit.findUnique.mockResolvedValue({ ...mockVisit, workflow_stage: 'payment' })
-    prisma.payment.findUnique.mockResolvedValue(null)
+    mockVisitModel.findUnique.mockResolvedValue({ ...mockVisit, workflow_stage: 'payment' })
+    mockPaymentModel.findUnique.mockResolvedValue(null)
 
     const res = await request(app)
       .patch('/api/visits/b2c3d4e5-f6a7-8901-bcde-f12345678901/stage')
@@ -154,7 +147,7 @@ describe('PATCH /api/visits/:id/stage', () => {
   })
 
   it('존재하지 않는 방문은 404를 반환한다', async () => {
-    prisma.visit.findUnique.mockResolvedValue(null)
+    mockVisitModel.findUnique.mockResolvedValue(null)
 
     const res = await request(app)
       .patch('/api/visits/nonexistent/stage')

@@ -1,6 +1,7 @@
 import request from 'supertest'
 import jwt from 'jsonwebtoken'
 import app from '../../index'
+import { prisma } from '../../lib/prisma'
 
 jest.mock('../../lib/prisma', () => ({
   prisma: {
@@ -12,8 +13,11 @@ jest.mock('../../lib/prisma', () => ({
   },
 }))
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { prisma } = require('../../lib/prisma')
+const mockPatientModel = prisma.patient as unknown as {
+  findMany: jest.Mock
+  findUnique: jest.Mock
+  create: jest.Mock
+}
 
 const JWT_SECRET = 'test-secret-key-for-integration-32chars'
 let authToken: string
@@ -37,7 +41,7 @@ const mockPatient = {
 
 describe('GET /api/patients', () => {
   it('환자가 없을 때 빈 배열을 반환한다', async () => {
-    prisma.patient.findMany.mockResolvedValue([])
+    mockPatientModel.findMany.mockResolvedValue([])
 
     const res = await request(app)
       .get('/api/patients')
@@ -48,7 +52,7 @@ describe('GET /api/patients', () => {
   })
 
   it('검색어 없이 전체 환자 목록을 반환한다', async () => {
-    prisma.patient.findMany.mockResolvedValue([mockPatient])
+    mockPatientModel.findMany.mockResolvedValue([mockPatient])
 
     const res = await request(app)
       .get('/api/patients')
@@ -61,14 +65,14 @@ describe('GET /api/patients', () => {
   })
 
   it('이름으로 환자를 검색한다', async () => {
-    prisma.patient.findMany.mockResolvedValue([mockPatient])
+    mockPatientModel.findMany.mockResolvedValue([mockPatient])
 
     const res = await request(app)
       .get('/api/patients?q=홍길동')
       .set('Authorization', `Bearer ${authToken}`)
 
     expect(res.status).toBe(200)
-    expect(prisma.patient.findMany).toHaveBeenCalledWith(
+    expect(mockPatientModel.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           OR: expect.arrayContaining([
@@ -82,8 +86,8 @@ describe('GET /api/patients', () => {
 
 describe('POST /api/patients', () => {
   it('신규 환자를 등록하고 201을 반환한다', async () => {
-    prisma.patient.findUnique.mockResolvedValue(null)
-    prisma.patient.create.mockResolvedValue(mockPatient)
+    mockPatientModel.findUnique.mockResolvedValue(null)
+    mockPatientModel.create.mockResolvedValue(mockPatient)
 
     const res = await request(app)
       .post('/api/patients')
@@ -95,7 +99,7 @@ describe('POST /api/patients', () => {
   })
 
   it('동일한 이름+생년월일 환자가 존재하면 409를 반환한다', async () => {
-    prisma.patient.findUnique.mockResolvedValue(mockPatient)
+    mockPatientModel.findUnique.mockResolvedValue(mockPatient)
 
     const res = await request(app)
       .post('/api/patients')
@@ -117,7 +121,7 @@ describe('POST /api/patients', () => {
 
 describe('GET /api/patients/:id', () => {
   it('존재하는 환자를 반환한다', async () => {
-    prisma.patient.findUnique.mockResolvedValue(mockPatient)
+    mockPatientModel.findUnique.mockResolvedValue(mockPatient)
 
     const res = await request(app)
       .get('/api/patients/a1b2c3d4-e5f6-7890-abcd-ef1234567890')
@@ -128,7 +132,7 @@ describe('GET /api/patients/:id', () => {
   })
 
   it('존재하지 않는 환자는 404를 반환한다', async () => {
-    prisma.patient.findUnique.mockResolvedValue(null)
+    mockPatientModel.findUnique.mockResolvedValue(null)
 
     const res = await request(app)
       .get('/api/patients/nonexistent-id')
