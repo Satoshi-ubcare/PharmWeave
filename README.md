@@ -6,7 +6,7 @@
 
 ## 🚀 Live Demo
 
-**Production:** https://pharmweave.vercel.app
+**Production:** https://pharm-weave-frontend.vercel.app
 
 ## 📋 프로젝트 소개
 
