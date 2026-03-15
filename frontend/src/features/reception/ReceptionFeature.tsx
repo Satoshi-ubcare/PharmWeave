@@ -37,7 +37,6 @@ export default function ReceptionFeature() {
   useEffect(() => { if (visitError) toast('error', visitError) }, [visitError, toast])
   useEffect(() => { if (stageError) toast('error', stageError) }, [stageError, toast])
 
-  // debounce 자동 검색: 1자 이상 입력 후 300ms 대기
   useEffect(() => {
     if (query.trim().length < 1) {
       clearResults()
@@ -51,7 +50,6 @@ export default function ReceptionFeature() {
     return () => clearTimeout(timer)
   }, [query, search, clearResults])
 
-  // 드롭다운 바깥 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -98,13 +96,17 @@ export default function ReceptionFeature() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">접수</h1>
-        <p className="text-gray-500 text-sm mt-1">환자를 검색하거나 신규 등록 후 방문을 시작합니다.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <span>🏥</span> 접수
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">환자를 검색하거나 신규 등록 후 방문을 시작합니다.</p>
       </div>
 
       {/* 환자 검색 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="font-semibold text-gray-800">환자 검색</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4 shadow-sm">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+          <span>🔍</span> 환자 검색
+        </h2>
         <div className="flex gap-2">
           <div className="relative flex-1" ref={dropdownRef}>
             <input
@@ -117,25 +119,24 @@ export default function ReceptionFeature() {
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               onFocus={() => results.length > 0 && setShowDropdown(true)}
               placeholder="이름 또는 생년월일 — 입력 시 자동 검색"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {searching && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">검색 중…</span>
             )}
 
-            {/* 자동완성 드롭다운 */}
             {showDropdown && results.length > 0 && (
-              <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+              <ul className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden">
                 {results.map((p) => (
                   <li key={p.id}>
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => handleSelectPatient(p)}
-                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors text-sm border-b border-gray-100 last:border-0"
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-sm border-b border-gray-100 dark:border-gray-700 last:border-0"
                     >
-                      <span className="font-medium text-gray-900">{p.name}</span>
-                      <span className="text-gray-500 ml-3">{String(p.birth_date).slice(0, 10)}</span>
-                      {p.phone && <span className="text-gray-400 ml-3">{p.phone}</span>}
+                      <span className="font-medium text-gray-900 dark:text-gray-100">👤 {p.name}</span>
+                      <span className="text-gray-500 dark:text-gray-400 ml-3">{String(p.birth_date).slice(0, 10)}</span>
+                      {p.phone && <span className="text-gray-400 dark:text-gray-500 ml-3">{p.phone}</span>}
                     </button>
                   </li>
                 ))}
@@ -143,7 +144,7 @@ export default function ReceptionFeature() {
             )}
 
             {showDropdown && !searching && query.trim().length >= 1 && results.length === 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                 검색 결과가 없습니다.
               </div>
             )}
@@ -151,49 +152,51 @@ export default function ReceptionFeature() {
           <button
             onClick={handleSearch}
             disabled={searching || query.trim().length < 1}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
             검색
           </button>
           <button
             onClick={() => setShowNewForm(true)}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
           >
-            신규 등록
+            ➕ 신규 등록
           </button>
         </div>
       </div>
 
       {/* 신규 환자 등록 폼 */}
       {showNewForm && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-          <h2 className="font-semibold text-gray-800">신규 환자 등록</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4 shadow-sm">
+          <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+            <span>📝</span> 신규 환자 등록
+          </h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">이름 *</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">이름 *</label>
               <input
                 type="text"
                 value={newPatient.name}
                 onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">생년월일 * (YYYY-MM-DD)</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">생년월일 * (YYYY-MM-DD)</label>
               <input
                 type="date"
                 value={newPatient.birth_date}
                 onChange={(e) => setNewPatient({ ...newPatient, birth_date: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">전화번호</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">전화번호</label>
               <input
                 type="tel"
                 value={newPatient.phone}
                 onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -201,14 +204,14 @@ export default function ReceptionFeature() {
             <button
               onClick={handleCreatePatient}
               disabled={creating}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
               {creating && <Spinner className="text-white" />}
-              {creating ? '등록 중...' : '등록'}
+              {creating ? '등록 중...' : '✅ 등록'}
             </button>
             <button
               onClick={() => setShowNewForm(false)}
-              className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               취소
             </button>
@@ -218,26 +221,28 @@ export default function ReceptionFeature() {
 
       {/* 선택된 환자 + 방문 시작 */}
       {selected && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 border border-blue-200 dark:border-blue-700 rounded-xl p-6 flex items-center justify-between shadow-sm">
           <div>
-            <p className="text-sm text-blue-600 font-medium">선택된 환자</p>
-            <p className="text-lg font-bold text-blue-900">{selected.name}</p>
-            <p className="text-sm text-blue-700">{String(selected.birth_date).slice(0, 10)} {selected.phone && `· ${selected.phone}`}</p>
+            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">✔ 선택된 환자</p>
+            <p className="text-lg font-bold text-blue-900 dark:text-blue-200">👤 {selected.name}</p>
+            <p className="text-sm text-blue-700 dark:text-blue-400">{String(selected.birth_date).slice(0, 10)} {selected.phone && `· ${selected.phone}`}</p>
           </div>
           <button
             onClick={handleStartVisit}
             disabled={starting}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md"
           >
             {starting && <Spinner className="text-white" />}
-            {starting ? '처리 중...' : '방문 시작 →'}
+            {starting ? '처리 중...' : '🚀 방문 시작 →'}
           </button>
         </div>
       )}
 
       {/* 단계별 대기 현황 */}
       <div>
-        <h2 className="text-base font-semibold text-gray-800 mb-3">오늘의 단계별 대기 현황</h2>
+        <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+          <span>📊</span> 오늘의 단계별 대기 현황
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {STAGE_ROUTES.map(({ stage, path }) => (
             <StagePatientList

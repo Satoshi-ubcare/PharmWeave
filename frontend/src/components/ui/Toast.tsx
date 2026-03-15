@@ -1,15 +1,15 @@
 import { useToastStore } from '@/stores/toastStore'
 
 const typeStyles = {
-  success: 'bg-green-600 text-white',
-  error: 'bg-red-600 text-white',
-  info: 'bg-gray-800 text-white',
+  success: 'bg-green-500 dark:bg-green-600 text-white',
+  error: 'bg-red-500 dark:bg-red-600 text-white',
+  info: 'bg-gray-700 dark:bg-gray-600 text-white',
 }
 
 const typeIcons = {
-  success: '✓',
-  error: '✕',
-  info: 'ℹ',
+  success: '✅',
+  error: '❌',
+  info: 'ℹ️',
 }
 
 export default function ToastContainer(): JSX.Element {
@@ -26,7 +26,7 @@ export default function ToastContainer(): JSX.Element {
           key={toast.id}
           role="alert"
           className={[
-            'flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-sm font-medium pointer-events-auto min-w-64 max-w-sm',
+            'flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium pointer-events-auto min-w-64 max-w-sm backdrop-blur-sm',
             typeStyles[toast.type],
           ].join(' ')}
         >
@@ -34,7 +34,7 @@ export default function ToastContainer(): JSX.Element {
           <span className="flex-1">{toast.message}</span>
           <button
             onClick={() => removeToast(toast.id)}
-            className="text-white/70 hover:text-white text-xs ml-1 shrink-0"
+            className="text-white/70 hover:text-white text-xs ml-1 shrink-0 w-5 h-5 flex items-center justify-center rounded hover:bg-white/20 transition-colors"
             aria-label="닫기"
           >
             ✕

@@ -49,7 +49,6 @@ export default function PrescriptionFeature() {
     clearDrug()
   }, [visitId, clearDrug])
 
-  // debounce 자동 검색: 1자 이상 입력 후 300ms 대기
   useEffect(() => {
     if (drugQuery.trim().length < 1) {
       clearDrug()
@@ -63,7 +62,6 @@ export default function PrescriptionFeature() {
     return () => clearTimeout(timer)
   }, [drugQuery, searchDrug, clearDrug])
 
-  // 드롭다운 바깥 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (drugDropdownRef.current && !drugDropdownRef.current.contains(e.target as Node)) {
@@ -108,55 +106,61 @@ export default function PrescriptionFeature() {
   }
 
   if (!visitId) {
-    return <p className="text-gray-500">먼저 접수 단계에서 방문을 시작해주세요.</p>
+    return <p className="text-gray-500 dark:text-gray-400">먼저 접수 단계에서 방문을 시작해주세요.</p>
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">처방</h1>
-        <p className="text-gray-500 text-sm mt-1">처방전 정보와 약품 항목을 입력합니다.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <span>📋</span> 처방
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">처방전 정보와 약품 항목을 입력합니다.</p>
       </div>
 
       <StagePatientList stage="prescription" />
 
       {/* 처방전 정보 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="font-semibold text-gray-800">처방전 정보</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4 shadow-sm">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+          <span>🏥</span> 처방전 정보
+        </h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">의료기관명 *</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">의료기관명 *</label>
             <input
               type="text"
               value={clinicName}
               onChange={(e) => setClinicName(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">처방 의사명</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">처방 의사명</label>
             <input
               type="text"
               value={doctorName}
               onChange={(e) => setDoctorName(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">처방일 *</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">처방일 *</label>
             <input
               type="date"
               value={prescribedAt}
               onChange={(e) => setPrescribedAt(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
       </div>
 
       {/* 약품 검색 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="font-semibold text-gray-800">약품 추가</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4 shadow-sm">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+          <span>💊</span> 약품 추가
+        </h2>
         <div className="relative" ref={drugDropdownRef}>
           <input
             type="text"
@@ -164,25 +168,24 @@ export default function PrescriptionFeature() {
             onChange={(e) => setDrugQuery(e.target.value)}
             onFocus={() => drugResults.length > 0 && setShowDrugDropdown(true)}
             placeholder="약품명 또는 코드 입력 시 자동 검색"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {drugSearching && (
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">검색 중…</span>
           )}
 
-          {/* 자동완성 드롭다운 */}
           {showDrugDropdown && drugResults.length > 0 && (
-            <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden divide-y divide-gray-100 max-h-60 overflow-y-auto">
+            <ul className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden divide-y divide-gray-100 dark:divide-gray-700 max-h-60 overflow-y-auto">
               {drugResults.map((drug) => (
                 <li key={drug.id}>
                   <button
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => addItem(drug)}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm transition-colors"
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-sm transition-colors"
                   >
-                    <span className="font-medium text-gray-900">{drug.drug_name}</span>
-                    <span className="text-gray-500 ml-2">({drug.drug_code})</span>
-                    <span className="text-blue-600 ml-2 text-xs">{drug.unit_price.toLocaleString()}원</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">💊 {drug.drug_name}</span>
+                    <span className="text-gray-500 dark:text-gray-400 ml-2">({drug.drug_code})</span>
+                    <span className="text-blue-600 dark:text-blue-400 ml-2 text-xs">{drug.unit_price.toLocaleString()}원</span>
                   </button>
                 </li>
               ))}
@@ -190,7 +193,7 @@ export default function PrescriptionFeature() {
           )}
 
           {showDrugDropdown && !drugSearching && drugQuery.trim().length >= 1 && drugResults.length === 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
               검색 결과가 없습니다.
             </div>
           )}
@@ -199,11 +202,13 @@ export default function PrescriptionFeature() {
 
       {/* 처방 항목 목록 */}
       {items.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
-          <h2 className="font-semibold text-gray-800">처방 항목 ({items.length})</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-3 shadow-sm">
+          <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+            <span>📊</span> 처방 항목 ({items.length})
+          </h2>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-gray-500 text-xs border-b border-gray-100">
+              <tr className="text-gray-500 dark:text-gray-400 text-xs border-b border-gray-100 dark:border-gray-700">
                 <th className="text-left pb-2">약품명</th>
                 <th className="text-center pb-2 w-20">수량</th>
                 <th className="text-center pb-2 w-20">일수</th>
@@ -211,12 +216,12 @@ export default function PrescriptionFeature() {
                 <th className="w-8" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
               {items.map((item, idx) => (
                 <tr key={item.drug_code}>
                   <td className="py-2">
-                    <div className="font-medium">{item.drug_name}</div>
-                    <div className="text-gray-400 text-xs">{item.drug_code}</div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">💊 {item.drug_name}</div>
+                    <div className="text-gray-400 dark:text-gray-500 text-xs">{item.drug_code}</div>
                   </td>
                   <td className="py-2 text-center">
                     <input
@@ -224,7 +229,7 @@ export default function PrescriptionFeature() {
                       min={1}
                       value={item.quantity}
                       onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))}
-                      className="w-16 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                      className="w-16 text-center border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-1 py-0.5 text-sm"
                     />
                   </td>
                   <td className="py-2 text-center">
@@ -233,14 +238,14 @@ export default function PrescriptionFeature() {
                       min={1}
                       value={item.days}
                       onChange={(e) => updateItem(idx, 'days', Number(e.target.value))}
-                      className="w-16 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                      className="w-16 text-center border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-1 py-0.5 text-sm"
                     />
                   </td>
-                  <td className="py-2 text-right text-gray-700">
+                  <td className="py-2 text-right text-gray-700 dark:text-gray-300">
                     {(item.unit_price * item.quantity * item.days).toLocaleString()}원
                   </td>
                   <td className="py-2 text-center">
-                    <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600 text-xs">✕</button>
+                    <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600 dark:hover:text-red-300 text-xs transition-colors">✕</button>
                   </td>
                 </tr>
               ))}
@@ -249,16 +254,16 @@ export default function PrescriptionFeature() {
         </div>
       )}
 
-      {error && <p role="alert" className="text-red-600 text-sm">{error}</p>}
+      {error && <p role="alert" className="text-red-600 dark:text-red-400 text-sm flex items-center gap-1"><span>⚠️</span>{error}</p>}
 
       <div className="flex justify-end">
         <button
           onClick={handleSave}
           disabled={saving || items.length === 0}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md"
         >
           {saving && <Spinner className="text-white" />}
-          {saving ? '저장 중...' : '처방 저장 → 조제'}
+          {saving ? '저장 중...' : '💾 처방 저장 → 조제'}
         </button>
       </div>
     </div>
