@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "github": {
+    "enabled": false
+  },
   "buildCommand": "npx prisma generate --schema=backend/prisma/schema.prisma && npm run build --workspace=frontend",
   "outputDirectory": "frontend/dist",
   "installCommand": "npm install --include=dev",
