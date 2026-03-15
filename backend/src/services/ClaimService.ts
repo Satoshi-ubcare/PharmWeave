@@ -1,22 +1,23 @@
-import { prisma } from '../lib/prisma'
 import { AppError } from '../middlewares/errorHandler'
 import { ClaimDataBuilder } from '../domain/ClaimDataBuilder'
+import {
+  IClaimRepository,
+  PrismaClaimRepository,
+} from '../repositories/ClaimRepository'
+import type { Claim } from '@prisma/client'
 
 const claimBuilder = new ClaimDataBuilder()
 
 export class ClaimService {
-  async create(visitId: string) {
-    const existing = await prisma.claim.findUnique({ where: { visit_id: visitId } })
+  constructor(
+    private readonly claimRepo: IClaimRepository = new PrismaClaimRepository(),
+  ) {}
+
+  async create(visitId: string): Promise<Claim> {
+    const existing = await this.claimRepo.findByVisitId(visitId)
     if (existing) throw new AppError(409, '이미 청구가 완료된 방문입니다.')
 
-    const visit = await prisma.visit.findUnique({
-      where: { id: visitId },
-      include: {
-        patient: true,
-        prescription: { include: { items: true } },
-        payment: true,
-      },
-    })
+    const visit = await this.claimRepo.findVisitWithFull(visitId)
     if (!visit) throw new AppError(404, '방문 기록을 찾을 수 없습니다.')
     if (!visit.prescription || visit.prescription.items.length === 0) {
       throw new AppError(422, '처방 정보가 없습니다.')
@@ -36,16 +37,11 @@ export class ClaimService {
       insurance_coverage: visit.payment.insurance_coverage,
     })
 
-    return prisma.claim.create({
-      data: {
-        visit_id: visitId,
-        claim_data: claimData as object,
-      },
-    })
+    return this.claimRepo.create(visitId, claimData as object)
   }
 
-  async getByVisitId(visitId: string) {
-    const claim = await prisma.claim.findUnique({ where: { visit_id: visitId } })
+  async getByVisitId(visitId: string): Promise<Claim> {
+    const claim = await this.claimRepo.findByVisitId(visitId)
     if (!claim) throw new AppError(404, '청구 정보가 없습니다.')
     return claim
   }

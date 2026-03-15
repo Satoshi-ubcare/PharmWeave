@@ -1,18 +1,28 @@
-import { prisma } from '../lib/prisma'
 import { AppError } from '../middlewares/errorHandler'
 import { CopayCalculator } from '../domain/CopayCalculator'
+import {
+  IPaymentRepository,
+  PrismaPaymentRepository,
+} from '../repositories/PaymentRepository'
+import {
+  IPrescriptionRepository,
+  PrismaPrescriptionRepository,
+} from '../repositories/PrescriptionRepository'
+import type { Payment } from '@prisma/client'
 
 const copayCalc = new CopayCalculator()
 
 export class PaymentService {
-  async process(visitId: string, method: 'cash' | 'card' | 'transfer') {
-    const existing = await prisma.payment.findUnique({ where: { visit_id: visitId } })
+  constructor(
+    private readonly paymentRepo: IPaymentRepository = new PrismaPaymentRepository(),
+    private readonly prescriptionRepo: IPrescriptionRepository = new PrismaPrescriptionRepository(),
+  ) {}
+
+  async process(visitId: string, method: 'cash' | 'card' | 'transfer'): Promise<Payment> {
+    const existing = await this.paymentRepo.findByVisitId(visitId)
     if (existing) throw new AppError(409, '이미 수납이 완료된 방문입니다.')
 
-    const prescription = await prisma.prescription.findUnique({
-      where: { visit_id: visitId },
-      include: { items: true },
-    })
+    const prescription = await this.prescriptionRepo.findByVisitId(visitId)
     if (!prescription || prescription.items.length === 0) {
       throw new AppError(422, '처방 정보가 없습니다.')
     }
@@ -21,19 +31,17 @@ export class PaymentService {
       prescription.items,
     )
 
-    return prisma.payment.create({
-      data: {
-        visit_id: visitId,
-        total_drug_cost: totalDrugCost,
-        copay_amount: copayAmount,
-        insurance_coverage: insuranceCoverage,
-        payment_method: method,
-      },
+    return this.paymentRepo.create({
+      visit_id: visitId,
+      total_drug_cost: totalDrugCost,
+      copay_amount: copayAmount,
+      insurance_coverage: insuranceCoverage,
+      payment_method: method,
     })
   }
 
-  async getByVisitId(visitId: string) {
-    const payment = await prisma.payment.findUnique({ where: { visit_id: visitId } })
+  async getByVisitId(visitId: string): Promise<Payment> {
+    const payment = await this.paymentRepo.findByVisitId(visitId)
     if (!payment) throw new AppError(404, '수납 정보가 없습니다.')
     return payment
   }

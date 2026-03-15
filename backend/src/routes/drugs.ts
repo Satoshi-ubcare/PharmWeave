@@ -1,22 +1,12 @@
 import { Router } from 'express'
-import { prisma } from '../lib/prisma'
+import { PrismaDrugRepository } from '../repositories/DrugRepository'
 
 const router = Router()
+const drugRepo = new PrismaDrugRepository()
 
 router.get('/', async (req, res) => {
   const q = String(req.query.q ?? '')
-  const drugs = await prisma.drug.findMany({
-    where: q
-      ? {
-          OR: [
-            { drug_name: { contains: q, mode: 'insensitive' } },
-            { drug_code: { contains: q } },
-          ],
-        }
-      : undefined,
-    orderBy: { drug_name: 'asc' },
-    take: 20,
-  })
+  const drugs = await drugRepo.search(q)
   res.json(drugs)
 })
 

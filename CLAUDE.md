@@ -24,13 +24,15 @@ Frontend (React + Vite)          Backend (Express + TypeScript)
 | Presentation | `frontend/src/pages/`, `features/`, `components/` | UI 렌더링, 사용자 입력 | React, Tailwind |
 | Application (FE) | `frontend/src/hooks/`, `stores/` | API 호출, 전역 상태 | Axios, Zustand |
 | Interface (BE) | `backend/src/routes/`, `middlewares/` | HTTP 수신, 요청 검증 | Express, Zod |
-| Application (BE) | `backend/src/services/` | 유스케이스 조율, Prisma 호출 | Prisma |
+| Application (BE) | `backend/src/services/` | 유스케이스 조율, Repository 호출 | IRepository 인터페이스 |
+| Repository | `backend/src/repositories/` | DB 접근 추상화, Prisma 쿼리 캡슐화 | Prisma |
 | Domain | `backend/src/domain/` | 순수 비즈니스 규칙 | **없음** (외부 의존 금지) |
 | Plugin | `backend/src/plugins/` | 확장 기능 실행, 결과 반환 | Prisma (읽기 전용) |
 
 **핵심 규칙:**
 - `domain/` 은 Prisma, Express, 외부 npm 패키지를 **절대 import하지 않는다**. 순수 TypeScript 함수/클래스만 허용.
 - `routes/` 는 `services/` 만 호출한다. domain을 직접 호출하지 않는다.
+- `services/` 는 `IRepository` 인터페이스를 통해 데이터에 접근한다. Prisma를 직접 import하지 않는다.
 - Plugin은 서비스에서만 실행되며, DB 저장은 service가 담당한다.
 
 ---
@@ -261,8 +263,8 @@ pharmweave/
 
 ## 자주 묻는 것 (FAQ for AI)
 
-**Q: Repository 패턴을 써야 하나?**
-A: 아니오. services에서 Prisma를 직접 호출한다. Repository 파일 7개 추가 대비 SoC 기여가 낮다.
+**Q: Repository 패턴은 어떻게 구성되어 있나?**
+A: `repositories/` 디렉토리에 IXxxRepository 인터페이스 + PrismaXxxRepository 구현이 쌍으로 존재한다. 서비스 constructor에 기본값(= new PrismaXxxRepository())으로 주입한다. 테스트 시 mock 구현체를 주입할 수 있다.
 
 **Q: Plugin은 어떻게 추가하나?**
 A: `plugins/` 에 실행 함수 파일 1개 추가 + `PluginService` 분기 1개 추가. 인터페이스 클래스 불필요.

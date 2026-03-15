@@ -2,24 +2,30 @@ import { prisma } from '../lib/prisma'
 import { AppError } from '../middlewares/errorHandler'
 import { executeMedicationGuide } from '../plugins/medicationGuide'
 import { executeDur } from '../plugins/durPlugin'
+import {
+  IPluginRepository,
+  PrismaPluginRepository,
+} from '../repositories/PluginRepository'
+import type { PluginConfig } from '@prisma/client'
 
 export class PluginService {
-  async list() {
-    return prisma.pluginConfig.findMany()
+  constructor(
+    private readonly pluginRepo: IPluginRepository = new PrismaPluginRepository(),
+  ) {}
+
+  async list(): Promise<PluginConfig[]> {
+    return this.pluginRepo.findAll()
   }
 
-  async toggle(id: string, enabled: boolean) {
-    const plugin = await prisma.pluginConfig.findUnique({ where: { id } })
+  async toggle(id: string, enabled: boolean): Promise<PluginConfig> {
+    const plugin = await this.pluginRepo.findById(id)
     if (!plugin) throw new AppError(404, 'Plugin을 찾을 수 없습니다.')
 
-    return prisma.pluginConfig.update({
-      where: { id },
-      data: { enabled },
-    })
+    return this.pluginRepo.update(id, enabled)
   }
 
   async execute(id: string, visitId: string): Promise<unknown> {
-    const plugin = await prisma.pluginConfig.findUnique({ where: { id } })
+    const plugin = await this.pluginRepo.findById(id)
     if (!plugin) throw new AppError(404, 'Plugin을 찾을 수 없습니다.')
     if (!plugin.enabled) {
       return { skipped: true, reason: 'Plugin이 비활성화되어 있습니다.' }

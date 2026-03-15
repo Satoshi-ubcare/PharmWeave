@@ -1,39 +1,28 @@
-import { prisma } from '../lib/prisma'
 import { AppError } from '../middlewares/errorHandler'
+import {
+  IPatientRepository,
+  PrismaPatientRepository,
+} from '../repositories/PatientRepository'
 import type { Patient } from '@prisma/client'
 
 export class PatientService {
-  async search(q: string): Promise<Patient[]> {
-    const dateCandidate = new Date(q)
-    const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(q) && !isNaN(dateCandidate.getTime())
+  constructor(
+    private readonly patientRepo: IPatientRepository = new PrismaPatientRepository(),
+  ) {}
 
-    return prisma.patient.findMany({
-      where: q
-        ? {
-            OR: [
-              { name: { contains: q, mode: 'insensitive' } },
-              ...(isValidDate ? [{ birth_date: { equals: dateCandidate } }] : []),
-            ],
-          }
-        : undefined,
-      orderBy: { name: 'asc' },
-      take: 20,
-    })
+  async search(q: string): Promise<Patient[]> {
+    return this.patientRepo.search(q)
   }
 
   async create(name: string, birth_date: string, phone?: string): Promise<Patient> {
-    const existing = await prisma.patient.findUnique({
-      where: { name_birth_date: { name, birth_date: new Date(birth_date) } },
-    })
+    const existing = await this.patientRepo.findByNameAndBirthDate(name, new Date(birth_date))
     if (existing) throw new AppError(409, '동일한 이름과 생년월일의 환자가 이미 존재합니다.')
 
-    return prisma.patient.create({
-      data: { name, birth_date: new Date(birth_date), phone },
-    })
+    return this.patientRepo.create(name, new Date(birth_date), phone)
   }
 
   async getById(id: string): Promise<Patient> {
-    const patient = await prisma.patient.findUnique({ where: { id } })
+    const patient = await this.patientRepo.findById(id)
     if (!patient) throw new AppError(404, '환자를 찾을 수 없습니다.')
     return patient
   }
