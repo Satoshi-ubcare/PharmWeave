@@ -184,19 +184,27 @@ npm run test:unit -- --coverage
 
 ---
 
-## 📦 배포
+## 📦 CI/CD 파이프라인
 
-`main` 브랜치 push 시 GitHub Actions 4단계 파이프라인 자동 실행:
+`main` 브랜치 push 또는 PR 시 GitHub Actions 4단계 파이프라인 자동 실행.
+`workflow_dispatch`로 수동 실행 지원 → [Actions 탭에서 확인](https://github.com/Satoshi-ubcare/PharmWeave/actions/workflows/ci.yml)
 
+| 단계 | Job 이름 | 내용 | 전제 조건 |
+|------|----------|------|-----------|
+| 1 | `Lint & Type Check` | ESLint (max-warnings 0) + tsc --noEmit (frontend · backend) | — |
+| 2 | `Tests + Migration` | Unit 22개 · Integration 23개 + prisma migrate deploy (PostgreSQL 컨테이너) | 1 통과 |
+| 3 | `Build Validation` | Vite build (frontend) + tsc compile (backend) | 2 통과 |
+| 4 | `Deploy to Vercel` | Vercel Production 배포 (main push 시에만) | 3 통과 |
+
+```yaml
+# .github/workflows/ci.yml 트리거
+on:
+  push:            { branches: [main] }
+  pull_request:    { branches: [main] }
+  workflow_dispatch:                    # 수동 실행
 ```
-push
-  └─ 1. Lint & Type Check    ESLint + tsc --noEmit
-  └─ 2. Unit & Integration   22 + 23 tests (PostgreSQL 서비스 컨테이너)
-  └─ 3. Build Validation     Vite build + tsc build
-  └─ 4. Deploy to Vercel     main push 시에만 실행 (테스트 실패 시 차단)
-```
 
-Frontend(React 정적 빌드)와 Backend(Express Serverless Function)를 Vercel 단일 플랫폼에 배포합니다.
+**배포 구성:** Frontend(React 정적 빌드)와 Backend(Express Serverless Function `api/index.ts`)를 Vercel 단일 플랫폼에 배포. `vercel.json`의 rewrites 규칙으로 `/api/*` → Serverless Function, 나머지 → `index.html` SPA 라우팅.
 
 ---
 
