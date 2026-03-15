@@ -1,7 +1,7 @@
 name: CI / CD
 
 # ┌──────────────────────────────────────────────────────────────────┐
-# │  PharmWeave 8-Stage Pipeline                                     │
+# │  PharmWeave 9-Stage Pipeline                                     │
 # │                                                                  │
 # │  [품질 게이트]                                                   │
 # │  1. quality       — ESLint max-warnings 0 + tsc --noEmit        │
@@ -11,11 +11,12 @@ name: CI / CD
 # │  [스테이징 검증 게이트] ← 프로덕션 배포 전 필수 통과            │
 # │  4. staging       — Vercel Preview (--no-prod) 배포              │
 # │  5. staging-smoke — Preview URL에서 전체 API + 성능 SLO 검증    │
+# │  6. e2e           — Playwright E2E (스테이징 URL 대상, 4 spec)  │
 # │                                                                  │
 # │  [프로덕션 배포]                                                 │
-# │  6. deploy        — Vercel Production (staging 통과 시만)        │
-# │  7. smoke-test    — 프로덕션 Smoke Test + SLO + 동시성 검증     │
-# │  8. rollback      — Smoke Test 실패 시 vercel rollback 자동 실행│
+# │  7. deploy        — Vercel Production (e2e 통과 시만)           │
+# │  8. smoke-test    — 프로덕션 Smoke Test + SLO + 동시성 검증     │
+# │  9. rollback      — Smoke Test 실패 시 vercel rollback 자동 실행│
 # └──────────────────────────────────────────────────────────────────┘
 #
 # ┌──────────────────────────────────────────────────────────────────┐
@@ -373,12 +374,70 @@ jobs:
           fi
 
   # ══════════════════════════════════════════════════════════════════
-  # 6단계: 프로덕션 배포 (스테이징 통과 후에만)
+  # 6단계: E2E 테스트 (Playwright — 스테이징 URL 대상)
+  #
+  # 목적: 실제 브라우저(Chromium)로 스테이징 환경의 UI·API 통합 동작을
+  #       검증한다. 4개 스펙(smoke, api, reception, workflow-navigation)이
+  #       모두 통과해야 프로덕션 배포가 허용된다.
+  # ══════════════════════════════════════════════════════════════════
+  e2e:
+    name: "6 · E2E Tests (Playwright)"
+    runs-on: ubuntu-latest
+    needs: [staging-smoke, staging]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+        working-directory: frontend
+
+      - name: "E2E 테스트 — Playwright (스테이징 URL 대상)"
+        run: npm run test:e2e --workspace=frontend
+        env:
+          CI: true
+          BASE_URL: ${{ needs.staging.outputs.preview-url }}
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## 6 · E2E Tests (Playwright)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**검증 대상:** ${{ needs.staging.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 스펙 파일 | 내용 |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| smoke.spec.ts | 페이지 로딩, 헤더, Stepper 6단계, 다크모드 |" >> $GITHUB_STEP_SUMMARY
+          echo "| api.spec.ts | /api/health, 인증, /api/drugs HTTP 계약 |" >> $GITHUB_STEP_SUMMARY
+          echo "| reception.spec.ts | 접수 화면 UI, 환자 검색 폼 |" >> $GITHUB_STEP_SUMMARY
+          echo "| workflow-navigation.spec.ts | 6단계 페이지 네비게이션 |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 리포트 아티팩트: \`playwright-report\` (7일 보관)" >> $GITHUB_STEP_SUMMARY
+
+  # ══════════════════════════════════════════════════════════════════
+  # 7단계: 프로덕션 배포 (E2E + 스테이징 통과 후에만)
   # ══════════════════════════════════════════════════════════════════
   deploy:
-    name: "6 · Deploy to Production"
+    name: "7 · Deploy to Production"
     runs-on: ubuntu-latest
-    needs: staging-smoke
+    needs: e2e
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -396,20 +455,20 @@ jobs:
       - name: Job summary
         if: always()
         run: |
-          echo "## 6 · Deploy to Production" >> $GITHUB_STEP_SUMMARY
+          echo "## 7 · Deploy to Production" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| 항목 | 값 |" >> $GITHUB_STEP_SUMMARY
           echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
           echo "| 배포 URL | https://pharm-weave-frontend.vercel.app |" >> $GITHUB_STEP_SUMMARY
-          echo "| 전제 조건 | 1~5단계 전부 통과 (품질·테스트·빌드·스테이징·스테이징Smoke) |" >> $GITHUB_STEP_SUMMARY
+          echo "| 전제 조건 | 1~6단계 전부 통과 (품질·테스트·빌드·스테이징·SmokeTest·E2E) |" >> $GITHUB_STEP_SUMMARY
           echo "| 트리거 | main 브랜치 push만 실행 |" >> $GITHUB_STEP_SUMMARY
           echo "| 커밋 | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
 
   # ══════════════════════════════════════════════════════════════════
-  # 7단계: 프로덕션 Smoke Test + 성능 SLO + 동시성
+  # 8단계: 프로덕션 Smoke Test + 성능 SLO + 동시성
   # ══════════════════════════════════════════════════════════════════
   smoke-test:
-    name: "7 · Production Smoke Test & SLO"
+    name: "8 · Production Smoke Test & SLO"
     runs-on: ubuntu-latest
     needs: deploy
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -536,7 +595,7 @@ jobs:
       - name: Job summary
         if: always()
         run: |
-          echo "## 7 · Production Smoke Test & SLO" >> $GITHUB_STEP_SUMMARY
+          echo "## 8 · Production Smoke Test & SLO" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**검증 대상:** $BASE_URL" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -549,16 +608,16 @@ jobs:
           echo "| 동시성 | 10 concurrent requests → 80%+ 성공 |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 자동 롤백" >> $GITHUB_STEP_SUMMARY
-          echo "이 단계 실패 시 **8단계 Auto Rollback**이 자동 실행됩니다." >> $GITHUB_STEP_SUMMARY
+          echo "이 단계 실패 시 **9단계 Auto Rollback**이 자동 실행됩니다." >> $GITHUB_STEP_SUMMARY
 
   # ══════════════════════════════════════════════════════════════════
-  # 8단계: 자동 롤백 (프로덕션 Smoke Test 실패 시)
+  # 9단계: 자동 롤백 (프로덕션 Smoke Test 실패 시)
   #
-  # 트리거: 7단계 실패 시 자동 실행
+  # 트리거: 8단계 실패 시 자동 실행
   # 동작: vercel rollback → 이전 프로덕션 배포로 즉시 복구
   # ══════════════════════════════════════════════════════════════════
   rollback:
-    name: "8 · Auto Rollback"
+    name: "9 · Auto Rollback"
     runs-on: ubuntu-latest
     needs: smoke-test
     if: |
@@ -617,7 +676,7 @@ jobs:
       - name: Job summary
         if: always()
         run: |
-          echo "## 8 · Auto Rollback" >> $GITHUB_STEP_SUMMARY
+          echo "## 9 · Auto Rollback" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**트리거:** 7단계 프로덕션 Smoke Test 실패" >> $GITHUB_STEP_SUMMARY
           echo "**실패 커밋:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY

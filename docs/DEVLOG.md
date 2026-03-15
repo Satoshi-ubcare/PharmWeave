@@ -687,8 +687,11 @@ export const useThemeStore = create<ThemeState>((set) => ({
 | ADR-20 | Repository 패턴 도입 | "서비스가 Prisma 직접 의존" 피드백 → 데이터 접근 레이어 분리 | IXxxRepository 인터페이스 7개 + PrismaXxxRepository 7개, 생성자 기본값 주입 |
 | ADR-21 | 도메인 에러 계층 구조 | "AppError 단일 클래스, 도메인별 예외 분류 부재" 피드백 | DomainError 기반 6개 서브클래스, HTTP 상태 코드 결정 errorHandler 집중 |
 | ADR-22 | drugs·plugins 통합 테스트 추가 | "plugins.ts/drugs.ts 미작성, PluginService 26% 미흡" 피드백 | 통합 테스트 13개 + PluginService 단위 8개 추가, 전체 커버리지 98% 달성 |
-| ADR-23 | CI 6단계 — Smoke Test 강화 + Auto Rollback | "Smoke Test 기본 수준, 자동 롤백 미구현" 피드백 | 인증 플로우·응답시간 SLO·동시성 검증 추가, vercel rollback 자동 실행 6단계 |
+| ADR-23 | CI 8단계 — 스테이징 환경 + Smoke 강화 + Auto Rollback | "스테이징 환경 검증 부재, 자동 롤백 미구현" 피드백 | Vercel Preview 스테이징, staging-smoke, SLO·동시성·vercel rollback 9단계로 확장 |
 | ADR-24 | UX — 필드별 폼 검사 + ConfirmDialog | "에러 메시지 간략, 확인 다이얼로그 부재" 피드백 | aria-invalid + role=alert 인라인 에러, ConfirmDialog 범용 모달, 환자 전환 확인 |
+| ADR-25 | CI 6단계 — Playwright E2E 스테이징 대상 실행 | "E2E CI 실행 여부 불명확" 피드백 | staging 이후 Playwright 4 spec을 Preview URL 대상으로 CI에서 자동 실행, 리포트 아티팩트 보관 |
+| ADR-26 | apiError.ts — axios.isAxiosError() 공식 가드 도입 | "타입 가드 기본 수준" 피드백 | duck typing → axios.isAxiosError() 교체, 네트워크 단절·HTTP 상태별 메시지 분기 강화 |
+| ADR-27 | PRD 섹션 13.3 — 정량적 KPI 추가 | "성공 지표 부분적" 피드백 | 업무 효율 4개·기술 품질 5개·가용성 3개 정량 지표, 현재 달성값 병기 |
 
 ---
 
@@ -735,16 +738,33 @@ export const useThemeStore = create<ThemeState>((set) => ({
 | 수납 (payment) | ✅ | ✅ | 자동 전환 |
 | 청구 (claim) | ✅ | ✅ | Payment 레코드 존재 (서버) |
 
-### CI/CD 파이프라인 최종 상태
+### CI/CD 파이프라인 최종 상태 (9단계)
 
 ```
-1. Lint & Type Check  → ESLint max-warnings 0, tsc --noEmit: ✅ PASS
-2. Tests + Migration  → Unit 30 + Integration 61 + Service 8 + prisma migrate deploy: ✅ PASS
-3. Build Validation   → Vite build, tsc build: ✅ PASS
-4. Deploy             → Vercel Production (main push only): ✅
-5. Smoke Test         → 헬스체크 + 인증플로우 + drugs/plugins API + 응답시간 SLO + 동시성 10req: ✅
-6. Auto Rollback      → Smoke Test 실패 시 vercel rollback 자동 실행: ✅ (자동 트리거)
+[품질 게이트]
+1. Lint & Type Check   → ESLint max-warnings 0, tsc --noEmit: ✅ PASS
+2. Tests + Migration   → Unit 30 + Integration 61 + Service 8 + prisma migrate deploy: ✅ PASS
+3. Build Validation    → Vite build, tsc build: ✅ PASS
+
+[스테이징 검증 게이트] ← 프로덕션 배포 전 필수 통과
+4. Staging Deploy      → Vercel Preview (--prod 없음, 격리된 스테이징 URL): ✅
+5. Staging Smoke Test  → 스테이징 URL: health + DB + drugs/plugins/visits API + SLO: ✅
+6. E2E Tests           → Playwright 4 spec (smoke/api/reception/workflow-navigation): ✅
+
+[프로덕션 배포]
+7. Deploy              → Vercel Production (6단계 E2E 통과 시만): ✅
+8. Smoke Test          → 프로덕션: health + auth + API + SLO + 동시성 10req: ✅
+9. Auto Rollback       → Smoke Test 실패 시 vercel rollback 자동 실행: ✅ (자동 트리거)
 ```
+
+### E2E 테스트 스펙 (Playwright)
+
+| 스펙 파일 | 테스트 항목 | 검증 대상 |
+|-----------|------------|-----------|
+| smoke.spec.ts | 페이지 로딩·헤더·Stepper·다크모드·Plugin 이동 | UI 렌더링 계약 |
+| api.spec.ts | /api/health·인증·/api/drugs HTTP 응답 | API 계약 |
+| reception.spec.ts | 접수 화면·환자 검색 폼·대기 현황 | Feature UI |
+| workflow-navigation.spec.ts | 6단계 페이지·미선택 단계 disabled | 라우팅 |
 
 ### 롤백 전략
 
@@ -752,7 +772,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
 
 | 방법 | 명령 / 경로 | 소요 시간 | 자동화 |
 |------|------------|----------|--------|
-| **CI 자동 롤백** | Smoke Test 실패 → 6단계 Auto Rollback 자동 실행 | ~2분 | ✅ 완전 자동 |
+| **CI 자동 롤백** | Smoke Test 실패 → 9단계 Auto Rollback 자동 실행 | ~2분 | ✅ 완전 자동 |
 | **Vercel 대시보드** | Deployments → 이전 배포 → Promote to Production | ~30초 | 수동 |
 | **Vercel CLI** | `vercel rollback --token $VERCEL_TOKEN` | ~30초 | 수동 |
 | **Git revert** | `git revert HEAD` → push → 파이프라인 재실행 | ~5분 (CI 포함) | 수동 |
