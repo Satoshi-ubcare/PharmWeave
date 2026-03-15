@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { visitApi } from '@/api/endpoints'
+import { extractApiError } from '@/lib/apiError'
 import type { Visit, WorkflowStage } from '@/types'
 
 export function useVisitsByStage(stage: WorkflowStage) {
@@ -13,9 +14,8 @@ export function useVisitsByStage(stage: WorkflowStage) {
     try {
       const res = await visitApi.today(stage)
       setVisits(res.data)
-    } catch {
-      // 대기 목록 로드 실패 — 주 기능에 영향 없으므로 목록을 빈 배열로 유지
-      setError('대기 목록을 불러오지 못했습니다.')
+    } catch (err) {
+      setError(extractApiError(err, '대기 목록을 불러오지 못했습니다.'))
     } finally {
       setLoading(false)
     }
@@ -36,8 +36,8 @@ export function useVisitCreate() {
     try {
       const res = await visitApi.create(patientId)
       return res.data
-    } catch {
-      setError('방문 생성에 실패했습니다.')
+    } catch (err) {
+      setError(extractApiError(err, '방문 생성에 실패했습니다.'))
       return null
     } finally {
       setLoading(false)
@@ -57,8 +57,8 @@ export function useWorkflowStage() {
     try {
       const res = await visitApi.transitionStage(visitId, stage)
       return res.data
-    } catch {
-      setError(`${stage} 단계 전환에 실패했습니다.`)
+    } catch (err) {
+      setError(extractApiError(err, `${stage} 단계 전환에 실패했습니다.`))
       return null
     } finally {
       setLoading(false)

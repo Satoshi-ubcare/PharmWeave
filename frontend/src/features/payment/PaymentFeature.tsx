@@ -5,6 +5,7 @@ import { usePrescription } from '@/hooks/usePrescription'
 import { usePaymentCreate } from '@/hooks/usePayment'
 import { useWorkflowStage } from '@/hooks/useVisit'
 import { useToast } from '@/hooks/useToast'
+import { cn } from '@/lib/cn'
 import StagePatientList from '@/components/StagePatientList'
 import Spinner from '@/components/ui/Spinner'
 
@@ -99,12 +100,12 @@ export default function PaymentFeature() {
                 <button
                   key={m}
                   onClick={() => setMethod(m)}
-                  className={[
+                  className={cn(
                     'flex-1 py-3 rounded-xl border text-sm font-medium transition-all',
                     method === m
                       ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105'
                       : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700',
-                  ].join(' ')}
+                  )}
                 >
                   {m === 'card' ? '💳 카드' : m === 'cash' ? '💵 현금' : '🏦 계좌이체'}
                 </button>

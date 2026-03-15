@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { cn } from '@/lib/cn'
 import type { WorkflowStage } from '@/types'
 
 const STEPS: { stage: WorkflowStage; label: string; emoji: string; path: string }[] = [
@@ -52,36 +53,30 @@ export default function WorkflowStepper({ currentStage, visitId }: WorkflowStepp
                 <button
                   onClick={() => isClickable && navigate(step.path)}
                   disabled={!isClickable}
-                  className={[
+                  className={cn(
                     'flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors',
                     status === 'completed' && 'cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20',
                     status === 'current' && 'cursor-default',
                     status === 'upcoming' && 'cursor-not-allowed opacity-40',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
+                  )}
                 >
                   <span
-                    className={[
+                    className={cn(
                       'w-9 h-9 rounded-full flex items-center justify-center text-base font-semibold transition-all',
                       status === 'completed' && 'bg-blue-500 text-white shadow-sm',
                       status === 'current' && 'bg-blue-600 text-white ring-2 ring-blue-300 dark:ring-blue-500 shadow-md',
                       status === 'upcoming' && 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
+                    )}
                   >
                     {status === 'completed' ? '✓' : status === 'current' ? step.emoji : index + 1}
                   </span>
                   <span
-                    className={[
+                    className={cn(
                       'text-xs font-medium',
                       status === 'current' && 'text-blue-600 dark:text-blue-400',
                       status === 'completed' && 'text-blue-500 dark:text-blue-400',
                       status === 'upcoming' && 'text-gray-400 dark:text-gray-500',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
+                    )}
                   >
                     {step.label}
                   </span>
@@ -89,12 +84,12 @@ export default function WorkflowStepper({ currentStage, visitId }: WorkflowStepp
 
                 {index < STEPS.length - 1 && (
                   <div
-                    className={[
+                    className={cn(
                       'h-0.5 flex-1 mx-1 transition-colors rounded-full',
                       STAGE_ORDER.indexOf(step.stage) < STAGE_ORDER.indexOf(currentStage)
                         ? 'bg-blue-400 dark:bg-blue-600'
                         : 'bg-gray-200 dark:bg-gray-700',
-                    ].join(' ')}
+                    )}
                   />
                 )}
               </li>

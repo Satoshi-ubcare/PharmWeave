@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { pluginApi } from '@/api/endpoints'
+import { extractApiError } from '@/lib/apiError'
 import type { Plugin } from '@/types'
 
 export function usePluginList() {
@@ -11,7 +12,7 @@ export function usePluginList() {
     pluginApi
       .list()
       .then((res) => setPlugins(res.data))
-      .catch(() => setError('Plugin 목록을 불러오지 못했습니다.'))
+      .catch((err: unknown) => setError(extractApiError(err, 'Plugin 목록을 불러오지 못했습니다.')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -20,20 +21,23 @@ export function usePluginList() {
 
 export function usePluginToggle() {
   const [toggling, setToggling] = useState<string | null>(null)
+  const [error, setError] = useState('')
 
   const toggle = async (id: string, enabled: boolean): Promise<Plugin | null> => {
     setToggling(id)
+    setError('')
     try {
       const res = await pluginApi.toggle(id, enabled)
       return res.data
-    } catch {
+    } catch (err) {
+      setError(extractApiError(err, 'Plugin 설정 변경에 실패했습니다.'))
       return null
     } finally {
       setToggling(null)
     }
   }
 
-  return { toggling, toggle }
+  return { toggling, toggle, error }
 }
 
 export function usePluginExecute() {
@@ -48,8 +52,8 @@ export function usePluginExecute() {
       const res = await pluginApi.execute(pluginId, visitId)
       setResult(res.data)
       return res.data
-    } catch {
-      setError('Plugin 실행에 실패했습니다.')
+    } catch (err) {
+      setError(extractApiError(err, 'Plugin 실행에 실패했습니다.'))
       return null
     } finally {
       setLoading(false)

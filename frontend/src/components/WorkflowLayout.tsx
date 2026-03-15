@@ -13,7 +13,9 @@ export default function WorkflowLayout() {
   const { theme, toggle } = useThemeStore()
 
   useEffect(() => {
-    pluginApi.list().then((res) => setPlugins(res.data)).catch(() => {})
+    pluginApi.list()
+      .then((res) => setPlugins(res.data))
+      .catch((err: unknown) => console.warn('[WorkflowLayout] Plugin 목록 로드 실패:', err))
   }, [setPlugins])
 
   return (

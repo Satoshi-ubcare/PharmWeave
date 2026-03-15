@@ -31,12 +31,13 @@ export default function PrescriptionFeature() {
   const [error, setError] = useState('')
   const drugDropdownRef = useRef<HTMLDivElement>(null)
 
-  const { results: drugResults, loading: drugSearching, search: searchDrug, clear: clearDrug } = useDrugSearch()
+  const { results: drugResults, loading: drugSearching, error: drugError, search: searchDrug, clear: clearDrug } = useDrugSearch()
   const { loading: saving, error: saveError, save } = usePrescriptionSave()
   const { error: stageError, transition } = useWorkflowStage()
 
   useEffect(() => { if (saveError) toast('error', saveError) }, [saveError, toast])
   useEffect(() => { if (stageError) toast('error', stageError) }, [stageError, toast])
+  useEffect(() => { if (drugError) toast('error', drugError) }, [drugError, toast])
 
   useEffect(() => {
     setClinicName('')

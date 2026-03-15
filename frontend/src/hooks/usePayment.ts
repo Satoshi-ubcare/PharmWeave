@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { paymentApi } from '@/api/endpoints'
+import { extractApiError } from '@/lib/apiError'
 import type { Payment } from '@/types'
 
 export function usePaymentCreate() {
@@ -15,8 +16,8 @@ export function usePaymentCreate() {
     try {
       const res = await paymentApi.create(visitId, method)
       return res.data
-    } catch {
-      setError('수납 처리에 실패했습니다.')
+    } catch (err) {
+      setError(extractApiError(err, '수납 처리에 실패했습니다.'))
       return null
     } finally {
       setLoading(false)

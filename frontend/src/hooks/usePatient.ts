@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { patientApi } from '@/api/endpoints'
+import { extractApiError } from '@/lib/apiError'
 import type { Patient } from '@/types'
 
 export function usePatientSearch() {
@@ -14,8 +15,8 @@ export function usePatientSearch() {
     try {
       const res = await patientApi.search(query)
       setResults(res.data)
-    } catch {
-      setError('환자 검색에 실패했습니다.')
+    } catch (err) {
+      setError(extractApiError(err, '환자 검색에 실패했습니다.'))
     } finally {
       setLoading(false)
     }
@@ -40,8 +41,8 @@ export function usePatientCreate() {
     try {
       const res = await patientApi.create(data)
       return res.data
-    } catch {
-      setError('환자 등록에 실패했습니다.')
+    } catch (err) {
+      setError(extractApiError(err, '환자 등록에 실패했습니다.'))
       return null
     } finally {
       setLoading(false)
