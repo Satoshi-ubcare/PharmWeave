@@ -382,14 +382,151 @@ app.get('/api/visits/today', async (req, res) => {
 
 ---
 
+## Day 4 (2026-03-16) — 피드백 반영 및 최종 완성도 향상
+
+### 목표
+해커톤 피드백 기반 보완 작업: UX 개선 → 아키텍처 정리 → 프론트엔드 테스트 → 다크 모드 + 디자인 개선
+
+---
+
+### 의사결정 14: api/index.ts 이중 백엔드 구조 해소
+
+**문제:** `api/index.ts`(Vercel 진입점, 283줄)와 `backend/src/`(개발·테스트용) 두 벌이 공존 — 기능 변경 시 두 곳 모두 수정 필요하며 Day 3 문제 해결 3의 근본 원인
+
+**선택:** `api/index.ts`를 `backend/src/index.ts`의 Express 앱을 그대로 import하는 5줄 thin wrapper로 교체
+
+```typescript
+// api/index.ts — Vercel Serverless 진입점
+import app from '../backend/src/index'
+export default app
+```
+
+**추가 조치:**
+- `backend/src/lib/prisma.ts`에 Vercel 프로덕션 환경 감지 → `connection_limit=1` 자동 적용
+- `tsconfig.json` 루트에 `backend/src/**/*.ts` include 추가
+
+**결과:** 코드베이스 단일화, 두 벌 유지 부채 완전 해소
+
+---
+
+### 의사결정 15: Toast 알림 시스템 및 UX 피드백 전면 적용
+
+**배경:** 각 단계에서 API 실패 시 사용자에게 아무런 피드백 없이 조용히 실패 — 에러 복구 불가
+
+**선택:** Zustand 기반 Toast 알림 시스템 신규 구현 (외부 라이브러리 없음)
+
+```
+toastStore.ts  : 알림 큐 상태 (addToast / removeToast / 4초 자동 삭제)
+useToast.ts    : { toast(type, message) } 훅
+ui/Toast.tsx   : fixed 우하단 컨테이너, 타입별 색상/이모지
+ui/Spinner.tsx : SVG 애니메이션 스피너 (sm/md)
+```
+
+**적용 범위:** 접수 · 처방 · 조제 · 검토 · 수납 · 청구 · Plugin 관리 전 단계
+- API 에러 → `toast('error', message)`
+- 처방 저장/수납 성공 → `toast('success', message)`
+- 버튼 로딩 → `<Spinner>` 렌더링
+
+**hooks 에러 처리 보완:**
+- `useVisitsByStage`: silent catch → `setError('대기 목록을 불러오지 못했습니다.')`
+- `usePrescription`: `.catch(() => {})` → `setError('처방 정보를 불러오지 못했습니다.')`
+- `usePluginToggle`: `try/finally` 누락된 catch 추가 (unhandled rejection 버그 수정)
+
+---
+
+### 의사결정 16: 단계별 환자 선택 패턴 (StagePatientList 항상 표시)
+
+**문제:** 조제·검토·수납·청구 창에서 visitId 없을 때 early return → `StagePatientList`가 렌더링되지 않아 환자 선택 자체 불가
+
+**선택:** early return 제거 → 조건부 렌더링으로 전환 (DispensingFeature 패턴 기준)
+
+```tsx
+// 변경 전: if (!visitId) return <p>먼저 접수 단계에서...</p>
+// 변경 후:
+<StagePatientList stage="dispensing" />          // 항상 표시
+{!visitId && <div>위 목록에서 선택하세요.</div>}  // 빈 상태
+{visitId && loading && <Spinner />}              // 로딩 중
+{visitId && !loading && prescription && <>...</>} // 처방 로드 후
+```
+
+**적용 대상:** DispensingFeature / ReviewFeature / PaymentFeature / ClaimFeature
+
+---
+
+### 의사결정 17: Frontend Vitest 설정 및 Zustand store 테스트
+
+**배경:** "프론트엔드 테스트가 없다"는 피드백 → Zustand store 단위 테스트 추가
+
+**선택:** `vite.config.ts`에 `test: { globals: true, environment: 'node' }` 추가, `package.json`에 `"test": "vitest run"` 스크립트 추가
+
+**작성된 테스트 (20개):**
+
+| 파일 | 테스트 | 내용 |
+|------|--------|------|
+| `workflowStore.test.ts` | 5개 | setVisit / setStage / reset 상태 전이 |
+| `pluginStore.test.ts` | 6개 | setPlugins / togglePlugin / isEnabled |
+| `toastStore.test.ts` | 9개 | addToast / removeToast / 4초 자동 삭제 (vi.useFakeTimers) |
+
+**TypeScript 이슈 수정:** mock 데이터의 `new Date()` → ISO 문자열 리터럴 변환 (`'1990-01-01'`, `'2026-03-16T09:00:00.000Z'`)
+
+---
+
+### 문제 해결 5: CI Node.js 버전 호환성
+
+**증상:** `vitest@4.1.0` 추가 후 CI 실패
+```
+SyntaxError: The requested module 'node:util' does not provide an export named 'styleText'
+```
+
+**원인:** `vitest@4.1.0`, `vite@8.0.0`이 Node.js `^20.0.0 || >=22.12.0` 요구 → CI `node-version: 18` 미충족
+
+**해결:** `.github/workflows/ci.yml` 전체 job의 `node-version: 18` → `node-version: 20`으로 변경 (quality / test / build 3개 job)
+
+---
+
+### 의사결정 18: 다크 모드 지원 및 이모지 디자인 개선
+
+**배경:** "UI가 단조롭다" 피드백 + 다크 모드 요구사항
+
+**선택:**
+- Tailwind `darkMode: 'class'` 활성화
+- `themeStore.ts` 신규 생성: localStorage 기반 테마 유지, `html` 요소에 `dark` 클래스 토글
+
+```typescript
+// themeStore.ts 핵심 구조
+const savedTheme = (localStorage.getItem('theme') as Theme) ?? 'light'
+applyTheme(savedTheme)  // 앱 로드 즉시 적용 (FOUC 방지)
+
+export const useThemeStore = create<ThemeState>((set) => ({
+  theme: savedTheme,
+  toggle: () => set((s) => {
+    const next = s.theme === 'light' ? 'dark' : 'light'
+    applyTheme(next)
+    return { theme: next }
+  }),
+}))
+```
+
+**적용 범위:** 전체 컴포넌트에 `dark:bg-gray-800`, `dark:text-gray-100`, `dark:border-gray-700` 등 dark 클래스 일괄 적용
+
+**디자인 개선:**
+- WorkflowStepper: 단계별 이모지 (🏥📋💊🔬💳📄), 현재 단계에 이모지 표시
+- 헤더: 그라디언트 배경, 💊 로고, 🌙/☀️ 토글 버튼
+- Toast: 이모지 아이콘 (✅❌ℹ️), `rounded-xl` + `shadow-xl` + `backdrop-blur-sm`
+- 버튼: `rounded-xl` + `shadow-md`, 결제 방법 선택 시 `scale-105` 애니메이션
+
+---
+
 ## 기술 부채 및 향후 개선 사항
 
 | 항목 | 현재 상태 | 개선 방향 |
 |------|-----------|-----------|
-| 이중 백엔드 구조 | ✅ **완료** — `api/index.ts`를 `backend/src/index.ts` app을 import하는 5줄 wrapper로 교체. 단일 코드베이스 통합 완료 | ~~Vercel adapter 패턴으로 단일 코드베이스 통합~~ |
+| 이중 백엔드 구조 | ✅ **완료** — `api/index.ts`를 5줄 thin wrapper로 교체, 단일 코드베이스 통합 완료 | — |
+| 에러 복구 UX | ✅ **완료** — Toast 알림 + Spinner + 성공/실패 피드백 전 단계 적용 | — |
+| 다크 모드 | ✅ **완료** — Tailwind class 전략 + themeStore (localStorage 유지) | — |
+| Frontend 테스트 | ✅ **완료** — Vitest 설정 + store 단위 테스트 20개 | E2E (Playwright) 추가 |
 | Plugin 데이터 | 하드코딩된 약물 규칙 (데모 수준) | 의약품 안전나라 API 연동 |
 | Role 기반 접근제어 | 미구현 | 약사/실무자/관리자 Role 분리 |
-| 에러 복구 UX | ✅ **완료** — Zustand 기반 Toast 알림 + SVG 스피너 + 성공/실패 피드백 전 단계 적용 | ~~토스트 알림, 재시도 버튼 추가~~ |
 | 모바일 최적화 | Tailwind 반응형 기본 적용 | 태블릿/모바일 실제 사용 시나리오 테스트 |
 | 스테퍼 뱃지 | 단계별 대기 인원 수 미표시 | WorkflowStepper에 대기 인원 뱃지 추가 |
 
@@ -412,6 +549,12 @@ app.get('/api/visits/today', async (req, res) => {
 | ADR-11 | useEffect([visitId]) 폼 초기화 | 환자 전환 시 이전 환자 데이터가 잔류하는 UX 버그 수정 | 각 Feature 컴포넌트 visitId 변경 감지 → 지역 상태 리셋 |
 | ADR-12 | 접수 화면 대기 현황 대시보드 | 서비스 진입 시 전체 워크플로우 현황 파악 불가 문제 해결 | 3열 그리드 5단계 대기 목록, 클릭 시 해당 단계 자동 이동 |
 | ADR-13 | CI 커버리지 임계값 제거 | test:unit --coverage 조합이 10% 커버리지로 파이프라인 차단 | test:all --coverage로 66개 전체 실행 후 lcov 아티팩트 업로드 |
+| ADR-14 | api/index.ts thin wrapper | 이중 백엔드 구조 → 기능 변경 시 두 곳 수정 필요한 부채 해소 | 283줄 중복 코드 제거, 단일 코드베이스로 통합 |
+| ADR-15 | Toast 알림 시스템 | API 실패 시 사용자 피드백 없는 문제 해결 | Zustand 기반, 외부 라이브러리 없음, 전 단계 적용 |
+| ADR-16 | 단계별 환자 선택 패턴 | early return이 StagePatientList 렌더링 차단 — UX 버그 | 4개 Feature에 조건부 렌더링 적용, 환자 선택 후 하단 노출 |
+| ADR-17 | Frontend Vitest 설정 | "프론트엔드 테스트 없음" 피드백 반영 | store 단위 테스트 20개 추가 (총 86개) |
+| ADR-18 | CI Node.js 18 → 20 | vitest@4.x, vite@8.x의 Node.js 20+ 요구사항 미충족으로 CI 실패 | node-version 3개 job 모두 20으로 업그레이드 |
+| ADR-19 | 다크 모드 + 이모지 디자인 | "UI 단조롭다" 피드백 반영, 다크 모드 지원 요구 | themeStore + Tailwind class 전략, 전 컴포넌트 dark: 클래스 적용 |
 
 ---
 
