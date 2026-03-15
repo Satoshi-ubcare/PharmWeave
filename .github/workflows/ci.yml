@@ -257,6 +257,9 @@ jobs:
     env:
       STAGING_URL: ${{ needs.staging.outputs.preview-url }}
       RESPONSE_TIME_SLO: 3000
+      # Vercel Preview 배포 보호 우회 토큰
+      # Vercel 대시보드 > Project Settings > Deployment Protection > Protection Bypass for Automation
+      BYPASS_TOKEN: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
     steps:
       - name: Wait for staging cold start
@@ -267,8 +270,12 @@ jobs:
         run: |
           echo "🔍 스테이징 URL: $STAGING_URL"
           for i in 1 2 3; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$STAGING_URL/api/health")
-            BODY=$(curl -s "$STAGING_URL/api/health")
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "x-vercel-protection-bypass: $BYPASS_TOKEN" \
+              "$STAGING_URL/api/health")
+            BODY=$(curl -s \
+              -H "x-vercel-protection-bypass: $BYPASS_TOKEN" \
+              "$STAGING_URL/api/health")
             echo "Attempt $i: HTTP $STATUS — $BODY"
             if [ "$STATUS" = "200" ] && echo "$BODY" | grep -q '"status":"ok"'; then
               echo "✅ 스테이징 /api/health OK"
@@ -289,6 +296,7 @@ jobs:
           REG_RESP=$(curl -s -w "\n%{http_code}" \
             -X POST "$STAGING_URL/api/auth/register" \
             -H "Content-Type: application/json" \
+            -H "x-vercel-protection-bypass: $BYPASS_TOKEN" \
             -d "{\"username\":\"$SMOKE_USER\",\"password\":\"$SMOKE_PASS\"}")
           REG_STATUS=$(echo "$REG_RESP" | tail -1)
           REG_BODY=$(echo "$REG_RESP" | head -1)
@@ -301,6 +309,7 @@ jobs:
               # 409: 이미 존재 → 로그인
               LOGIN_BODY=$(curl -s -X POST "$STAGING_URL/api/auth/login" \
                 -H "Content-Type: application/json" \
+                -H "x-vercel-protection-bypass: $BYPASS_TOKEN" \
                 -d "{\"username\":\"$SMOKE_USER\",\"password\":\"$SMOKE_PASS\"}")
               TOKEN=$(echo "$LOGIN_BODY" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
             fi
@@ -317,7 +326,9 @@ jobs:
           check_api() {
             local label=$1; local url=$2; local expected=$3
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              -H "Authorization: Bearer $STAGING_TOKEN" "$url")
+              -H "Authorization: Bearer $STAGING_TOKEN" \
+              -H "x-vercel-protection-bypass: $BYPASS_TOKEN" \
+              "$url")
             if [ "$STATUS" = "$expected" ]; then
               echo "✅ $label: HTTP $STATUS"
             else
@@ -338,7 +349,9 @@ jobs:
           measure() {
             local label=$1; local url=$2
             TIME_MS=$(curl -s -o /dev/null -w "%{time_total}" \
-              -H "Authorization: Bearer $STAGING_TOKEN" "$url" \
+              -H "Authorization: Bearer $STAGING_TOKEN" \
+              -H "x-vercel-protection-bypass: $BYPASS_TOKEN" \
+              "$url" \
               | awk '{printf "%d", $1 * 1000}')
             echo "$label: ${TIME_MS}ms"
             if [ "$TIME_MS" -gt "$RESPONSE_TIME_SLO" ]; then
@@ -406,6 +419,8 @@ jobs:
         env:
           CI: true
           BASE_URL: ${{ needs.staging.outputs.preview-url }}
+          # Vercel Preview 배포 보호 우회 (playwright.config.ts의 extraHTTPHeaders에서 사용)
+          VERCEL_BYPASS_TOKEN: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
