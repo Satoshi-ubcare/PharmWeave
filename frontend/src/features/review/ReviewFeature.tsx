@@ -11,7 +11,7 @@ import Spinner from '@/components/ui/Spinner'
 export default function ReviewFeature() {
   const navigate = useNavigate()
   const { visitId, patient, setStage } = useWorkflowStore()
-  const { prescription, error: prescriptionError } = usePrescription(visitId)
+  const { prescription, loading: prescriptionLoading, error: prescriptionError } = usePrescription(visitId)
   const { loading: submitting, error: stageError, transition } = useWorkflowStage()
   const { toast } = useToast()
   const [memo, setMemo] = useState('')
@@ -68,6 +68,13 @@ export default function ReviewFeature() {
               <p className="font-medium mt-0.5 text-gray-900 dark:text-gray-100">{patient.phone ?? '—'}</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {visitId && prescriptionLoading && (
+        <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 text-sm py-4">
+          <Spinner size="md" className="text-gray-400" />
+          <span>처방 정보를 불러오는 중...</span>
         </div>
       )}
 

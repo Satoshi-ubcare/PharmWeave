@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { cn } from '@/lib/cn'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePatientSearch, usePatientCreate } from '@/hooks/usePatient'
 import { useVisitCreate, useWorkflowStage } from '@/hooks/useVisit'
@@ -26,6 +27,7 @@ export default function ReceptionFeature() {
   const [showNewForm, setShowNewForm] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const [newPatient, setNewPatient] = useState({ name: '', birth_date: '', phone: '' })
+  const [formErrors, setFormErrors] = useState({ name: '', birth_date: '', phone: '' })
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const { results, loading: searching, search, clear: clearResults } = usePatientSearch()
@@ -74,11 +76,30 @@ export default function ReceptionFeature() {
     clearResults()
   }
 
+  const validateNewPatient = (): boolean => {
+    const errors = { name: '', birth_date: '', phone: '' }
+    if (!newPatient.name.trim() || newPatient.name.trim().length < 2) {
+      errors.name = '이름은 2자 이상 입력해야 합니다.'
+    }
+    if (!newPatient.birth_date) {
+      errors.birth_date = '생년월일을 입력해야 합니다.'
+    } else if (new Date(newPatient.birth_date) > new Date()) {
+      errors.birth_date = '생년월일은 오늘 이전이어야 합니다.'
+    }
+    if (newPatient.phone && !/^\d{10,11}$/.test(newPatient.phone.replace(/-/g, ''))) {
+      errors.phone = '전화번호는 숫자 10~11자리로 입력하세요. (예: 01012345678)'
+    }
+    setFormErrors(errors)
+    return !Object.values(errors).some(Boolean)
+  }
+
   const handleCreatePatient = async () => {
+    if (!validateNewPatient()) return
     const patient = await createPatient(newPatient)
     if (patient) {
       setSelected(patient)
       setShowNewForm(false)
+      setFormErrors({ name: '', birth_date: '', phone: '' })
       clearResults()
       toast('success', `${patient.name}님이 등록되었습니다.`)
     }
@@ -177,27 +198,71 @@ export default function ReceptionFeature() {
               <input
                 type="text"
                 value={newPatient.name}
-                onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
-                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => {
+                  setNewPatient({ ...newPatient, name: e.target.value })
+                  if (formErrors.name) setFormErrors({ ...formErrors, name: '' })
+                }}
+                aria-invalid={!!formErrors.name}
+                className={cn(
+                  'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
+                  formErrors.name
+                    ? 'border-red-400 dark:border-red-500'
+                    : 'border-gray-300 dark:border-gray-600',
+                )}
               />
+              {formErrors.name && (
+                <p role="alert" className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
+                  <span>⚠</span>{formErrors.name}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">생년월일 * (YYYY-MM-DD)</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">생년월일 *</label>
               <input
                 type="date"
                 value={newPatient.birth_date}
-                onChange={(e) => setNewPatient({ ...newPatient, birth_date: e.target.value })}
-                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                max={new Date().toISOString().split('T')[0]}
+                onChange={(e) => {
+                  setNewPatient({ ...newPatient, birth_date: e.target.value })
+                  if (formErrors.birth_date) setFormErrors({ ...formErrors, birth_date: '' })
+                }}
+                aria-invalid={!!formErrors.birth_date}
+                className={cn(
+                  'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
+                  formErrors.birth_date
+                    ? 'border-red-400 dark:border-red-500'
+                    : 'border-gray-300 dark:border-gray-600',
+                )}
               />
+              {formErrors.birth_date && (
+                <p role="alert" className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
+                  <span>⚠</span>{formErrors.birth_date}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">전화번호</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">전화번호 <span className="text-gray-400">(선택)</span></label>
               <input
                 type="tel"
                 value={newPatient.phone}
-                onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="01012345678"
+                onChange={(e) => {
+                  setNewPatient({ ...newPatient, phone: e.target.value })
+                  if (formErrors.phone) setFormErrors({ ...formErrors, phone: '' })
+                }}
+                aria-invalid={!!formErrors.phone}
+                className={cn(
+                  'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
+                  formErrors.phone
+                    ? 'border-red-400 dark:border-red-500'
+                    : 'border-gray-300 dark:border-gray-600',
+                )}
               />
+              {formErrors.phone && (
+                <p role="alert" className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
+                  <span>⚠</span>{formErrors.phone}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex gap-2">

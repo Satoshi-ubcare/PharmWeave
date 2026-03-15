@@ -6,6 +6,7 @@ import { useWorkflowStage } from '@/hooks/useVisit'
 import { useToast } from '@/hooks/useToast'
 import StagePatientList from '@/components/StagePatientList'
 import Spinner from '@/components/ui/Spinner'
+import { cn } from '@/lib/cn'
 import type { Drug } from '@/types'
 
 interface ItemInput {
@@ -28,7 +29,7 @@ export default function PrescriptionFeature() {
 
   const [drugQuery, setDrugQuery] = useState('')
   const [showDrugDropdown, setShowDrugDropdown] = useState(false)
-  const [error, setError] = useState('')
+  const [formErrors, setFormErrors] = useState({ clinicName: '', items: '' })
   const drugDropdownRef = useRef<HTMLDivElement>(null)
 
   const { results: drugResults, loading: drugSearching, error: drugError, search: searchDrug, clear: clearDrug } = useDrugSearch()
@@ -46,7 +47,7 @@ export default function PrescriptionFeature() {
     setItems([])
     setDrugQuery('')
     setShowDrugDropdown(false)
-    setError('')
+    setFormErrors({ clinicName: '', items: '' })
     clearDrug()
   }, [visitId, clearDrug])
 
@@ -76,6 +77,7 @@ export default function PrescriptionFeature() {
   const addItem = (drug: Drug) => {
     if (items.find((i) => i.drug_code === drug.drug_code)) return
     setItems([...items, { drug_code: drug.drug_code, drug_name: drug.drug_name, unit_price: drug.unit_price, quantity: 1, days: 1 }])
+    if (formErrors.items) setFormErrors((prev) => ({ ...prev, items: '' }))
     clearDrug()
     setDrugQuery('')
     setShowDrugDropdown(false)
@@ -88,11 +90,15 @@ export default function PrescriptionFeature() {
   const removeItem = (idx: number) => setItems(items.filter((_, i) => i !== idx))
 
   const handleSave = async () => {
-    if (!visitId || !clinicName || items.length === 0) {
-      setError('의료기관명과 처방 항목 1개 이상이 필요합니다.')
+    if (!visitId) return
+    const errors = { clinicName: '', items: '' }
+    if (!clinicName.trim()) errors.clinicName = '의료기관명을 입력해야 합니다.'
+    if (items.length === 0) errors.items = '처방 항목을 1개 이상 추가해야 합니다.'
+    if (errors.clinicName || errors.items) {
+      setFormErrors(errors)
       return
     }
-    setError('')
+    setFormErrors({ clinicName: '', items: '' })
     const result = await save(visitId, {
       clinic_name: clinicName,
       doctor_name: doctorName || undefined,
@@ -132,9 +138,23 @@ export default function PrescriptionFeature() {
             <input
               type="text"
               value={clinicName}
-              onChange={(e) => setClinicName(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => {
+                setClinicName(e.target.value)
+                if (formErrors.clinicName) setFormErrors((prev) => ({ ...prev, clinicName: '' }))
+              }}
+              aria-invalid={!!formErrors.clinicName}
+              className={cn(
+                'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
+                formErrors.clinicName
+                  ? 'border-red-400 dark:border-red-500'
+                  : 'border-gray-300 dark:border-gray-600',
+              )}
             />
+            {formErrors.clinicName && (
+              <p role="alert" className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
+                <span>⚠</span>{formErrors.clinicName}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">처방 의사명</label>
@@ -255,7 +275,11 @@ export default function PrescriptionFeature() {
         </div>
       )}
 
-      {error && <p role="alert" className="text-red-600 dark:text-red-400 text-sm flex items-center gap-1"><span>⚠️</span>{error}</p>}
+      {formErrors.items && (
+        <p role="alert" className="text-red-600 dark:text-red-400 text-sm flex items-center gap-1">
+          <span>⚠</span>{formErrors.items}
+        </p>
+      )}
 
       <div className="flex justify-end">
         <button
