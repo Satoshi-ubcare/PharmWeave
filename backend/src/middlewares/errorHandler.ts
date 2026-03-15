@@ -1,14 +1,24 @@
 import type { Request, Response, NextFunction } from 'express'
 import { ZodError } from 'zod'
+import {
+  DomainError,
+  NotFoundError,
+  ConflictError,
+  WorkflowTransitionError,
+  PreconditionError,
+  DomainValidationError,
+  UnauthorizedError,
+} from '../domain/errors'
 
-export class AppError extends Error {
-  constructor(
-    public statusCode: number,
-    message: string,
-  ) {
-    super(message)
-    this.name = 'AppError'
-  }
+/** HTTP 상태 코드는 여기서만 결정 — 도메인 레이어는 HTTP에 의존하지 않는다 */
+function domainErrorStatus(err: DomainError): number {
+  if (err instanceof NotFoundError) return 404
+  if (err instanceof ConflictError) return 409
+  if (err instanceof WorkflowTransitionError) return 422
+  if (err instanceof PreconditionError) return 422
+  if (err instanceof DomainValidationError) return 400
+  if (err instanceof UnauthorizedError) return 401
+  return 500
 }
 
 export function errorHandler(
@@ -22,8 +32,8 @@ export function errorHandler(
     return
   }
 
-  if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: err.message })
+  if (err instanceof DomainError) {
+    res.status(domainErrorStatus(err)).json({ error: err.message })
     return
   }
 

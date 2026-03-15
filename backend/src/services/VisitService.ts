@@ -1,4 +1,4 @@
-import { AppError } from '../middlewares/errorHandler'
+import { NotFoundError, WorkflowTransitionError, PreconditionError } from '../domain/errors'
 import { WorkflowStateMachine } from '../domain/WorkflowStateMachine'
 import type { WorkflowStage } from '../domain/WorkflowStateMachine'
 import {
@@ -25,7 +25,7 @@ export class VisitService {
 
   async create(patient_id: string) {
     const patient = await this.patientRepo.findById(patient_id)
-    if (!patient) throw new AppError(404, '환자를 찾을 수 없습니다.')
+    if (!patient) throw new NotFoundError('환자를 찾을 수 없습니다.')
 
     return this.visitRepo.create(patient_id)
   }
@@ -36,17 +36,17 @@ export class VisitService {
 
   async getById(id: string) {
     const visit = await this.visitRepo.findById(id)
-    if (!visit) throw new AppError(404, '방문 기록을 찾을 수 없습니다.')
+    if (!visit) throw new NotFoundError('방문 기록을 찾을 수 없습니다.')
     return visit
   }
 
   async transitionStage(id: string, stage: WorkflowStage) {
     const visit = await this.visitRepo.findById(id)
-    if (!visit) throw new AppError(404, '방문 기록을 찾을 수 없습니다.')
+    if (!visit) throw new NotFoundError('방문 기록을 찾을 수 없습니다.')
 
     const sm = new WorkflowStateMachine(visit.workflow_stage as WorkflowStage)
     if (!sm.canTransition(stage)) {
-      throw new AppError(422, `${visit.workflow_stage} → ${stage} 전환은 허용되지 않습니다.`)
+      throw new WorkflowTransitionError(visit.workflow_stage, stage)
     }
 
     await this.validateStageGuards(id, stage)
@@ -58,14 +58,14 @@ export class VisitService {
     if (stage === 'review') {
       const prescription = await this.prescriptionRepo.findByVisitId(visitId)
       if (!prescription || prescription.items.length === 0) {
-        throw new AppError(422, '처방 항목이 1개 이상 있어야 조제 완료가 가능합니다.')
+        throw new PreconditionError('처방 항목이 1개 이상 있어야 조제 완료가 가능합니다.')
       }
     }
 
     if (stage === 'claim') {
       const payment = await this.paymentRepo.findByVisitId(visitId)
       if (!payment) {
-        throw new AppError(422, '수납이 완료되어야 청구가 가능합니다.')
+        throw new PreconditionError('수납이 완료되어야 청구가 가능합니다.')
       }
     }
   }

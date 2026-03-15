@@ -1,4 +1,4 @@
-import { AppError } from '../middlewares/errorHandler'
+import { NotFoundError } from '../domain/errors'
 import {
   IPrescriptionRepository,
   PrismaPrescriptionRepository,
@@ -27,7 +27,7 @@ export class PrescriptionService {
 
   async upsert(visitId: string, input: UpsertPrescriptionInput): Promise<PrescriptionWithItems> {
     const visit = await this.visitRepo.findById(visitId)
-    if (!visit) throw new AppError(404, '방문 기록을 찾을 수 없습니다.')
+    if (!visit) throw new NotFoundError('방문 기록을 찾을 수 없습니다.')
 
     return this.prescriptionRepo.upsert(visitId, {
       ...input,
@@ -37,7 +37,7 @@ export class PrescriptionService {
 
   async getByVisitId(visitId: string): Promise<PrescriptionWithItems> {
     const prescription = await this.prescriptionRepo.findByVisitId(visitId)
-    if (!prescription) throw new AppError(404, '처방 정보가 없습니다.')
+    if (!prescription) throw new NotFoundError('처방 정보가 없습니다.')
     return prescription
   }
 }

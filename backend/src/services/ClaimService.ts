@@ -1,4 +1,4 @@
-import { AppError } from '../middlewares/errorHandler'
+import { NotFoundError, ConflictError, PreconditionError } from '../domain/errors'
 import { ClaimDataBuilder } from '../domain/ClaimDataBuilder'
 import {
   IClaimRepository,
@@ -15,14 +15,14 @@ export class ClaimService {
 
   async create(visitId: string): Promise<Claim> {
     const existing = await this.claimRepo.findByVisitId(visitId)
-    if (existing) throw new AppError(409, '이미 청구가 완료된 방문입니다.')
+    if (existing) throw new ConflictError('이미 청구가 완료된 방문입니다.')
 
     const visit = await this.claimRepo.findVisitWithFull(visitId)
-    if (!visit) throw new AppError(404, '방문 기록을 찾을 수 없습니다.')
+    if (!visit) throw new NotFoundError('방문 기록을 찾을 수 없습니다.')
     if (!visit.prescription || visit.prescription.items.length === 0) {
-      throw new AppError(422, '처방 정보가 없습니다.')
+      throw new PreconditionError('처방 정보가 없습니다.')
     }
-    if (!visit.payment) throw new AppError(422, '수납 정보가 없습니다.')
+    if (!visit.payment) throw new PreconditionError('수납 정보가 없습니다.')
 
     const claimData = claimBuilder.build({
       visit_id: visitId,
@@ -42,7 +42,7 @@ export class ClaimService {
 
   async getByVisitId(visitId: string): Promise<Claim> {
     const claim = await this.claimRepo.findByVisitId(visitId)
-    if (!claim) throw new AppError(404, '청구 정보가 없습니다.')
+    if (!claim) throw new NotFoundError('청구 정보가 없습니다.')
     return claim
   }
 }

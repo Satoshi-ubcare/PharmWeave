@@ -1,4 +1,4 @@
-import { AppError } from '../middlewares/errorHandler'
+import { NotFoundError, ConflictError, PreconditionError } from '../domain/errors'
 import { CopayCalculator } from '../domain/CopayCalculator'
 import {
   IPaymentRepository,
@@ -20,11 +20,11 @@ export class PaymentService {
 
   async process(visitId: string, method: 'cash' | 'card' | 'transfer'): Promise<Payment> {
     const existing = await this.paymentRepo.findByVisitId(visitId)
-    if (existing) throw new AppError(409, '이미 수납이 완료된 방문입니다.')
+    if (existing) throw new ConflictError('이미 수납이 완료된 방문입니다.')
 
     const prescription = await this.prescriptionRepo.findByVisitId(visitId)
     if (!prescription || prescription.items.length === 0) {
-      throw new AppError(422, '처방 정보가 없습니다.')
+      throw new PreconditionError('처방 정보가 없습니다.')
     }
 
     const { totalDrugCost, copayAmount, insuranceCoverage } = copayCalc.calculate(
@@ -42,7 +42,7 @@ export class PaymentService {
 
   async getByVisitId(visitId: string): Promise<Payment> {
     const payment = await this.paymentRepo.findByVisitId(visitId)
-    if (!payment) throw new AppError(404, '수납 정보가 없습니다.')
+    if (!payment) throw new NotFoundError('수납 정보가 없습니다.')
     return payment
   }
 }

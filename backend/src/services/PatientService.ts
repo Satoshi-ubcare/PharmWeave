@@ -1,4 +1,4 @@
-import { AppError } from '../middlewares/errorHandler'
+import { NotFoundError, ConflictError } from '../domain/errors'
 import {
   IPatientRepository,
   PrismaPatientRepository,
@@ -16,14 +16,14 @@ export class PatientService {
 
   async create(name: string, birth_date: string, phone?: string): Promise<Patient> {
     const existing = await this.patientRepo.findByNameAndBirthDate(name, new Date(birth_date))
-    if (existing) throw new AppError(409, '동일한 이름과 생년월일의 환자가 이미 존재합니다.')
+    if (existing) throw new ConflictError('동일한 이름과 생년월일의 환자가 이미 존재합니다.')
 
     return this.patientRepo.create(name, new Date(birth_date), phone)
   }
 
   async getById(id: string): Promise<Patient> {
     const patient = await this.patientRepo.findById(id)
-    if (!patient) throw new AppError(404, '환자를 찾을 수 없습니다.')
+    if (!patient) throw new NotFoundError('환자를 찾을 수 없습니다.')
     return patient
   }
 }
