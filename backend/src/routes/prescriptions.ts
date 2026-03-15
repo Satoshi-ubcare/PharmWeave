@@ -1,10 +1,10 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import { prisma } from '../lib/prisma'
 import { validate } from '../middlewares/validate'
-import { AppError } from '../middlewares/errorHandler'
+import { PrescriptionService } from '../services/PrescriptionService'
 
 const router = Router()
+const prescriptionService = new PrescriptionService()
 
 const prescriptionSchema = z.object({
   clinic_name: z.string().min(1).max(100),
@@ -25,49 +25,13 @@ const prescriptionSchema = z.object({
 
 router.post('/:visitId/prescriptions', validate(prescriptionSchema), async (req, res) => {
   const { visitId } = req.params
-  const { clinic_name, doctor_name, prescribed_at, items } = req.body as z.infer<typeof prescriptionSchema>
-
-  const visit = await prisma.visit.findUnique({ where: { id: visitId } })
-  if (!visit) throw new AppError(404, '방문 기록을 찾을 수 없습니다.')
-
-  const existing = await prisma.prescription.findUnique({ where: { visit_id: visitId } })
-  if (existing) {
-    const prescription = await prisma.prescription.update({
-      where: { visit_id: visitId },
-      data: {
-        clinic_name,
-        doctor_name,
-        prescribed_at: new Date(prescribed_at),
-        items: {
-          deleteMany: {},
-          createMany: { data: items },
-        },
-      },
-      include: { items: true },
-    })
-    res.json(prescription)
-    return
-  }
-
-  const prescription = await prisma.prescription.create({
-    data: {
-      visit_id: visitId,
-      clinic_name,
-      doctor_name,
-      prescribed_at: new Date(prescribed_at),
-      items: { createMany: { data: items } },
-    },
-    include: { items: true },
-  })
+  const input = req.body as z.infer<typeof prescriptionSchema>
+  const prescription = await prescriptionService.upsert(visitId, input)
   res.status(201).json(prescription)
 })
 
 router.get('/:visitId/prescriptions', async (req, res) => {
-  const prescription = await prisma.prescription.findUnique({
-    where: { visit_id: req.params.visitId },
-    include: { items: true },
-  })
-  if (!prescription) throw new AppError(404, '처방 정보가 없습니다.')
+  const prescription = await prescriptionService.getByVisitId(req.params.visitId)
   res.json(prescription)
 })
 
