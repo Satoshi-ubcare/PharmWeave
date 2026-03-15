@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { claimApi } from '@/api/endpoints'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { useWorkflowStage } from '@/hooks/useVisit'
+import StagePatientList from '@/components/StagePatientList'
 import type { Claim } from '@/types'
 
 export default function ClaimFeature() {
@@ -60,6 +61,8 @@ export default function ClaimFeature() {
         <h1 className="text-2xl font-bold text-gray-900">청구</h1>
         <p className="text-gray-500 text-sm mt-1">건강보험 청구 데이터를 생성하고 완료합니다.</p>
       </div>
+
+      <StagePatientList stage="claim" />
 
       {!claim ? (
         <div className="bg-white rounded-xl border border-gray-200 p-6 text-center space-y-4">

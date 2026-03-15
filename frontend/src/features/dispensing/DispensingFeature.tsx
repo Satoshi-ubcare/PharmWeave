@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
+import StagePatientList from '@/components/StagePatientList'
 
 export default function DispensingFeature() {
   const navigate = useNavigate()
@@ -39,6 +40,8 @@ export default function DispensingFeature() {
         <h1 className="text-2xl font-bold text-gray-900">조제</h1>
         <p className="text-gray-500 text-sm mt-1">처방 항목을 하나씩 확인하고 체크하세요.</p>
       </div>
+
+      <StagePatientList stage="dispensing" />
 
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">

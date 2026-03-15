@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
+import StagePatientList from '@/components/StagePatientList'
 
 export default function ReviewFeature() {
   const navigate = useNavigate()
@@ -31,6 +32,8 @@ export default function ReviewFeature() {
         <h1 className="text-2xl font-bold text-gray-900">검토</h1>
         <p className="text-gray-500 text-sm mt-1">처방 내용을 최종 확인합니다.</p>
       </div>
+
+      <StagePatientList stage="review" />
 
       {patient && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">

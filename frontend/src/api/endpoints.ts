@@ -33,8 +33,8 @@ export const patientApi = {
 export const visitApi = {
   create: (patientId: string) =>
     apiClient.post<Visit>('/visits', { patient_id: patientId }),
-  today: () =>
-    apiClient.get<Visit[]>('/visits/today'),
+  today: (stage?: WorkflowStage) =>
+    apiClient.get<Visit[]>('/visits/today', stage ? { params: { stage } } : undefined),
   get: (id: string) =>
     apiClient.get<Visit>(`/visits/${id}`),
   transitionStage: (id: string, stage: WorkflowStage) =>

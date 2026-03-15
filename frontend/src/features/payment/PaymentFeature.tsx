@@ -4,6 +4,7 @@ import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
 import { usePaymentCreate } from '@/hooks/usePayment'
 import { useWorkflowStage } from '@/hooks/useVisit'
+import StagePatientList from '@/components/StagePatientList'
 
 function calcCopay(totalDrugCost: number): { copayAmount: number; insuranceCoverage: number } {
   const rate = totalDrugCost < 10000 ? 0.2 : 0.3
@@ -43,6 +44,8 @@ export default function PaymentFeature() {
         <h1 className="text-2xl font-bold text-gray-900">수납</h1>
         <p className="text-gray-500 text-sm mt-1">본인부담금을 계산하고 결제를 처리합니다.</p>
       </div>
+
+      <StagePatientList stage="payment" />
 
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <h2 className="font-semibold text-gray-800">본인부담금 계산</h2>

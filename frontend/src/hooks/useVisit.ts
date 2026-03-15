@@ -1,6 +1,27 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { visitApi } from '@/api/endpoints'
 import type { Visit, WorkflowStage } from '@/types'
+
+export function useVisitsByStage(stage: WorkflowStage) {
+  const [visits, setVisits] = useState<Visit[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await visitApi.today(stage)
+      setVisits(res.data)
+    } catch {
+      // 목록 로드 실패는 무시 (주 기능에 영향 없음)
+    } finally {
+      setLoading(false)
+    }
+  }, [stage])
+
+  useEffect(() => { load() }, [load])
+
+  return { visits, loading, refresh: load }
+}
 
 export function useVisitCreate() {
   const [loading, setLoading] = useState(false)

@@ -21,8 +21,9 @@ router.post('/', validate(createVisitSchema), async (req, res) => {
   res.status(201).json(visit)
 })
 
-router.get('/today', async (_req, res) => {
-  const visits = await visitService.getToday()
+router.get('/today', async (req, res) => {
+  const stage = req.query.stage as WorkflowStage | undefined
+  const visits = await visitService.getToday(stage)
   res.json(visits)
 })
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescriptionSave, useDrugSearch } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
+import StagePatientList from '@/components/StagePatientList'
 import type { Drug } from '@/types'
 
 interface ItemInput {
@@ -72,6 +73,8 @@ export default function PrescriptionFeature() {
         <h1 className="text-2xl font-bold text-gray-900">처방</h1>
         <p className="text-gray-500 text-sm mt-1">처방전 정보와 약품 항목을 입력합니다.</p>
       </div>
+
+      <StagePatientList stage="prescription" />
 
       {/* 처방전 정보 */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">

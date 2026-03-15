@@ -14,16 +14,19 @@ export class VisitService {
     })
   }
 
-  async getToday() {
+  async getToday(stage?: WorkflowStage) {
     const start = new Date()
     start.setHours(0, 0, 0, 0)
     const end = new Date()
     end.setHours(23, 59, 59, 999)
 
     return prisma.visit.findMany({
-      where: { visited_at: { gte: start, lte: end } },
+      where: {
+        visited_at: { gte: start, lte: end },
+        ...(stage ? { workflow_stage: stage } : {}),
+      },
       include: { patient: true },
-      orderBy: { visited_at: 'desc' },
+      orderBy: { visited_at: 'asc' },
     })
   }
 
