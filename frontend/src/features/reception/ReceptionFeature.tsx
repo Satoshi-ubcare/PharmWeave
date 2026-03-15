@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePatientSearch, usePatientCreate } from '@/hooks/usePatient'
@@ -12,14 +12,53 @@ export default function ReceptionFeature() {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)
   const [showNewForm, setShowNewForm] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
   const [newPatient, setNewPatient] = useState({ name: '', birth_date: '', phone: '' })
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const { results, loading: searching, search, clear: clearResults } = usePatientSearch()
-  const { loading: creating, create: createPatient } = usePatientCreate()
+  const { create: createPatient } = usePatientCreate()
   const { loading: starting, create: createVisit } = useVisitCreate()
   const { transition } = useWorkflowStage()
 
-  const handleSearch = () => search(query)
+  // debounce 자동 검색: 2자 이상 입력 후 300ms 대기
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      clearResults()
+      setShowDropdown(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      search(query)
+      setShowDropdown(true)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [query])
+
+  // 드롭다운 바깥 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSearch = () => {
+    if (query.trim().length >= 2) {
+      search(query)
+      setShowDropdown(true)
+    }
+  }
+
+  const handleSelectPatient = (p: Patient) => {
+    setSelected(p)
+    setShowDropdown(false)
+    setQuery(p.name)
+    clearResults()
+  }
 
   const handleCreatePatient = async () => {
     const patient = await createPatient(newPatient)
@@ -52,17 +91,51 @@ export default function ReceptionFeature() {
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <h2 className="font-semibold text-gray-800">환자 검색</h2>
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="이름 또는 생년월일 (YYYY-MM-DD)"
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="relative flex-1" ref={dropdownRef}>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                if (selected && e.target.value !== selected.name) setSelected(null)
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              onFocus={() => results.length > 0 && setShowDropdown(true)}
+              placeholder="이름 또는 생년월일 — 2자 이상 입력 시 자동 검색"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {searching && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">검색 중…</span>
+            )}
+
+            {/* 자동완성 드롭다운 */}
+            {showDropdown && results.length > 0 && (
+              <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                {results.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleSelectPatient(p)}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors text-sm border-b border-gray-100 last:border-0"
+                    >
+                      <span className="font-medium text-gray-900">{p.name}</span>
+                      <span className="text-gray-500 ml-3">{p.birth_date}</span>
+                      {p.phone && <span className="text-gray-400 ml-3">{p.phone}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {showDropdown && !searching && query.trim().length >= 2 && results.length === 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+                검색 결과가 없습니다.
+              </div>
+            )}
+          </div>
           <button
             onClick={handleSearch}
-            disabled={searching || creating}
+            disabled={searching || query.trim().length < 2}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
             검색
@@ -74,26 +147,6 @@ export default function ReceptionFeature() {
             신규 등록
           </button>
         </div>
-
-        {results.length > 0 && (
-          <ul className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
-            {results.map((p) => (
-              <li key={p.id}>
-                <button
-                  onClick={() => setSelected(p)}
-                  className={[
-                    'w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors text-sm',
-                    selected?.id === p.id && 'bg-blue-50 font-medium',
-                  ].join(' ')}
-                >
-                  <span className="font-medium">{p.name}</span>
-                  <span className="text-gray-500 ml-3">{p.birth_date}</span>
-                  {p.phone && <span className="text-gray-400 ml-3">{p.phone}</span>}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
       {/* 신규 환자 등록 폼 */}
