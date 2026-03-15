@@ -225,7 +225,7 @@ app.post('/api/visits/:visitId/claim', async (req, res) => {
     birth_date: visit.patient.birth_date.toISOString().split('T')[0],
     clinic_name: visit.prescription.clinic_name, doctor_name: visit.prescription.doctor_name,
     prescribed_at: visit.prescription.prescribed_at.toISOString().split('T')[0],
-    items: visit.prescription.items.map(i => ({ ...i, total: i.unit_price * i.quantity * i.days })),
+    items: visit.prescription.items.map((i: {unit_price:number;quantity:number;days:number;[k:string]:unknown}) => ({ ...i, total: i.unit_price * i.quantity * i.days })),
     total_drug_cost: visit.payment.total_drug_cost, copay_amount: visit.payment.copay_amount,
     insurance_coverage: visit.payment.insurance_coverage, claimed_at: new Date().toISOString(),
   }
@@ -255,7 +255,7 @@ app.post('/api/plugins/:id/execute', async (req, res) => {
   if (!plugin.enabled) { res.json({ skipped: true }); return }
   const rx = await prisma.prescription.findUnique({ where: { visit_id: visitId }, include: { items: true } })
   if (req.params.id === 'medication-guide') {
-    const guides = (rx?.items ?? []).map(item => ({
+    const guides = (rx?.items ?? []).map((item: {drug_name:string;quantity:number;days:number}) => ({
       drug_name: item.drug_name, how_to_take: `1회 ${item.quantity}정, ${item.days}일 복용`,
       warnings: ['식후 30분에 복용하세요.', '정해진 용량을 지켜주세요.'],
     }))
