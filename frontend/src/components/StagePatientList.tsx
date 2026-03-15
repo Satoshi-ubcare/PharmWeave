@@ -17,7 +17,7 @@ const STAGE_LABEL: Record<string, string> = {
 
 export default function StagePatientList({ stage, onSelect }: Props) {
   const { visitId, setVisit } = useWorkflowStore()
-  const { visits, loading, refresh } = useVisitsByStage(stage)
+  const { visits, loading, error, refresh } = useVisitsByStage(stage)
 
   const handleSelect = (v: (typeof visits)[number]) => {
     if (!v.patient) return
@@ -44,7 +44,11 @@ export default function StagePatientList({ stage, onSelect }: Props) {
 
       {loading && <p className="text-xs text-gray-400 py-2">불러오는 중...</p>}
 
-      {!loading && visits.length === 0 && (
+      {!loading && error && (
+        <p className="text-xs text-red-400 py-2">{error}</p>
+      )}
+
+      {!loading && !error && visits.length === 0 && (
         <p className="text-xs text-gray-400 py-2">대기 환자 없음</p>
       )}
 

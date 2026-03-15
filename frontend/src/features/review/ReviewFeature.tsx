@@ -3,19 +3,22 @@ import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
+import { useToast } from '@/hooks/useToast'
 import StagePatientList from '@/components/StagePatientList'
 import PluginSlot from '@/components/PluginSlot'
+import Spinner from '@/components/ui/Spinner'
 
 export default function ReviewFeature() {
   const navigate = useNavigate()
   const { visitId, patient, setStage } = useWorkflowStore()
-  const { prescription } = usePrescription(visitId)
-  const { loading: submitting, transition } = useWorkflowStage()
+  const { prescription, error: prescriptionError } = usePrescription(visitId)
+  const { loading: submitting, error: stageError, transition } = useWorkflowStage()
+  const { toast } = useToast()
   const [memo, setMemo] = useState('')
 
-  useEffect(() => {
-    setMemo('')
-  }, [visitId])
+  useEffect(() => { setMemo('') }, [visitId])
+  useEffect(() => { if (stageError) toast('error', stageError) }, [stageError, toast])
+  useEffect(() => { if (prescriptionError) toast('error', prescriptionError) }, [prescriptionError, toast])
 
   const totalCost = prescription?.items.reduce(
     (sum, item) => sum + item.unit_price * item.quantity * item.days,
@@ -29,16 +32,20 @@ export default function ReviewFeature() {
     navigate('/payment')
   }
 
-  if (!visitId) return <p className="text-gray-500">먼저 접수 단계에서 방문을 시작해주세요.</p>
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">검토</h1>
-        <p className="text-gray-500 text-sm mt-1">처방 내용을 최종 확인합니다.</p>
+        <p className="text-gray-500 text-sm mt-1">대기 환자를 선택하면 처방 내용이 표시됩니다.</p>
       </div>
 
       <StagePatientList stage="review" />
+
+      {!visitId && (
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+          위 목록에서 검토할 환자를 선택하세요.
+        </div>
+      )}
 
       {patient && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -107,8 +114,9 @@ export default function ReviewFeature() {
         <button
           onClick={handleApprove}
           disabled={submitting}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
+          {submitting && <Spinner className="text-white" />}
           {submitting ? '처리 중...' : '검토 승인 → 수납'}
         </button>
       </div>

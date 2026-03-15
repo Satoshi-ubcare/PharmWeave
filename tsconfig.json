@@ -4,8 +4,7 @@
     "module": "commonjs",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "outDir": "dist"
+    "skipLibCheck": true
   },
-  "include": ["api/**/*.ts"]
+  "include": ["api/**/*.ts", "backend/src/**/*.ts"]
 }

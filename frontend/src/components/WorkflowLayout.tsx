@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet, Link } from 'react-router-dom'
 import WorkflowStepper from './WorkflowStepper'
+import ToastContainer from './ui/Toast'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePluginStore } from '@/stores/pluginStore'
 import { pluginApi } from '@/api/endpoints'
@@ -45,6 +46,8 @@ export default function WorkflowLayout() {
           <Outlet />
         </div>
       </main>
+
+      <ToastContainer />
     </div>
   )
 }

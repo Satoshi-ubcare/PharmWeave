@@ -2,23 +2,38 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { usePluginStore } from '@/stores/pluginStore'
 import { usePluginList, usePluginToggle } from '@/hooks/usePlugin'
+import { useToast } from '@/hooks/useToast'
+import Spinner from '@/components/ui/Spinner'
 import type { Plugin } from '@/types'
 
 export default function PluginManageFeature() {
   const { plugins, setPlugins, togglePlugin } = usePluginStore()
-  const { plugins: fetched, loading } = usePluginList()
+  const { plugins: fetched, loading, error: listError } = usePluginList()
   const { toggling, toggle } = usePluginToggle()
+  const { toast } = useToast()
 
   useEffect(() => {
     if (fetched.length > 0) setPlugins(fetched)
   }, [fetched, setPlugins])
+  useEffect(() => { if (listError) toast('error', listError) }, [listError, toast])
 
   const handleToggle = async (plugin: Plugin) => {
-    const updated = await toggle(plugin.id, !plugin.enabled)
-    if (updated) togglePlugin(plugin.id, !plugin.enabled)
+    const nextEnabled = !plugin.enabled
+    const updated = await toggle(plugin.id, nextEnabled)
+    if (updated) {
+      togglePlugin(plugin.id, nextEnabled)
+      toast('success', `${plugin.name}이(가) ${nextEnabled ? '활성화' : '비활성화'}되었습니다.`)
+    } else {
+      toast('error', 'Plugin 설정 변경에 실패했습니다.')
+    }
   }
 
-  if (loading) return <p className="text-gray-400 text-sm">플러그인 목록을 불러오는 중...</p>
+  if (loading) return (
+    <div className="flex items-center gap-2 text-gray-400 text-sm py-8">
+      <Spinner size="md" className="text-gray-400" />
+      <span>플러그인 목록을 불러오는 중...</span>
+    </div>
+  )
 
   return (
     <div className="space-y-6">

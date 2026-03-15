@@ -367,16 +367,29 @@ app.get('/api/visits/today', async (req, res) => {
 변경 후: test:unit → test:all --coverage (66개 전체) → 아티팩트 업로드
 ```
 
+**최종 커버리지 측정 결과 (66개 테스트 전체 실행 기준):**
+
+| 레이어 | Statements | Branches | Functions | Lines |
+|--------|-----------|---------|-----------|-------|
+| **전체** | **89.38%** | **75.43%** | **80.43%** | **89.66%** |
+| domain | 100% | 100% | 100% | 100% |
+| routes | 90.9% | 55.55% | 73.68% | 90.71% |
+| services | 84.87% | 75.6% | 76.47% | 85.57% |
+
+- domain 레이어(WorkflowStateMachine, CopayCalculator, ClaimDataBuilder): **전 지표 100%**
+- routes 중 `plugins.ts`, `drugs.ts`는 통합 테스트 미작성으로 커버리지 낮음
+- `PluginService.ts`: 실행 로직이 직접 테스트되지 않아 26% (데모 수준 Plugin 특성상 허용)
+
 ---
 
 ## 기술 부채 및 향후 개선 사항
 
 | 항목 | 현재 상태 | 개선 방향 |
 |------|-----------|-----------|
-| 이중 백엔드 구조 | `api/index.ts`(Vercel)와 `backend/src/`(개발) 별도 관리 | Vercel adapter 패턴으로 단일 코드베이스 통합 |
+| 이중 백엔드 구조 | ✅ **완료** — `api/index.ts`를 `backend/src/index.ts` app을 import하는 5줄 wrapper로 교체. 단일 코드베이스 통합 완료 | ~~Vercel adapter 패턴으로 단일 코드베이스 통합~~ |
 | Plugin 데이터 | 하드코딩된 약물 규칙 (데모 수준) | 의약품 안전나라 API 연동 |
 | Role 기반 접근제어 | 미구현 | 약사/실무자/관리자 Role 분리 |
-| 에러 복구 UX | 기본 에러 메시지 수준 | 토스트 알림, 재시도 버튼 추가 |
+| 에러 복구 UX | ✅ **완료** — Zustand 기반 Toast 알림 + SVG 스피너 + 성공/실패 피드백 전 단계 적용 | ~~토스트 알림, 재시도 버튼 추가~~ |
 | 모바일 최적화 | Tailwind 반응형 기본 적용 | 태블릿/모바일 실제 사용 시나리오 테스트 |
 | 스테퍼 뱃지 | 단계별 대기 인원 수 미표시 | WorkflowStepper에 대기 인원 뱃지 추가 |
 
@@ -399,3 +412,69 @@ app.get('/api/visits/today', async (req, res) => {
 | ADR-11 | useEffect([visitId]) 폼 초기화 | 환자 전환 시 이전 환자 데이터가 잔류하는 UX 버그 수정 | 각 Feature 컴포넌트 visitId 변경 감지 → 지역 상태 리셋 |
 | ADR-12 | 접수 화면 대기 현황 대시보드 | 서비스 진입 시 전체 워크플로우 현황 파악 불가 문제 해결 | 3열 그리드 5단계 대기 목록, 클릭 시 해당 단계 자동 이동 |
 | ADR-13 | CI 커버리지 임계값 제거 | test:unit --coverage 조합이 10% 커버리지로 파이프라인 차단 | test:all --coverage로 66개 전체 실행 후 lcov 아티팩트 업로드 |
+
+---
+
+## 최종 완성도 검증 결과
+
+### 테스트 현황
+
+| 분류 | 파일 | 테스트 수 | 환경 |
+|------|------|-----------|------|
+| Frontend 단위 (store) | workflowStore.test.ts | 5개 | Vitest |
+| Frontend 단위 (store) | pluginStore.test.ts | 6개 | Vitest |
+| Frontend 단위 (store) | toastStore.test.ts | 9개 | Vitest |
+| Backend 단위 (domain) | WorkflowStateMachine.test.ts | 7개 | Jest |
+| Backend 단위 (domain) | CopayCalculator.test.ts | 8개 | Jest |
+| Backend 단위 (domain) | ClaimDataBuilder.test.ts | 7개 | Jest |
+| Backend 통합 | auth.test.ts | 6개 | Jest + Supertest |
+| Backend 통합 | patients.test.ts | 8개 | Jest + Supertest |
+| Backend 통합 | visits.test.ts | 9개 | Jest + Supertest |
+| Backend 통합 | prescriptions.test.ts | 7개 | Jest + Supertest |
+| Backend 통합 | payments.test.ts | 7개 | Jest + Supertest |
+| Backend 통합 | claims.test.ts | 7개 | Jest + Supertest |
+| **합계** | **12개 파일** | **86개 (전체 PASS)** | |
+
+### 커버리지 (전체 66개 기준)
+
+| 지표 | 전체 | domain | routes | services |
+|------|------|--------|--------|----------|
+| Statements | 89.38% | 100% | 90.9% | 84.87% |
+| Branches | 75.43% | 100% | 55.55% | 75.6% |
+| Functions | 80.43% | 100% | 73.68% | 76.47% |
+| Lines | 89.66% | 100% | 90.71% | 85.57% |
+
+### Workflow 기능 완성도
+
+| 단계 | API | Frontend | 단계 전환 가드 |
+|------|-----|----------|---------------|
+| 접수 (reception) | ✅ | ✅ | — |
+| 처방 (prescription) | ✅ | ✅ | 자동 전환 |
+| 조제 (dispensing) | ✅ | ✅ | PrescriptionItem 1개 이상 (서버) |
+| 검토 (review) | ✅ | ✅ | 체크박스 전체 완료 (프론트) |
+| 수납 (payment) | ✅ | ✅ | 자동 전환 |
+| 청구 (claim) | ✅ | ✅ | Payment 레코드 존재 (서버) |
+
+### CI/CD 파이프라인 최종 상태
+
+```
+1. Lint & Type Check  → ESLint max-warnings 0, tsc --noEmit: ✅ PASS
+2. Tests + Migration  → Unit 22 + Integration 44 + prisma migrate deploy: ✅ PASS
+3. Build Validation   → Vite build, tsc build: ✅ PASS
+4. Deploy             → Vercel Production (main push only): ✅
+5. Smoke Test         → GET /api/health (200) + POST /api/auth/login (401=DB 정상): ✅
+```
+
+### 롤백 전략
+
+배포 후 smoke test 실패 또는 프로덕션 장애 발생 시:
+
+| 방법 | 명령 / 경로 | 소요 시간 |
+|------|------------|----------|
+| **Vercel 대시보드** | Deployments → 이전 배포 → Promote to Production | ~30초 |
+| **Vercel CLI** | `vercel rollback --token $VERCEL_TOKEN` | ~30초 |
+| **Git revert** | `git revert HEAD` → push → 파이프라인 재실행 | ~5분 (CI 포함) |
+
+- **우선 순위:** 대시보드 즉시 롤백 → CLI → Git revert 순
+- Neon DB는 마이그레이션 롤백이 별도 필요 (`prisma migrate reset` 주의: 데이터 삭제)
+- DB 스키마 변경이 없는 배포라면 Vercel 롤백만으로 충분

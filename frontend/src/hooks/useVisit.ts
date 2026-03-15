@@ -5,14 +5,17 @@ import type { Visit, WorkflowStage } from '@/types'
 export function useVisitsByStage(stage: WorkflowStage) {
   const [visits, setVisits] = useState<Visit[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
+    setError('')
     try {
       const res = await visitApi.today(stage)
       setVisits(res.data)
     } catch {
-      // 목록 로드 실패는 무시 (주 기능에 영향 없음)
+      // 대기 목록 로드 실패 — 주 기능에 영향 없으므로 목록을 빈 배열로 유지
+      setError('대기 목록을 불러오지 못했습니다.')
     } finally {
       setLoading(false)
     }
@@ -20,7 +23,7 @@ export function useVisitsByStage(stage: WorkflowStage) {
 
   useEffect(() => { load() }, [load])
 
-  return { visits, loading, refresh: load }
+  return { visits, loading, error, refresh: load }
 }
 
 export function useVisitCreate() {

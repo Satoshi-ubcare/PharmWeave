@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePatientSearch, usePatientCreate } from '@/hooks/usePatient'
 import { useVisitCreate, useWorkflowStage } from '@/hooks/useVisit'
+import { useToast } from '@/hooks/useToast'
 import StagePatientList from '@/components/StagePatientList'
+import Spinner from '@/components/ui/Spinner'
 import type { Patient, WorkflowStage } from '@/types'
 
 const STAGE_ROUTES: { stage: WorkflowStage; path: string }[] = [
@@ -17,6 +19,7 @@ const STAGE_ROUTES: { stage: WorkflowStage; path: string }[] = [
 export default function ReceptionFeature() {
   const navigate = useNavigate()
   const { setVisit } = useWorkflowStore()
+  const { toast } = useToast()
 
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)
@@ -26,9 +29,13 @@ export default function ReceptionFeature() {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const { results, loading: searching, search, clear: clearResults } = usePatientSearch()
-  const { create: createPatient } = usePatientCreate()
-  const { loading: starting, create: createVisit } = useVisitCreate()
-  const { transition } = useWorkflowStage()
+  const { loading: creating, error: createError, create: createPatient } = usePatientCreate()
+  const { loading: starting, error: visitError, create: createVisit } = useVisitCreate()
+  const { error: stageError, transition } = useWorkflowStage()
+
+  useEffect(() => { if (createError) toast('error', createError) }, [createError, toast])
+  useEffect(() => { if (visitError) toast('error', visitError) }, [visitError, toast])
+  useEffect(() => { if (stageError) toast('error', stageError) }, [stageError, toast])
 
   // debounce 자동 검색: 1자 이상 입력 후 300ms 대기
   useEffect(() => {
@@ -75,6 +82,7 @@ export default function ReceptionFeature() {
       setSelected(patient)
       setShowNewForm(false)
       clearResults()
+      toast('success', `${patient.name}님이 등록되었습니다.`)
     }
   }
 
@@ -86,8 +94,6 @@ export default function ReceptionFeature() {
     setVisit({ ...visit, workflow_stage: 'prescription' }, selected)
     navigate('/prescription')
   }
-
-  const error = ''
 
   return (
     <div className="space-y-6">
@@ -194,9 +200,11 @@ export default function ReceptionFeature() {
           <div className="flex gap-2">
             <button
               onClick={handleCreatePatient}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+              disabled={creating}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
             >
-              등록
+              {creating && <Spinner className="text-white" />}
+              {creating ? '등록 중...' : '등록'}
             </button>
             <button
               onClick={() => setShowNewForm(false)}
@@ -219,15 +227,12 @@ export default function ReceptionFeature() {
           <button
             onClick={handleStartVisit}
             disabled={starting}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
+            {starting && <Spinner className="text-white" />}
             {starting ? '처리 중...' : '방문 시작 →'}
           </button>
         </div>
-      )}
-
-      {error && (
-        <p role="alert" className="text-red-600 text-sm">{error}</p>
       )}
 
       {/* 단계별 대기 현황 */}

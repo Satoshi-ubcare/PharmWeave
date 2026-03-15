@@ -3,31 +3,38 @@ import { useNavigate } from 'react-router-dom'
 import { claimApi } from '@/api/endpoints'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { useWorkflowStage } from '@/hooks/useVisit'
+import { useToast } from '@/hooks/useToast'
 import StagePatientList from '@/components/StagePatientList'
+import Spinner from '@/components/ui/Spinner'
 import type { Claim } from '@/types'
 
 export default function ClaimFeature() {
   const navigate = useNavigate()
   const { visitId, setStage, reset, patient } = useWorkflowStore()
-  const { loading: submitting, transition } = useWorkflowStage()
+  const { loading: submitting, error: stageError, transition } = useWorkflowStage()
+  const { toast } = useToast()
   const [claim, setClaim] = useState<Claim | null>(null)
   const [completed, setCompleted] = useState(false)
-  const [error, setError] = useState('')
+  const [claiming, setClaiming] = useState(false)
 
   useEffect(() => {
     setClaim(null)
     setCompleted(false)
-    setError('')
+    setClaiming(false)
   }, [visitId])
+  useEffect(() => { if (stageError) toast('error', stageError) }, [stageError, toast])
 
   const handleCreateClaim = async () => {
     if (!visitId) return
-    setError('')
+    setClaiming(true)
     try {
       const res = await claimApi.create(visitId)
       setClaim(res.data)
+      toast('success', '청구 데이터가 생성되었습니다.')
     } catch {
-      setError('청구 생성에 실패했습니다.')
+      toast('error', '청구 생성에 실패했습니다.')
+    } finally {
+      setClaiming(false)
     }
   }
 
@@ -42,8 +49,6 @@ export default function ClaimFeature() {
     reset()
     navigate('/reception')
   }
-
-  if (!visitId) return <p className="text-gray-500">먼저 접수 단계에서 방문을 시작해주세요.</p>
 
   if (completed) {
     return (
@@ -65,23 +70,32 @@ export default function ClaimFeature() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">청구</h1>
-        <p className="text-gray-500 text-sm mt-1">건강보험 청구 데이터를 생성하고 완료합니다.</p>
+        <p className="text-gray-500 text-sm mt-1">대기 환자를 선택하면 청구를 진행할 수 있습니다.</p>
       </div>
 
       <StagePatientList stage="claim" />
 
-      {!claim ? (
+      {!visitId && (
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+          위 목록에서 청구할 환자를 선택하세요.
+        </div>
+      )}
+
+      {visitId && !claim && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 text-center space-y-4">
           <p className="text-gray-600">처방 및 수납 데이터를 기반으로 청구 데이터를 생성합니다.</p>
           <button
             onClick={handleCreateClaim}
-            disabled={submitting}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            disabled={claiming}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {submitting ? '생성 중...' : '청구 데이터 생성'}
+            {claiming && <Spinner className="text-white" />}
+            {claiming ? '생성 중...' : '청구 데이터 생성'}
           </button>
         </div>
-      ) : (
+      )}
+
+      {visitId && claim && (
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h2 className="font-semibold text-gray-800 mb-4">청구 데이터</h2>
@@ -102,15 +116,15 @@ export default function ClaimFeature() {
             <button
               onClick={handleComplete}
               disabled={submitting}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
             >
+              {submitting && <Spinner className="text-white" />}
               {submitting ? '처리 중...' : '청구 완료 — 업무 종료'}
             </button>
           </div>
         </div>
       )}
 
-      {error && <p role="alert" className="text-red-600 text-sm">{error}</p>}
     </div>
   )
 }

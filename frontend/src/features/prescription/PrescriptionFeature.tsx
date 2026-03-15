@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescriptionSave, useDrugSearch } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
+import { useToast } from '@/hooks/useToast'
 import StagePatientList from '@/components/StagePatientList'
+import Spinner from '@/components/ui/Spinner'
 import type { Drug } from '@/types'
 
 interface ItemInput {
@@ -17,6 +19,7 @@ interface ItemInput {
 export default function PrescriptionFeature() {
   const navigate = useNavigate()
   const { visitId, setStage } = useWorkflowStore()
+  const { toast } = useToast()
 
   const [clinicName, setClinicName] = useState('')
   const [doctorName, setDoctorName] = useState('')
@@ -29,8 +32,11 @@ export default function PrescriptionFeature() {
   const drugDropdownRef = useRef<HTMLDivElement>(null)
 
   const { results: drugResults, loading: drugSearching, search: searchDrug, clear: clearDrug } = useDrugSearch()
-  const { loading: saving, save } = usePrescriptionSave()
-  const { transition } = useWorkflowStage()
+  const { loading: saving, error: saveError, save } = usePrescriptionSave()
+  const { error: stageError, transition } = useWorkflowStage()
+
+  useEffect(() => { if (saveError) toast('error', saveError) }, [saveError, toast])
+  useEffect(() => { if (stageError) toast('error', stageError) }, [stageError, toast])
 
   useEffect(() => {
     setClinicName('')
@@ -95,6 +101,7 @@ export default function PrescriptionFeature() {
       items,
     })
     if (!result) return
+    toast('success', '처방이 저장되었습니다.')
     await transition(visitId, 'dispensing')
     setStage('dispensing')
     navigate('/dispensing')
@@ -248,8 +255,9 @@ export default function PrescriptionFeature() {
         <button
           onClick={handleSave}
           disabled={saving || items.length === 0}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
+          {saving && <Spinner className="text-white" />}
           {saving ? '저장 중...' : '처방 저장 → 조제'}
         </button>
       </div>

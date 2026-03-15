@@ -5,15 +5,17 @@ import type { Plugin } from '@/types'
 export function usePluginList() {
   const [plugins, setPlugins] = useState<Plugin[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     pluginApi
       .list()
       .then((res) => setPlugins(res.data))
+      .catch(() => setError('Plugin 목록을 불러오지 못했습니다.'))
       .finally(() => setLoading(false))
   }, [])
 
-  return { plugins, setPlugins, loading }
+  return { plugins, setPlugins, loading, error }
 }
 
 export function usePluginToggle() {
@@ -24,6 +26,8 @@ export function usePluginToggle() {
     try {
       const res = await pluginApi.toggle(id, enabled)
       return res.data
+    } catch {
+      return null
     } finally {
       setToggling(null)
     }

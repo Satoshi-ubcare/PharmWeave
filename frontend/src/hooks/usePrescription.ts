@@ -5,18 +5,20 @@ import type { Prescription, PrescriptionPayload, Drug } from '@/types'
 export function usePrescription(visitId: string | null) {
   const [prescription, setPrescription] = useState<Prescription | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!visitId) return
     setLoading(true)
+    setError('')
     prescriptionApi
       .get(visitId)
       .then((res) => setPrescription(res.data))
-      .catch(() => {})
+      .catch(() => setError('처방 정보를 불러오지 못했습니다.'))
       .finally(() => setLoading(false))
   }, [visitId])
 
-  return { prescription, loading }
+  return { prescription, loading, error }
 }
 
 export function usePrescriptionSave() {
