@@ -275,9 +275,4 @@ app.post('/api/plugins/:id/execute', async (req, res) => {
   }
 })
 
-export const config = {
-  runtime: 'nodejs',
-  maxDuration: 30,
-}
-
 export default app
