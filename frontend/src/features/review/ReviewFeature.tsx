@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
@@ -12,6 +12,10 @@ export default function ReviewFeature() {
   const { prescription } = usePrescription(visitId)
   const { loading: submitting, transition } = useWorkflowStage()
   const [memo, setMemo] = useState('')
+
+  useEffect(() => {
+    setMemo('')
+  }, [visitId])
 
   const totalCost = prescription?.items.reduce(
     (sum, item) => sum + item.unit_price * item.quantity * item.days,
@@ -83,8 +87,8 @@ export default function ReviewFeature() {
       {visitId && (
         <div className="space-y-3">
           <h2 className="font-semibold text-gray-700 text-sm">Plugin 검사</h2>
-          <PluginSlot pluginId="dur" visitId={visitId} />
-          <PluginSlot pluginId="medication-guide" visitId={visitId} />
+          <PluginSlot key={`dur-${visitId}`} pluginId="dur" visitId={visitId} />
+          <PluginSlot key={`mg-${visitId}`} pluginId="medication-guide" visitId={visitId} />
         </div>
       )}
 

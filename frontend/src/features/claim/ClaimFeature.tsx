@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { claimApi } from '@/api/endpoints'
 import { useWorkflowStore } from '@/stores/workflowStore'
@@ -13,6 +13,12 @@ export default function ClaimFeature() {
   const [claim, setClaim] = useState<Claim | null>(null)
   const [completed, setCompleted] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    setClaim(null)
+    setCompleted(false)
+    setError('')
+  }, [visitId])
 
   const handleCreateClaim = async () => {
     if (!visitId) return

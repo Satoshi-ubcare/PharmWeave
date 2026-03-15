@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescriptionSave, useDrugSearch } from '@/hooks/usePrescription'
@@ -29,6 +29,16 @@ export default function PrescriptionFeature() {
   const { results: drugResults, search: searchDrug, clear: clearDrug } = useDrugSearch()
   const { loading: saving, save } = usePrescriptionSave()
   const { transition } = useWorkflowStage()
+
+  useEffect(() => {
+    setClinicName('')
+    setDoctorName('')
+    setPrescribedAt(new Date().toISOString().split('T')[0])
+    setItems([])
+    setDrugQuery('')
+    setError('')
+    clearDrug()
+  }, [visitId, clearDrug])
 
   const handleDrugSearch = () => searchDrug(drugQuery)
 

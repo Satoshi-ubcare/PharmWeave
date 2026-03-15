@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
 import { usePaymentCreate } from '@/hooks/usePayment'
@@ -19,6 +19,10 @@ export default function PaymentFeature() {
   const { loading: submitting, error, process } = usePaymentCreate()
   const { transition } = useWorkflowStage()
   const [method, setMethod] = useState<'cash' | 'card' | 'transfer'>('card')
+
+  useEffect(() => {
+    setMethod('card')
+  }, [visitId])
 
   const totalDrugCost = prescription?.items.reduce(
     (sum, item) => sum + item.unit_price * item.quantity * item.days,

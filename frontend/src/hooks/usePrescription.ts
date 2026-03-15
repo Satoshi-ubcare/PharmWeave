@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { prescriptionApi, drugApi } from '@/api/endpoints'
 import type { Prescription, PrescriptionPayload, Drug } from '@/types'
 
@@ -43,13 +43,13 @@ export function usePrescriptionSave() {
 export function useDrugSearch() {
   const [results, setResults] = useState<Drug[]>([])
 
-  const search = async (query: string): Promise<void> => {
+  const search = useCallback(async (query: string): Promise<void> => {
     if (!query.trim()) return
     const res = await drugApi.search(query)
     setResults(res.data)
-  }
+  }, [])
 
-  const clear = (): void => setResults([])
+  const clear = useCallback((): void => setResults([]), [])
 
   return { results, search, clear }
 }
