@@ -6,12 +6,11 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { z, ZodError } from 'zod'
 
+const dbUrl = process.env.DATABASE_URL ?? ''
+const prismaUrl = dbUrl.includes('connection_limit') ? dbUrl : `${dbUrl}${dbUrl.includes('?') ? '&' : '?'}connection_limit=1`
+
 const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
+  datasources: { db: { url: prismaUrl } },
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 })
 const app = express()
@@ -19,26 +18,12 @@ const app = express()
 app.use(cors({ origin: process.env.CORS_ORIGIN ?? '*' }))
 app.use(express.json())
 
-// ─── Error Handler ────────────────────────────────────────
+// ─── Error Classes ─────────────────────────────────────────
 class AppError extends Error {
   constructor(public statusCode: number, message: string) {
     super(message)
   }
 }
-
-app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  if (err instanceof ZodError) {
-    res.status(400).json({ error: 'Validation failed', details: err.errors })
-    return
-  }
-  if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: err.message })
-    return
-  }
-  console.error('[UnhandledError]', err)
-  const message = err instanceof Error ? err.message : 'Internal server error'
-  res.status(500).json({ error: 'Internal server error', details: process.env.NODE_ENV !== 'production' ? message : undefined })
-})
 
 function validate(schema: z.ZodSchema) {
   return (req: express.Request, _res: express.Response, next: express.NextFunction) => {
@@ -273,6 +258,21 @@ app.post('/api/plugins/:id/execute', async (req, res) => {
   } else {
     throw new AppError(400, `알 수 없는 Plugin: ${req.params.id}`)
   }
+})
+
+// ─── Error Handler (반드시 모든 라우트 뒤에 위치해야 함) ────
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (err instanceof ZodError) {
+    res.status(400).json({ error: 'Validation failed', details: err.errors })
+    return
+  }
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json({ error: err.message })
+    return
+  }
+  console.error('[UnhandledError]', err)
+  const message = err instanceof Error ? err.message : 'Internal server error'
+  res.status(500).json({ error: 'Internal server error', details: process.env.NODE_ENV !== 'production' ? message : undefined })
 })
 
 export default app
