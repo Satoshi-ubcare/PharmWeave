@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescriptionSave, useDrugSearch } from '@/hooks/usePrescription'
@@ -24,9 +24,11 @@ export default function PrescriptionFeature() {
   const [items, setItems] = useState<ItemInput[]>([])
 
   const [drugQuery, setDrugQuery] = useState('')
+  const [showDrugDropdown, setShowDrugDropdown] = useState(false)
   const [error, setError] = useState('')
+  const drugDropdownRef = useRef<HTMLDivElement>(null)
 
-  const { results: drugResults, search: searchDrug, clear: clearDrug } = useDrugSearch()
+  const { results: drugResults, loading: drugSearching, search: searchDrug, clear: clearDrug } = useDrugSearch()
   const { loading: saving, save } = usePrescriptionSave()
   const { transition } = useWorkflowStage()
 
@@ -36,17 +38,42 @@ export default function PrescriptionFeature() {
     setPrescribedAt(new Date().toISOString().split('T')[0])
     setItems([])
     setDrugQuery('')
+    setShowDrugDropdown(false)
     setError('')
     clearDrug()
   }, [visitId, clearDrug])
 
-  const handleDrugSearch = () => searchDrug(drugQuery)
+  // debounce 자동 검색: 1자 이상 입력 후 300ms 대기
+  useEffect(() => {
+    if (drugQuery.trim().length < 1) {
+      clearDrug()
+      setShowDrugDropdown(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      searchDrug(drugQuery)
+      setShowDrugDropdown(true)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [drugQuery, searchDrug, clearDrug])
+
+  // 드롭다운 바깥 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (drugDropdownRef.current && !drugDropdownRef.current.contains(e.target as Node)) {
+        setShowDrugDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const addItem = (drug: Drug) => {
     if (items.find((i) => i.drug_code === drug.drug_code)) return
     setItems([...items, { drug_code: drug.drug_code, drug_name: drug.drug_name, unit_price: drug.unit_price, quantity: 1, days: 1 }])
     clearDrug()
     setDrugQuery('')
+    setShowDrugDropdown(false)
   }
 
   const updateItem = (idx: number, field: keyof ItemInput, value: number) => {
@@ -123,38 +150,44 @@ export default function PrescriptionFeature() {
       {/* 약품 검색 */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <h2 className="font-semibold text-gray-800">약품 추가</h2>
-        <div className="flex gap-2">
+        <div className="relative" ref={drugDropdownRef}>
           <input
             type="text"
             value={drugQuery}
             onChange={(e) => setDrugQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleDrugSearch()}
-            placeholder="약품명 또는 코드 검색"
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onFocus={() => drugResults.length > 0 && setShowDrugDropdown(true)}
+            placeholder="약품명 또는 코드 입력 시 자동 검색"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <button
-            onClick={handleDrugSearch}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-          >
-            검색
-          </button>
+          {drugSearching && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">검색 중…</span>
+          )}
+
+          {/* 자동완성 드롭다운 */}
+          {showDrugDropdown && drugResults.length > 0 && (
+            <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden divide-y divide-gray-100 max-h-60 overflow-y-auto">
+              {drugResults.map((drug) => (
+                <li key={drug.id}>
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => addItem(drug)}
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm transition-colors"
+                  >
+                    <span className="font-medium text-gray-900">{drug.drug_name}</span>
+                    <span className="text-gray-500 ml-2">({drug.drug_code})</span>
+                    <span className="text-blue-600 ml-2 text-xs">{drug.unit_price.toLocaleString()}원</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {showDrugDropdown && !drugSearching && drugQuery.trim().length >= 1 && drugResults.length === 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+              검색 결과가 없습니다.
+            </div>
+          )}
         </div>
-        {drugResults.length > 0 && (
-          <ul className="border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
-            {drugResults.map((drug) => (
-              <li key={drug.id}>
-                <button
-                  onClick={() => addItem(drug)}
-                  className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm transition-colors"
-                >
-                  <span className="font-medium">{drug.drug_name}</span>
-                  <span className="text-gray-500 ml-2">({drug.drug_code})</span>
-                  <span className="text-gray-400 ml-2">{drug.unit_price.toLocaleString()}원</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
       {/* 처방 항목 목록 */}

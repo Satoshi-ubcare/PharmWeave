@@ -42,14 +42,22 @@ export function usePrescriptionSave() {
 
 export function useDrugSearch() {
   const [results, setResults] = useState<Drug[]>([])
+  const [loading, setLoading] = useState(false)
 
   const search = useCallback(async (query: string): Promise<void> => {
     if (!query.trim()) return
-    const res = await drugApi.search(query)
-    setResults(res.data)
+    setLoading(true)
+    try {
+      const res = await drugApi.search(query)
+      setResults(res.data)
+    } catch {
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const clear = useCallback((): void => setResults([]), [])
 
-  return { results, search, clear }
+  return { results, loading, search, clear }
 }
