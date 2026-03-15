@@ -3,6 +3,12 @@
   "github": {
     "enabled": false
   },
+  "build": {
+    "env": {
+      "PRISMA_GENERATE_DATAPROXY": "false",
+      "PRISMA_ACCELERATE_GENERATE": "false"
+    }
+  },
   "buildCommand": "npx prisma generate --schema=backend/prisma/schema.prisma && npm run build --workspace=frontend",
   "outputDirectory": "frontend/dist",
   "installCommand": "npm install --include=dev",
