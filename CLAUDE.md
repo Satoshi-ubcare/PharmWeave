@@ -51,7 +51,7 @@ Frontend (React + Vite)          Backend (Express + TypeScript)
 | **복약지도** | 처방된 약품에 대한 복용 안내문 자동 생성 Plugin |
 | **CopayCalculator** | 본인부담금 계산 로직. 약제비 × 30% (1만원 미만이면 × 20%) |
 | **ClaimDataBuilder** | 청구 JSONB 구조 생성기. 처방 항목, 금액, 기관 정보 포함 |
-| **WorkflowStateMachine** | 단계 전환 유효성 검사. `canTransition(current, target)` |
+| **WorkflowStateMachine** | 단계 전환 유효성 검사. `new WorkflowStateMachine(currentStage).canTransition(target)` |
 
 ---
 
@@ -92,11 +92,12 @@ Frontend (React + Vite)          Backend (Express + TypeScript)
 
 ```
 reception → prescription  : 조건 없음 (환자 선택만으로 진입)
-prescription → dispensing : 처방 항목(PrescriptionItem) 1개 이상 존재
-dispensing → review       : 조제 확인 완료 플래그 (프론트 체크박스)
-review → payment          : 검토 단계 진입 자체가 조건
-payment → claim           : Payment 레코드 존재
-claim → completed         : Claim 레코드 존재
+prescription → dispensing : 조건 없음 (서버 검증 없음)
+dispensing → review       : 처방 항목(PrescriptionItem) 1개 이상 존재 (서버 검증)
+                            조제 체크박스 전체 완료는 프론트에서만 강제
+review → payment          : 조건 없음 (서버 검증 없음)
+payment → claim           : Payment 레코드 존재 (서버 검증)
+claim → completed         : 조건 없음 (서버 검증 없음)
 ```
 
 단계 전환 API: `PATCH /api/visits/:id/stage` — `{ "stage": "prescription" }`
@@ -162,7 +163,7 @@ POST   /api/plugins/:id/execute   Plugin 실행 { visitId }
 ## 본인부담금 계산 규칙 (CopayCalculator)
 
 ```
-약제비 합계 = Σ (unit_price × quantity) for all PrescriptionItem
+약제비 합계 = Σ (unit_price × quantity × days) for all PrescriptionItem
 
 본인부담금:
   - 약제비 합계 < 10,000원  → 본인부담금 = 약제비 × 20%
@@ -227,12 +228,13 @@ VITE_API_BASE_URL=http://localhost:3000/api
 pharmweave/
 ├── .github/workflows/ci.yml
 ├── docs/PRD.md
+├── docs/DEVLOG.md
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/          # URL 진입점 (6단계 + PluginManage)
 │   │   ├── features/       # 단계별 컴포넌트 (reception/, prescription/, ...)
 │   │   ├── components/     # WorkflowStepper, PluginSlot, ui/
-│   │   ├── hooks/          # API 훅 (useWorkflowStage, usePatientSearch, ...)
+│   │   ├── hooks/          # API 훅 (usePatient, useVisit, usePrescription, usePayment, usePlugin)
 │   │   ├── stores/         # Zustand (workflowStore, pluginStore)
 │   │   └── api/            # Axios client + endpoints
 │   ├── vite.config.ts
@@ -241,7 +243,7 @@ pharmweave/
 │   ├── src/
 │   │   ├── routes/         # HTTP 라우터
 │   │   ├── middlewares/    # auth, validate
-│   │   ├── services/       # 유스케이스 (WorkflowService, PaymentService, ...)
+│   │   ├── services/       # 유스케이스 (PatientService, VisitService, PrescriptionService, PaymentService, ClaimService, PluginService)
 │   │   ├── domain/         # 순수 비즈니스 로직 (외부 의존 없음)
 │   │   ├── plugins/        # Plugin 실행 함수
 │   │   └── schemas/        # Zod 요청 스키마

@@ -131,7 +131,7 @@ reception → prescription → dispensing → review → payment → claim → c
 **F1-1. 환자 검색**
 - 입력: 이름(2자 이상) 또는 생년월일(YYYYMMDD 8자리)
 - 처리: `GET /api/patients?q={query}` 호출
-- 출력: 매칭 환자 목록 (최대 10건). 결과 없으면 "신규 환자 등록" 폼 노출
+- 출력: 매칭 환자 목록 (최대 20건). 결과 없으면 "신규 환자 등록" 폼 노출
 - 검색어 길이가 2자 미만이면 검색 버튼 비활성화
 
 **F1-2. 신규 환자 등록**
@@ -182,19 +182,19 @@ reception → prescription → dispensing → review → payment → claim → c
   - `clinic_name`: 필수, 2자 이상 100자 이하
   - `doctor_name`: 선택, 최대 50자
   - `prescribed_at`: 필수, 오늘 포함 과거 날짜만 허용 (미래 처방 불가), date picker 제공
-- 처리: `POST /api/visits/:id/prescription` 최초 저장, 이후 수정 시 `PUT /api/prescriptions/:id`
+- 처리: `POST /api/visits/:id/prescriptions` — 처방 헤더 + 항목 배열을 단일 요청으로 저장 (upsert). 수정 시에도 동일 endpoint 재호출
 
 **F2-2. 처방 의약품 추가**
 - 약품 검색: 약품명 또는 코드 입력 → `GET /api/drugs?q={query}` 호출 → 드롭다운 선택
 - 입력 필드:
   - `quantity`: 필수, 양의 정수, 최대 9999
   - `days`: 필수, 양의 정수, 최대 365
-- [추가] 클릭 시 `POST /api/prescriptions/:id/items` 호출
-- 성공 시 처방 항목 목록에 즉시 반영
+- [추가] 클릭 시 화면 상 항목 목록에 즉시 반영 (아직 서버 저장 안됨)
+- [저장] 또는 단계 전환 시 `POST /api/visits/:id/prescriptions`에 전체 항목 배열 포함하여 전송
 
 **F2-3. 처방 항목 삭제**
-- [삭제] 클릭 시 확인 없이 즉시 `DELETE /api/prescriptions/:id/items/:itemId` 호출
-- 목록에서 즉시 제거
+- [삭제] 클릭 시 화면 상 항목 목록에서 즉시 제거 (클라이언트 상태만 변경)
+- 처방 전체 저장 시 제거된 항목은 서버에 반영됨
 
 #### 비즈니스 규칙
 - 처방 항목은 최소 1개 이상이어야 다음 단계로 진행 가능
@@ -295,7 +295,8 @@ reception → prescription → dispensing → review → payment → claim → c
 #### 기능 상세
 
 **F5-1. 본인부담금 계산**
-- 수납 화면 진입 시 `POST /api/visits/:id/payment/calculate` 호출하여 서버에서 계산 후 화면에 표시
+- 수납 화면 진입 시 `GET /api/visits/:id/prescriptions` 호출하여 처방 항목을 로드하고 클라이언트에서 미리 표시
+- 최종 계산은 수납 처리(`POST /api/visits/:id/payment`) 시 서버에서 재계산하여 Payment 레코드에 저장
 - 계산 기준 (데모용 단순화):
   - 약제비 = 처방 항목별 (수량 × 투약일수 × 단가) 합계
   - 본인부담금 = 약제비 × 30% (단, 1만원 미만은 약제비 × 20%)
@@ -364,13 +365,12 @@ reception → prescription → dispensing → review → payment → claim → c
 
 **F6-3. 청구 완료 처리**
 - [청구 완료] 클릭 시:
-  1. `PATCH /api/claims/:id` — `{ "status": "completed" }` 호출
-  2. `PATCH /api/visits/:id/stage` — `{ "stage": "completed" }` 호출
-  3. 완료 확인 화면 표시 후 새 환자 접수 화면으로 이동
+  1. `PATCH /api/visits/:id/stage` — `{ "stage": "completed" }` 호출 (단일 endpoint로 완료 처리)
+  2. 완료 확인 화면 표시 후 새 환자 접수 화면으로 이동
 
 #### 비즈니스 규칙
 - 청구 완료 처리 후 해당 방문의 모든 데이터는 읽기 전용으로 전환
-- Claim 레코드 초기 상태는 `pending`, 완료 처리 후 `completed`
+- Claim 레코드는 생성 시 자동으로 완료 상태로 간주 (`claim_data` JSONB에 전체 청구 구조 저장)
 - 청구 완료 후 메인 화면(접수)으로 자동 리다이렉트
 
 #### 에러 케이스
@@ -387,7 +387,7 @@ reception → prescription → dispensing → review → payment → claim → c
 
 #### 화면 구성
 - 당일 방문 목록 테이블: 환자명, 방문 시간, 현재 단계, [이어서 진행] 버튼
-- `GET /api/visits?date={today}` 호출
+- `GET /api/visits/today` 호출
 
 #### 기능 상세
 - 진행 중인 방문 클릭 시 해당 방문의 현재 단계로 즉시 이동
@@ -404,18 +404,15 @@ reception → prescription → dispensing → review → payment → claim → c
 | 환자 등록 | POST | `/api/patients` | 접수 |
 | 방문 생성 | POST | `/api/visits` | 접수 |
 | 단계 전환 | PATCH | `/api/visits/:id/stage` | 전체 |
-| 처방 등록 | POST | `/api/visits/:id/prescription` | 처방 |
-| 처방 수정 | PUT | `/api/prescriptions/:id` | 처방 |
-| 처방 항목 추가 | POST | `/api/prescriptions/:id/items` | 처방 |
-| 처방 항목 삭제 | DELETE | `/api/prescriptions/:id/items/:itemId` | 처방 |
+| 처방 등록/수정 | POST | `/api/visits/:id/prescriptions` | 처방 |
+| 처방 조회 | GET | `/api/visits/:id/prescriptions` | 처방/검토 |
 | 약품 검색 | GET | `/api/drugs?q=` | 처방 |
-| 방문 + 처방 전체 조회 | GET | `/api/visits/:id` | 검토 |
-| 본인부담금 계산 | POST | `/api/visits/:id/payment/calculate` | 수납 |
+| 방문 상세 조회 | GET | `/api/visits/:id` | 검토 |
 | 수납 처리 | POST | `/api/visits/:id/payment` | 수납 |
+| 수납 조회 | GET | `/api/visits/:id/payment` | 수납 |
 | 청구 생성 | POST | `/api/visits/:id/claim` | 청구 |
 | 청구 조회 | GET | `/api/visits/:id/claim` | 청구 |
-| 청구 완료 | PATCH | `/api/claims/:id` | 청구 |
-| 오늘 방문 목록 | GET | `/api/visits?date=today` | 관리 |
+| 오늘 방문 목록 | GET | `/api/visits/today` | 관리 |
 
 ---
 
@@ -579,21 +576,14 @@ reception → prescription → dispensing → review → payment → claim → c
 - 패널 닫은 후 수납 화면에서 [복약지도 보기] 버튼으로 재오픈 가능
 - 데이터 재생성 없이 마지막 생성 결과 표시
 
-#### Drug 마스터 테이블 추가 컬럼
+#### 복약지도 데이터 소스 (데모 구현)
 
-복약지도 Plugin이 ON일 때 사용하는 데이터로, Drug 테이블에 다음 컬럼이 필요하다:
+현재 구현에서는 Drug DB 컬럼 대신 **플러그인 내 하드코딩된 약품 경고 맵**을 사용한다. 약품 코드별로 주의사항 텍스트가 `medicationGuide.ts`에 정의되어 있으며, 등록되지 않은 약품은 기본 안내 문구를 반환한다.
 
-| 컬럼 | 타입 | 설명 |
-|------|------|------|
-| `dosage_instruction` | TEXT | 복용 방법 (예: 1회 1정, 1일 3회) |
-| `cautions` | TEXT | 복약 주의사항 |
-| `side_effects` | TEXT | 주요 부작용 |
-| `storage` | TEXT | 보관 방법 |
-
-> 데이터 없는 약품은 해당 항목을 "정보 없음"으로 표시한다.
+> 향후 개선 시 Drug 테이블에 `dosage_instruction`, `cautions`, `side_effects`, `storage` 컬럼을 추가하고 의약품안전나라 API 데이터로 채울 수 있다.
 
 #### 비즈니스 규칙
-- 복약지도는 생성 후 DB에 저장하지 않음 (매 호출 시 Drug 마스터에서 실시간 생성)
+- 복약지도는 생성 후 DB에 저장하지 않음 (매 호출 시 약품 경고 맵에서 실시간 생성)
 - Plugin이 OFF 상태이면 수납 완료 후 복약지도 패널/버튼 노출하지 않음
 - 처방 항목이 없는 경우(비정상) 복약지도 생성 스킵
 
@@ -650,18 +640,19 @@ reception → prescription → dispensing → review → payment → claim → c
 | 레이어 | 기술 | 선택 이유 |
 |--------|------|-----------|
 | Frontend 배포 | Vercel | GitHub 연동 자동 배포, 정적 빌드 최적 환경 |
-| Backend 배포 | Railway 또는 Render | Express 앱을 그대로 배포. Vercel Serverless 대비 timeout 제한 없음 |
+| Backend 배포 | Vercel Serverless Function | Frontend와 동일 플랫폼 — CORS 단순화, GitHub push 자동 배포 일원화 |
 
-> **Frontend(Vercel) + Backend(Railway) 분리 배포:** Vercel Serverless의 무료 플랜 timeout 10초 제한이 Plugin 실행 API에 영향을 줄 수 있어 분리한다.
+> **Frontend + Backend 통합 배포 (Vercel):** `vercel.json`의 `rewrites` 규칙으로 `/api/*` 요청을 `backend/api/index.ts` Serverless Function으로 라우팅한다. Railway/Render 분리 배포 대안을 검토했으나, 단일 플랫폼 관리 단순성을 선택했다.
 
 ### 6.5 테스트 / CI/CD
 
 | 레이어 | 기술 | 선택 이유 |
 |--------|------|-----------|
-| 백엔드 단위 테스트 | Jest | Domain 순수 로직(WorkflowStateMachine, CopayCalculator) 검증 |
-| CI/CD | GitHub Actions | lint + build + 단위 테스트 자동화 |
+| 백엔드 단위 테스트 | Jest | Domain 순수 로직(WorkflowStateMachine, CopayCalculator, ClaimDataBuilder) 검증 — 22개 |
+| 백엔드 통합 테스트 | Jest + Supertest | HTTP 계약 검증 (Prisma 모킹, 실제 DB 불필요) — 23개 |
+| CI/CD | GitHub Actions | quality → test → build → deploy 4단계 파이프라인 |
 
-> **통합 테스트(Supertest) + 별도 테스트 DB 미구현:** 테스트 DB 구성에 약 1시간이 소요된다. Domain 단위 테스트만으로 테스트 전략 8점을 충분히 확보하며, 통합 테스트는 시간 여유 발생 시 추가한다.
+> **통합 테스트 전략:** `jest.mock('../../lib/prisma')`로 Prisma 싱글톤을 모킹하여 실제 DB 없이 routes → services → domain 흐름의 HTTP 응답 계약을 검증한다. CI에서 PostgreSQL 서비스 컨테이너는 `prisma migrate deploy` 검증용으로만 사용한다.
 
 ---
 
@@ -687,7 +678,7 @@ reception → prescription → dispensing → review → payment → claim → c
 └──────────────────────────┬───────────────────────────────────┘
                            │ REST API / JWT
 ┌──────────────────────────▼───────────────────────────────────┐
-│               Backend API Layer (Railway)                    │
+│               Backend API Layer (Vercel Serverless)          │
 │           Node.js + Express + TypeScript                     │
 │  ┌───────────────────────────────────────────────────────┐   │
 │  │  routes/     HTTP 수신, Zod 검증, JWT 인증 미들웨어     │   │
@@ -701,7 +692,7 @@ reception → prescription → dispensing → review → payment → claim → c
 └──────────────────────────┬───────────────────────────────────┘
                            │ Prisma Client
 ┌──────────────────────────▼───────────────────────────────────┐
-│               Database Layer (Supabase / Neon)               │
+│               Database Layer (Neon — Serverless PostgreSQL)  │
 │   Patient · Visit · Prescription · Payment · Claim · Drug    │
 │   PluginConfig                                               │
 └──────────────────────────────────────────────────────────────┘
@@ -736,9 +727,11 @@ frontend/src/
 │   └── ui/             #   shadcn/ui 래퍼
 │
 ├── hooks/              # [Application] API 호출 + 로컬 로직 캡슐화
-│   ├── useWorkflowStage.ts
-│   ├── usePatientSearch.ts
-│   └── useCopayEstimate.ts
+│   ├── usePatient.ts       #   환자 검색·등록
+│   ├── useVisit.ts         #   방문 생성·단계 전환
+│   ├── usePrescription.ts  #   처방 조회·저장·약품 검색
+│   ├── usePayment.ts       #   수납 처리
+│   └── usePlugin.ts        #   Plugin 목록·토글·실행
 │
 ├── stores/             # [Application] 전역 클라이언트 상태 (Zustand)
 │   ├── workflowStore.ts    #   현재 visitId
@@ -779,7 +772,7 @@ backend/src/
 │   └── validate.ts      #   Zod 스키마 기반 요청 검증
 │
 ├── services/            # [Application] 유스케이스 조율 + Prisma 직접 호출
-│   ├── WorkflowService.ts      #   단계 전환: Domain 검증 → Prisma 업데이트
+│   ├── VisitService.ts         #   방문 생성·조회·단계 전환: Domain 검증 → Prisma 업데이트
 │   ├── PatientService.ts
 │   ├── PrescriptionService.ts
 │   ├── PaymentService.ts       #   CopayCalculator 호출 후 Prisma 저장
@@ -824,7 +817,7 @@ Frontend (WorkflowStepper)
     ▼
 routes/visits.ts  →  validate(stageSchema)  →  auth middleware
     ▼
-WorkflowService.transition(visitId, targetStage)
+VisitService.transitionStage(visitId, targetStage)
     │
     ├─ WorkflowStateMachine.canTransition(current, target)
     │       { allowed: boolean, reason?: string }
@@ -884,19 +877,22 @@ GitHub Repository (main branch)
          ▼
 GitHub Actions
   ├─ ESLint + TypeScript type-check
-  ├─ Jest 단위 테스트 (domain/ 순수 로직)
+  ├─ Jest 단위 테스트 (domain/ 순수 로직, 22개)
+  ├─ Jest 통합 테스트 (API 계층, Prisma 모킹, 23개)
   └─ Build 검증 (frontend + backend)
          │
-    ┌────┴──────────────────────┐
-    ▼                           ▼
-Vercel                      Railway / Render
-(React 정적 빌드)             (Express 서버)
-pharmweave.vercel.app        api.pharmweave.app
-    │                           │
-    └───────── REST API ─────────┘
-                                │  Prisma Client
-                                ▼
-                          Supabase / Neon (PostgreSQL)
+         ▼
+       Vercel
+  ┌────────────────────────────┐
+  │  React 정적 빌드 (CDN)      │
+  │  pharmweave.vercel.app     │
+  ├────────────────────────────┤
+  │  Express Serverless Fn     │
+  │  pharmweave.vercel.app/api │
+  └────────────────────────────┘
+         │  Prisma Client
+         ▼
+       Neon (PostgreSQL)
 ```
 
 **환경별 설정:**
