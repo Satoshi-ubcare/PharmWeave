@@ -21,9 +21,9 @@ export default function ReceptionFeature() {
   const { loading: starting, create: createVisit } = useVisitCreate()
   const { transition } = useWorkflowStage()
 
-  // debounce 자동 검색: 2자 이상 입력 후 300ms 대기
+  // debounce 자동 검색: 1자 이상 입력 후 300ms 대기
   useEffect(() => {
-    if (query.trim().length < 2) {
+    if (query.trim().length < 1) {
       clearResults()
       setShowDropdown(false)
       return
@@ -47,7 +47,7 @@ export default function ReceptionFeature() {
   }, [])
 
   const handleSearch = () => {
-    if (query.trim().length >= 2) {
+    if (query.trim().length >= 1) {
       search(query)
       setShowDropdown(true)
     }
@@ -101,7 +101,7 @@ export default function ReceptionFeature() {
               }}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               onFocus={() => results.length > 0 && setShowDropdown(true)}
-              placeholder="이름 또는 생년월일 — 2자 이상 입력 시 자동 검색"
+              placeholder="이름 또는 생년월일 — 입력 시 자동 검색"
               className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {searching && (
@@ -127,7 +127,7 @@ export default function ReceptionFeature() {
               </ul>
             )}
 
-            {showDropdown && !searching && query.trim().length >= 2 && results.length === 0 && (
+            {showDropdown && !searching && query.trim().length >= 1 && results.length === 0 && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
                 검색 결과가 없습니다.
               </div>
@@ -135,7 +135,7 @@ export default function ReceptionFeature() {
           </div>
           <button
             onClick={handleSearch}
-            disabled={searching || query.trim().length < 2}
+            disabled={searching || query.trim().length < 1}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
             검색

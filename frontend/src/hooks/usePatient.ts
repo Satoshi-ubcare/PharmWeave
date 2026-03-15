@@ -8,7 +8,7 @@ export function usePatientSearch() {
   const [error, setError] = useState('')
 
   const search = async (query: string): Promise<void> => {
-    if (!query.trim()) return
+    if (!query.trim().length) return
     setLoading(true)
     setError('')
     try {
