@@ -24,6 +24,17 @@
 - npm workspaces만으로 의존성 공유와 루트 스크립트 관리가 충분
 - Turborepo 학습 비용 대비 효과 낮음 → **단순함 우선**
 
+**트레이드오프 분석:**
+
+| 얻은 것 | 잃은 것 |
+|--------|--------|
+| PR 하나로 frontend + backend 변경 원자적 관리 | frontend/backend 독립 배포 사이클 불가 |
+| 루트 `npm run test` 한 줄로 전체 테스트 | `node_modules` 호이스팅으로 의존성 충돌 잠재 위험 |
+| CI 캐시 단일화 (lock file 1개) | 어느 한 쪽 lint 실패가 전체 파이프라인 차단 |
+| Vercel 진입점 `api/index.ts`에서 `../backend/src` import 단순화 | 리포 규모 증가 시 빌드 시간 선형 증가 |
+
+**결론:** 2인 이하 해커톤 팀에서 이 선택은 순이익. 팀 규모 4명 이상, 배포 주기 독립화 필요 시점에는 별도 리포 또는 Turborepo로 전환 권장.
+
 ---
 
 ### 의사결정 2: Neon (Serverless PostgreSQL) 선택
@@ -39,7 +50,17 @@
 - Vercel Serverless Function과의 연결 지연 최소화 (Neon은 connection pooling 내장)
 - 무료 플랜으로 해커톤 기간 충분
 - Prisma 공식 문서에서 Neon 연동 예제가 풍부
-- **트레이드오프:** cold start 시 Neon 연결 초기화 비용이 있음 → `prisma.$connect()` 패턴보다 싱글톤 PrismaClient로 완화
+
+**트레이드오프 분석:**
+
+| 얻은 것 | 잃은 것 |
+|--------|--------|
+| Vercel과 동일 region 배포 가능 → 지연 최소화 | Neon cold start (비활성 DB 첫 연결 ~1-2초 지연) |
+| Serverless connection pooling 내장 (`pgbouncer=true`) | 벤더 종속성 — Neon 특화 URL 파라미터 |
+| 브랜치 기반 DB 스냅샷 (마이그레이션 롤백 용이) | 무료 플랜 compute 시간 제한 (월 191.9 시간) |
+| Prisma와 공식 통합 가이드 완비 | Railway/Supabase 대비 관리 UI 제한적 |
+
+**완화 조치:** `backend/src/lib/prisma.ts`에서 프로덕션 환경 감지 → `connection_limit=1&pool_timeout=0` 자동 적용. Serverless 함수 인스턴스당 커넥션 누수 방지.
 
 ---
 
@@ -57,7 +78,17 @@ plugins/    : 확장 기능 (서비스에서 실행)
 **결정 이유:**
 - domain 레이어를 외부 의존 없이 유지하면 단위 테스트가 DB 없이 가능
 - Plugin은 서비스에서만 실행 → 플러그인 추가 시 routes 수정 불필요
-- **FAQ에 명시:** Repository 패턴은 도입하지 않음. services에서 Prisma 직접 호출이 7개 Repository 파일 추가 대비 SoC 기여가 낮음
+- 초기 설계: Repository 패턴 미사용. services에서 Prisma 직접 호출 (7개 파일 추가 대비 SoC 기여 낮음)
+- **Day 4 수정:** 피드백 반영으로 Repository 패턴 도입 (의사결정 20 참조)
+
+**트레이드오프 분석:**
+
+| 계층 | 얻은 것 | 잃은 것 |
+|-----|--------|--------|
+| `domain/` 순수 함수 | Jest로 DB 없이 22개 단위 테스트 | 비즈니스 규칙이 도메인 객체가 아닌 함수 → OOP 스타일 불가 |
+| `services/` 유스케이스 | 트랜잭션·가드 로직 한 곳 집중 | Prisma 직접 호출 → 초기엔 테스트 시 DB 모킹 강제 |
+| `routes/` 얇은 레이어 | 15줄 이하 유지, 관심사 명확 | Zod 스키마 파일 수 증가 (schemas/ 분리 필요) |
+| `plugins/` 함수 파일 | 신규 플러그인 = 파일 1개 + 분기 1개 | 플러그인 간 공유 유틸리티 패턴 없음 |
 
 ---
 
@@ -179,6 +210,17 @@ branches: 70%
 - 3개 미만에서 추상화 레이어 도입은 오버엔지니어링
 - 함수 1개 추가 + 분기 1개 추가로 신규 플러그인 확장 가능
 
+**트레이드오프 분석:**
+
+| 얻은 것 | 잃은 것 |
+|--------|--------|
+| 파일 구조 단순: 플러그인당 1파일 | `PluginService.execute()` switch문 — 플러그인 10개 초과 시 유지보수 부담 |
+| 인터페이스 없이 타입 추론으로 충분 | 플러그인별 입력/출력 타입이 `unknown` → 호출측 타입 캐스팅 필요 |
+| DB 읽기 전용 PrismaClient를 직접 전달 | 플러그인이 DB를 직접 읽음 → 의존성 역전 원칙 위배 잠재 가능성 |
+| 하드코딩된 상호작용 규칙으로 즉시 시연 가능 | 실제 의약품 안전나라 API 미연동 → 데모 수준에서 멈춤 |
+
+**임계점:** 플러그인 5개 이상이면 `IPlugin` 인터페이스 + 플러그인 레지스트리 패턴으로 전환 권장.
+
 **구현된 플러그인:**
 
 | 플러그인 | 기능 | 실제 구현 수준 |
@@ -253,6 +295,17 @@ branches: 70%
 - Prisma 모킹으로 DB 응답을 예측 가능하게 제어 → 단위 테스트와 상호 보완
 - CI에서 실제 PostgreSQL은 unit 테스트(domain 레이어)와 migrate 검증에 활용
 
+**트레이드오프 분석:**
+
+| 얻은 것 | 잃은 것 |
+|--------|--------|
+| CI 속도: DB 컨테이너 없이 ~6초 내 61개 통합 테스트 완료 | Prisma API 변경(예: 필드명 변경) 시 mock이 실제 DB와 불일치 발생 가능 |
+| 예측 가능한 DB 응답 → 엣지 케이스(404, 409) 재현 용이 | 실제 SQL 쿼리 검증 불가 (N+1 문제, 인덱스 효과 등) |
+| 서비스 레이어 단독 테스트 → 레이어 경계 명확 검증 | Jest mock 리셋(`clearAllMocks`) 누락 시 테스트 간 오염 위험 |
+| 병렬 실행 가능 (DB 공유 상태 없음) | 실제 Prisma 타입과 mock 반환값 타입 수동 일치 필요 |
+
+**보완 전략:** `prisma migrate deploy`를 CI PostgreSQL 컨테이너에서 실행하여 DDL 정합성 독립 검증. mock 테스트와 상호 보완적 역할 분리.
+
 **테스트 커버리지:**
 
 | 파일 | 테스트 수 | 검증 대상 |
@@ -263,7 +316,9 @@ branches: 70%
 | `prescriptions.test.ts` | 7개 | POST 처방생성/수정/404/빈항목/누락필드, GET 조회/404 |
 | `payments.test.ts` | 7개 | POST 수납201/중복409/처방없음422/잘못된방법400/20%할인, GET 조회/404 |
 | `claims.test.ts` | 7개 | POST 청구201/중복409/방문없음404/처방없음422/수납없음422, GET 조회/404 |
-| **합계** | **44개** | |
+| `drugs.test.ts` | 4개 | GET 검색어 유무, 빈 결과, 다중 결과 |
+| `plugins.test.ts` | 9개 | 목록, 토글(성공/404/400), 실행(DUR/medication-guide/disabled/unknown/UUID 검증) |
+| **합계** | **66개** | (+ PluginService 단위 8개 별도) |
 
 ---
 
@@ -484,7 +539,81 @@ SyntaxError: The requested module 'node:util' does not provide an export named '
 
 ---
 
-### 의사결정 18: 다크 모드 지원 및 이모지 디자인 개선
+### 의사결정 19: Repository 패턴 도입 (피드백 반영)
+
+**배경:** 피드백 "서비스가 Prisma에 직접 의존 → 테스트 어려움, 데이터 접근 레이어 불분리"
+
+**선택:** `IPatientRepository` 등 인터페이스 7개 + `PrismaXxxRepository` 구현체 7개 추가. 서비스 생성자에 기본값 주입.
+
+```typescript
+class PatientService {
+  constructor(
+    private readonly patientRepo: IPatientRepository = new PrismaPatientRepository()
+  ) {}
+}
+```
+
+**트레이드오프 분석:**
+
+| 얻은 것 | 잃은 것 |
+|--------|--------|
+| 서비스 단위 테스트 시 in-memory mock repo 주입 가능 | 파일 수 +14개 (인터페이스 7 + 구현체 7) |
+| Prisma 타입을 Repository 경계에서 DTO로 변환 가능 | 인터페이스-구현체 1:1 대응 → 추상화 실질 효과 낮음 |
+| 서비스 코드에서 `prisma.xxx.findMany()` 직접 호출 제거 | Repository 테스트 자체가 Prisma를 직접 호출해야 함 |
+| 테스트 시 `jest.fn()` mock repo 생성자 주입으로 DB 의존 제거 | `PluginService.execute()`는 여전히 `prisma` 직접 전달 (플러그인 함수 인터페이스 제약) |
+
+**교훈:** "Repository 패턴을 언제 도입해야 하는가"의 명확한 임계점 — 서비스 단위 테스트 필요성이 발생한 시점이 맞는 타이밍. Day 1에 도입하지 않은 것은 해커톤 맥락에서 옳은 결정이었으나, 코드베이스가 커질수록 도입 비용도 커짐을 확인.
+
+---
+
+### 의사결정 20: 도메인 에러 계층 구조 도입 (피드백 반영)
+
+**배경:** 피드백 "AppError 단일 클래스로 도메인별 예외 분류 부재 — HTTP 상태 코드 결정 로직이 throw 시점에 분산"
+
+**선택:**
+```typescript
+// domain/errors.ts
+DomainError (base)
+├── NotFoundError        → HTTP 404
+├── ConflictError        → HTTP 409
+├── WorkflowTransitionError → HTTP 422
+├── PreconditionError    → HTTP 422
+├── DomainValidationError → HTTP 400
+└── UnauthorizedError    → HTTP 401
+```
+HTTP 상태 코드 결정을 `errorHandler.ts`의 `domainErrorStatus()` 함수 한 곳에 집중.
+
+**트레이드오프 분석:**
+
+| 얻은 것 | 잃은 것 |
+|--------|--------|
+| 도메인 레이어가 HTTP 상태 코드를 완전히 모름 → 진정한 관심사 분리 | 에러 클래스 파일 1개에 6개 클래스 → 처음 보는 개발자에게 낯선 패턴 |
+| `throw new NotFoundError('...')` — 의도가 코드에서 자명 | `errorHandler.ts`가 도메인 에러 타입 전체를 알아야 함 → 신규 에러 타입 추가 시 2곳 수정 |
+| 에러 타입별 단위 테스트 (instanceof 검사) 용이 | `AppError(statusCode, message)` 방식보다 HTTP 코드와 에러의 매핑 관계가 덜 직관적 |
+
+---
+
+### 의사결정 21: UX 개선 — 필드별 폼 유효성 검사 + ConfirmDialog
+
+**배경:** 피드백 "폼 유효성 검사 에러 메시지가 간략, 확인 다이얼로그 부재"
+
+**선택:**
+1. `ReceptionFeature`: 단일 에러 → 필드별 인라인 에러 (`name`, `birth_date`, `phone`)
+2. `PrescriptionFeature`: 단일 에러 → `clinicName` / `items` 필드별 분리
+3. `ConfirmDialog`: ESC·배경클릭·`variant` 지원 범용 모달 신규 생성
+4. `StagePatientList`: 환자 전환 시 ConfirmDialog 확인 절차 추가
+
+**트레이드오프 분석:**
+
+| 얻은 것 | 잃은 것 |
+|--------|--------|
+| `aria-invalid` + `role="alert"` → 접근성 표준 준수 | 컴포넌트 상태(`formErrors`)가 늘어 복잡도 증가 |
+| 필드별 빨간 테두리로 즉각적 시각 피드백 | 기존 단일 에러보다 조건 분기 코드량 증가 |
+| ConfirmDialog 재사용 — `variant: 'danger'/'default'` 로 확장 가능 | 간단한 작업에 모달 추가 → 클릭 수 증가 (UX 양날의 검) |
+
+---
+
+### 의사결정 22: 다크 모드 지원 및 이모지 디자인 개선
 
 **배경:** "UI가 단조롭다" 피드백 + 다크 모드 요구사항
 
@@ -552,9 +681,14 @@ export const useThemeStore = create<ThemeState>((set) => ({
 | ADR-14 | api/index.ts thin wrapper | 이중 백엔드 구조 → 기능 변경 시 두 곳 수정 필요한 부채 해소 | 283줄 중복 코드 제거, 단일 코드베이스로 통합 |
 | ADR-15 | Toast 알림 시스템 | API 실패 시 사용자 피드백 없는 문제 해결 | Zustand 기반, 외부 라이브러리 없음, 전 단계 적용 |
 | ADR-16 | 단계별 환자 선택 패턴 | early return이 StagePatientList 렌더링 차단 — UX 버그 | 4개 Feature에 조건부 렌더링 적용, 환자 선택 후 하단 노출 |
-| ADR-17 | Frontend Vitest 설정 | "프론트엔드 테스트 없음" 피드백 반영 | store 단위 테스트 20개 추가 (총 86개) |
+| ADR-17 | Frontend Vitest 설정 | "프론트엔드 테스트 없음" 피드백 반영 | store 단위 테스트 20개 추가 |
 | ADR-18 | CI Node.js 18 → 20 | vitest@4.x, vite@8.x의 Node.js 20+ 요구사항 미충족으로 CI 실패 | node-version 3개 job 모두 20으로 업그레이드 |
 | ADR-19 | 다크 모드 + 이모지 디자인 | "UI 단조롭다" 피드백 반영, 다크 모드 지원 요구 | themeStore + Tailwind class 전략, 전 컴포넌트 dark: 클래스 적용 |
+| ADR-20 | Repository 패턴 도입 | "서비스가 Prisma 직접 의존" 피드백 → 데이터 접근 레이어 분리 | IXxxRepository 인터페이스 7개 + PrismaXxxRepository 7개, 생성자 기본값 주입 |
+| ADR-21 | 도메인 에러 계층 구조 | "AppError 단일 클래스, 도메인별 예외 분류 부재" 피드백 | DomainError 기반 6개 서브클래스, HTTP 상태 코드 결정 errorHandler 집중 |
+| ADR-22 | drugs·plugins 통합 테스트 추가 | "plugins.ts/drugs.ts 미작성, PluginService 26% 미흡" 피드백 | 통합 테스트 13개 + PluginService 단위 8개 추가, 전체 커버리지 98% 달성 |
+| ADR-23 | CI 6단계 — Smoke Test 강화 + Auto Rollback | "Smoke Test 기본 수준, 자동 롤백 미구현" 피드백 | 인증 플로우·응답시간 SLO·동시성 검증 추가, vercel rollback 자동 실행 6단계 |
+| ADR-24 | UX — 필드별 폼 검사 + ConfirmDialog | "에러 메시지 간략, 확인 다이얼로그 부재" 피드백 | aria-invalid + role=alert 인라인 에러, ConfirmDialog 범용 모달, 환자 전환 확인 |
 
 ---
 
@@ -576,16 +710,19 @@ export const useThemeStore = create<ThemeState>((set) => ({
 | Backend 통합 | prescriptions.test.ts | 7개 | Jest + Supertest |
 | Backend 통합 | payments.test.ts | 7개 | Jest + Supertest |
 | Backend 통합 | claims.test.ts | 7개 | Jest + Supertest |
-| **합계** | **12개 파일** | **86개 (전체 PASS)** | |
+| Backend 통합 | drugs.test.ts | 4개 | Jest + Supertest |
+| Backend 통합 | plugins.test.ts | 9개 | Jest + Supertest |
+| Backend 서비스 단위 | PluginService.test.ts | 8개 | Jest |
+| **합계** | **15개 파일** | **103개 (전체 PASS)** | |
 
-### 커버리지 (전체 66개 기준)
+### 커버리지 (전체 103개 기준)
 
 | 지표 | 전체 | domain | routes | services |
 |------|------|--------|--------|----------|
-| Statements | 89.38% | 100% | 90.9% | 84.87% |
-| Branches | 75.43% | 100% | 55.55% | 75.6% |
-| Functions | 80.43% | 100% | 73.68% | 76.47% |
-| Lines | 89.66% | 100% | 90.71% | 85.57% |
+| Statements | **98.06%** | 100% | **100%** | **100%** |
+| Branches | **98.24%** | 100% | 100% | 100% |
+| Functions | **96.29%** | 100% | 100% | 100% |
+| Lines | **98.26%** | 100% | 100% | 100% |
 
 ### Workflow 기능 완성도
 
@@ -602,22 +739,122 @@ export const useThemeStore = create<ThemeState>((set) => ({
 
 ```
 1. Lint & Type Check  → ESLint max-warnings 0, tsc --noEmit: ✅ PASS
-2. Tests + Migration  → Unit 22 + Integration 44 + prisma migrate deploy: ✅ PASS
+2. Tests + Migration  → Unit 30 + Integration 61 + Service 8 + prisma migrate deploy: ✅ PASS
 3. Build Validation   → Vite build, tsc build: ✅ PASS
 4. Deploy             → Vercel Production (main push only): ✅
-5. Smoke Test         → GET /api/health (200) + POST /api/auth/login (401=DB 정상): ✅
+5. Smoke Test         → 헬스체크 + 인증플로우 + drugs/plugins API + 응답시간 SLO + 동시성 10req: ✅
+6. Auto Rollback      → Smoke Test 실패 시 vercel rollback 자동 실행: ✅ (자동 트리거)
 ```
 
 ### 롤백 전략
 
 배포 후 smoke test 실패 또는 프로덕션 장애 발생 시:
 
-| 방법 | 명령 / 경로 | 소요 시간 |
-|------|------------|----------|
-| **Vercel 대시보드** | Deployments → 이전 배포 → Promote to Production | ~30초 |
-| **Vercel CLI** | `vercel rollback --token $VERCEL_TOKEN` | ~30초 |
-| **Git revert** | `git revert HEAD` → push → 파이프라인 재실행 | ~5분 (CI 포함) |
+| 방법 | 명령 / 경로 | 소요 시간 | 자동화 |
+|------|------------|----------|--------|
+| **CI 자동 롤백** | Smoke Test 실패 → 6단계 Auto Rollback 자동 실행 | ~2분 | ✅ 완전 자동 |
+| **Vercel 대시보드** | Deployments → 이전 배포 → Promote to Production | ~30초 | 수동 |
+| **Vercel CLI** | `vercel rollback --token $VERCEL_TOKEN` | ~30초 | 수동 |
+| **Git revert** | `git revert HEAD` → push → 파이프라인 재실행 | ~5분 (CI 포함) | 수동 |
 
-- **우선 순위:** 대시보드 즉시 롤백 → CLI → Git revert 순
-- Neon DB는 마이그레이션 롤백이 별도 필요 (`prisma migrate reset` 주의: 데이터 삭제)
+- **우선 순위:** CI 자동 롤백 → 대시보드 → CLI → Git revert 순
+- **DB 롤백:** Neon 콘솔 → Branch → Restore Point 선택 (스키마 변경이 있는 경우)
 - DB 스키마 변경이 없는 배포라면 Vercel 롤백만으로 충분
+- 예방: 파괴적 마이그레이션(컬럼 삭제) 전 Neon 브랜치 스냅샷 생성 필수
+
+---
+
+## 최종 회고 (Lessons Learned)
+
+> 4일간의 개발 과정에서 얻은 기술적·프로세스적 교훈을 기록합니다.
+> "잘 된 것"과 "다음엔 다르게 할 것"을 구분하여 작성합니다.
+
+---
+
+### 잘 된 것 (What Worked Well)
+
+#### 1. 레이어 경계가 명확한 아키텍처 설계
+Day 1에 `routes → services → domain` 3계층을 명확히 정의하고 지킨 것이 가장 큰 성공 요인이었다. domain 레이어를 외부 의존 없이 유지함으로써 22개 단위 테스트를 DB 없이 즉시 작성할 수 있었고, routes를 15줄 이하로 유지함으로써 기능 변경 시 영향 범위가 명확했다.
+
+**측정 가능한 효과:**
+- domain 레이어 테스트 커버리지: **100%** (WorkflowStateMachine, CopayCalculator, ClaimDataBuilder)
+- routes 평균 길이: **15줄 이하**
+- 새 기능(약품 검색) 추가 시 수정 파일: routes 1 + service 1 + repository 1 = **3파일**
+
+#### 2. 피드백 수용 사이클이 빠름
+피드백을 받은 날 당일 코드베이스에 반영하는 속도를 유지했다. Repository 패턴 도입(피드백 → 구현: ~2시간), 도메인 에러 계층(피드백 → 구현: ~1시간), UX 개선(피드백 → 구현: ~3시간). 모노레포 구조 덕분에 frontend/backend 동시 변경을 하나의 PR로 처리할 수 있었다.
+
+#### 3. CI/CD 파이프라인이 실질적 품질 게이트 역할
+`quality → test → build → deploy` 순서를 강제함으로써 ESLint 경고 0개, TypeScript 에러 0개 상태를 끝까지 유지했다. `npm run type-check` 실패가 배포를 차단한 사례가 3번 있었고, 덕분에 런타임 오류 없이 프로덕션 배포를 유지했다.
+
+#### 4. Zustand + 훅 분리 패턴의 효과
+전역 상태(visitId, plugins, toast)는 Zustand로, API 생명주기(loading, error, data)는 커스텀 훅으로 분리한 패턴이 일관되게 작동했다. Feature 컴포넌트가 `useWorkflowStore()`, `usePrescriptionSave()` 두 줄로 필요한 것을 모두 가져올 수 있어 복잡성이 낮게 유지됐다.
+
+---
+
+### 다음엔 다르게 할 것 (What to Do Differently)
+
+#### 1. 이중 백엔드 구조 — 처음부터 단일 진입점으로 설계했어야 함
+**문제:** `api/index.ts`(Vercel 진입점 283줄)와 `backend/src/`(개발·테스트용)가 공존하면서 Day 3까지 기능 변경 시 두 곳을 동시에 수정해야 했다. Day 3 `_req` 버그(쿼리 파라미터 무시)도 이 구조에서 발생했다.
+
+**다음엔:** Day 1에 `api/index.ts`를 `import app from '../backend/src/index'; export default app` 5줄 thin wrapper로 시작. Vercel 배포 검증 후 구조 확정.
+
+#### 2. Repository 패턴 — Day 1에 도입할지 명확한 기준을 세웠어야 함
+처음엔 "오버엔지니어링"으로 생략했다가 Day 4 피드백에서 도입했다. **결과적으로 더 많은 시간 소요.** Repository가 필요한 명확한 기준: "서비스 레이어 단위 테스트가 필요한가?" — 이 질문에 "예"라면 Day 1에 도입하는 것이 비용이 낮다.
+
+**다음엔:** 서비스가 3개 이상이거나 서비스 단위 테스트 계획이 있으면 처음부터 Repository 인터페이스 생성.
+
+#### 3. `api/index.ts` 구조 변경 없이 기능 추가를 너무 오래 했음
+Vercel 진입점 파일이 비대해지는 것을 Day 3까지 방치했다. 기술 부채가 명확히 보일 때 즉시 리팩토링하는 "보이스카우트 규칙"을 더 철저히 적용했어야 한다.
+
+#### 4. Smoke Test를 처음부터 더 구체적으로 설계했어야 함
+초기 Smoke Test가 헬스 체크 + DB 연결 확인 2개에 그쳤다. 배포 후 진짜 문제(인증 플로우 실패, 특정 API 500 오류)는 이 수준에서 감지되지 않는다. **다음엔:** 배포 전에 "어떤 API가 실패하면 심각한 장애인가?"를 먼저 정의하고 그 엔드포인트를 Smoke Test에 포함.
+
+#### 5. 다크 모드 적용을 너무 늦게 시작했음
+모든 컴포넌트에 `dark:` 클래스를 Day 4에 일괄 적용했는데, 이것이 예상보다 시간이 많이 걸렸다(~2시간). 컴포넌트를 처음 작성할 때 `dark:` 클래스를 함께 작성하면 나중에 일괄 적용보다 훨씬 빠르다.
+
+---
+
+### 기술적 인사이트 (Technical Insights)
+
+#### Vercel Serverless + Prisma 조합의 특성
+- **Cold start:** 비활성 함수 첫 호출 시 Neon 연결 초기화 ~1-2초. 프로덕션에서는 허용 가능한 수준이나 사용자가 체감함.
+- **Connection pooling:** `connection_limit=1` 없이 배포하면 함수 인스턴스 증가 시 Neon 커넥션 한도 초과. `prisma.ts`에서 프로덕션 환경 자동 감지 후 적용하는 패턴이 필수.
+- **`prisma generate` 타이밍:** `postinstall` 스크립트에 넣는 것이 가장 안정적. `buildCommand`에 추가하면 순서 문제 발생 가능.
+
+#### Zustand의 적절한 사용 범위
+- **전역 상태로 적합:** visitId(여러 페이지에서 읽음), pluginEnabled(WorkflowLayout에서 초기화, 여러 컴포넌트에서 참조), theme(html 클래스 직접 조작 필요)
+- **로컬 상태로 적합:** API 요청의 loading/error/data (단일 컴포넌트 생명주기), 폼 입력값
+- **판단 기준:** "이 상태가 페이지 이동 후에도 유지되어야 하는가? 여러 컴포넌트가 동시에 읽는가?" → 예면 Zustand, 아니면 useState/useReducer
+
+#### 테스트 계층화의 실제 효과
+```
+domain 단위 테스트 (22개)  : 빠름(<100ms), DB 불필요, 비즈니스 규칙 보호
+통합 테스트 (61개)          : 중간(~6초/파일), DB mock, HTTP 계약 보호
+prisma migrate deploy       : 느림(~1초), 실제 DB, DDL 정합성 보호
+Smoke Test                  : 가장 느림, 실제 프로덕션, 배포 후 회귀 보호
+```
+각 계층이 서로 다른 버그를 잡는다. domain 테스트가 통과해도 통합 테스트가 Zod 검증 누락을 잡고, 통합 테스트가 통과해도 migrate가 스키마 불일치를 잡는다.
+
+#### TypeScript strict mode의 가치
+`"strict": true` 설정이 런타임 오류를 여러 번 예방했다:
+- `visitId: string | null` — null 체크 강제 → 수납 처리 시 null visitId 전달 버그 사전 차단
+- 함수 반환 타입 명시 — `async (): Promise<Patient | null>` → 호출측 null 체크 강제
+
+---
+
+### 해커톤 환경에서의 의사결정 패턴
+
+4일이라는 제한된 시간 안에서 반복적으로 직면한 의사결정 패턴:
+
+**"지금 당장 vs. 나중에" 트레이드오프**
+
+| 결정 | 선택 | 결과 |
+|------|------|------|
+| Repository 패턴 | 나중에 (Day 4) | Day 4에 더 많은 시간 소요 — 손해 |
+| 이중 백엔드 구조 해소 | 나중에 (Day 4) | Day 3에 _req 버그 발생 — 손해 |
+| Toast 알림 시스템 | 나중에 (Day 3) | Day 1-2에 에러 추적 어려움 — 손해 |
+| domain 레이어 테스트 | 즉시 (Day 1) | Day 2-3 기능 추가 시 회귀 없음 — 이익 |
+| TypeScript strict | 즉시 (Day 1) | 런타임 오류 0건 — 이익 |
+
+**결론:** 기반 코드 품질(TypeScript strict, 테스트, 아키텍처 규칙)에 대한 투자는 "즉시"가 옳다. 기능 추가는 "필요할 때"가 옳다. "나중에 하면 더 비싸지는 것"과 "지금 하면 오버엔지니어링인 것"을 구분하는 것이 해커톤 성공의 핵심이었다.
