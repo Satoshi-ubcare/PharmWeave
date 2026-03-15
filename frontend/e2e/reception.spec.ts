@@ -35,8 +35,8 @@ test.describe('접수 화면', () => {
   })
 
   test('단계별 대기 현황 대시보드 표시', async ({ page }) => {
-    // StagePatientList 대시보드 — 6개 단계 뱃지 확인
-    await expect(page.getByText('접수')).toBeVisible()
-    await expect(page.getByText('처방')).toBeVisible()
+    // StagePatientList 대시보드 — 6개 단계 뱃지 확인 (다중 요소 허용)
+    await expect(page.getByText('접수').first()).toBeVisible()
+    await expect(page.getByText('처방').first()).toBeVisible()
   })
 })

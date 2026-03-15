@@ -16,8 +16,8 @@ test.describe('Workflow 단계 페이지 — visitId 없는 상태', () => {
   for (const { path, heading } of stages) {
     test(`${heading} 페이지 — 환자 미선택 안내 표시`, async ({ page }) => {
       await page.goto(path)
-      // 각 페이지 제목 확인
-      await expect(page.getByRole('heading', { name: new RegExp(heading) })).toBeVisible()
+      // 각 페이지 h1 제목 확인 (h2 사이드바 헤딩과 구분)
+      await expect(page.getByRole('heading', { level: 1, name: new RegExp(heading) })).toBeVisible()
       // visitId 없을 때 안내 문구 표시
       const guideMsg = page.getByText(/선택하세요|시작해주세요|대기 환자/)
       await expect(guideMsg.first()).toBeVisible()

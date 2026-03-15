@@ -18,8 +18,9 @@ test.describe('Smoke', () => {
 
   test('워크플로우 스테퍼 6단계 모두 표시', async ({ page }) => {
     await page.goto('/')
+    const stepper = page.locator('nav')
     for (const label of ['접수', '처방', '조제', '검토', '수납', '청구']) {
-      await expect(page.getByText(label)).toBeVisible()
+      await expect(stepper.getByText(label, { exact: true })).toBeVisible()
     }
   })
 
@@ -28,13 +29,16 @@ test.describe('Smoke', () => {
     const toggle = page.getByRole('button', { name: '테마 전환' })
     await expect(toggle).toBeVisible()
 
-    // 라이트 → 다크
-    await toggle.click()
+    // 기본값: 다크 모드
     await expect(page.locator('html')).toHaveClass(/dark/)
 
     // 다크 → 라이트
     await toggle.click()
     await expect(page.locator('html')).not.toHaveClass(/dark/)
+
+    // 라이트 → 다크
+    await toggle.click()
+    await expect(page.locator('html')).toHaveClass(/dark/)
   })
 
   test('Plugin 관리 페이지 이동', async ({ page }) => {
