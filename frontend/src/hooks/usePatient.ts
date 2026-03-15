@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { patientApi } from '@/api/endpoints'
 import type { Patient } from '@/types'
 
@@ -7,7 +7,7 @@ export function usePatientSearch() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const search = async (query: string): Promise<void> => {
+  const search = useCallback(async (query: string): Promise<void> => {
     if (!query.trim().length) return
     setLoading(true)
     setError('')
@@ -19,9 +19,9 @@ export function usePatientSearch() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const clear = (): void => setResults([])
+  const clear = useCallback((): void => setResults([]), [])
 
   return { results, loading, error, search, clear }
 }

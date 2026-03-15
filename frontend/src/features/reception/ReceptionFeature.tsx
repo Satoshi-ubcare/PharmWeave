@@ -33,7 +33,7 @@ export default function ReceptionFeature() {
       setShowDropdown(true)
     }, 300)
     return () => clearTimeout(timer)
-  }, [query])
+  }, [query, search, clearResults])
 
   // 드롭다운 바깥 클릭 시 닫기
   useEffect(() => {
