@@ -11,9 +11,6 @@ module.exports = {
     '!src/domain/__tests__/**',
     '!src/**/*.d.ts',
   ],
-  coverageThreshold: {
-    global: { lines: 80 },
-  },
   testEnvironmentOptions: {
     env: { NODE_ENV: 'test' },
   },

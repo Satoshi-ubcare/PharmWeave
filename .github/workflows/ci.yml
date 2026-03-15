@@ -103,10 +103,10 @@ jobs:
           DATABASE_URL: postgresql://test:test@localhost:5432/pharmweave_test
 
       - name: "Unit tests — Domain Layer (WorkflowStateMachine · CopayCalculator · ClaimDataBuilder)"
-        run: npm run test:unit --workspace=backend -- --coverage --coverageReporters=text-summary
+        run: npm run test:unit --workspace=backend
 
-      - name: "Integration tests — API Layer (auth 6 · patients 8 · visits 9, Prisma mocked)"
-        run: npm run test:integration --workspace=backend
+      - name: "All tests + Coverage — Unit 22 + Integration 44 (Prisma mocked)"
+        run: npm run test:all --workspace=backend -- --coverage --coverageReporters=text-summary --coverageReporters=lcov
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
@@ -122,7 +122,7 @@ jobs:
           echo "|-----------|------|" >> $GITHUB_STEP_SUMMARY
           echo "| DB Migration | prisma migrate deploy → PostgreSQL 15 컨테이너 |" >> $GITHUB_STEP_SUMMARY
           echo "| Unit Tests | Domain Layer 순수 로직 (22 tests) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Integration Tests | HTTP API 계약 검증 · Prisma mocked (23 tests) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | HTTP API 계약 검증 · Prisma mocked (44 tests) |" >> $GITHUB_STEP_SUMMARY
           echo "| Coverage | backend/coverage/ 아티팩트 업로드 |" >> $GITHUB_STEP_SUMMARY
 
   # ─── 3단계: 빌드 검증 ─────────────────────────────────────
