@@ -119,7 +119,7 @@ export default function ReceptionFeature() {
                       className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors text-sm border-b border-gray-100 last:border-0"
                     >
                       <span className="font-medium text-gray-900">{p.name}</span>
-                      <span className="text-gray-500 ml-3">{p.birth_date}</span>
+                      <span className="text-gray-500 ml-3">{String(p.birth_date).slice(0, 10)}</span>
                       {p.phone && <span className="text-gray-400 ml-3">{p.phone}</span>}
                     </button>
                   </li>
@@ -205,7 +205,7 @@ export default function ReceptionFeature() {
           <div>
             <p className="text-sm text-blue-600 font-medium">선택된 환자</p>
             <p className="text-lg font-bold text-blue-900">{selected.name}</p>
-            <p className="text-sm text-blue-700">{selected.birth_date} {selected.phone && `· ${selected.phone}`}</p>
+            <p className="text-sm text-blue-700">{String(selected.birth_date).slice(0, 10)} {selected.phone && `· ${selected.phone}`}</p>
           </div>
           <button
             onClick={handleStartVisit}

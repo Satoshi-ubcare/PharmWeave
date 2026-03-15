@@ -37,7 +37,7 @@ export default function ReviewFeature() {
           <h2 className="font-semibold text-gray-800 mb-3">환자 정보</h2>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div><span className="text-gray-500">이름</span><p className="font-medium mt-0.5">{patient.name}</p></div>
-            <div><span className="text-gray-500">생년월일</span><p className="font-medium mt-0.5">{patient.birth_date}</p></div>
+            <div><span className="text-gray-500">생년월일</span><p className="font-medium mt-0.5">{String(patient.birth_date).slice(0, 10)}</p></div>
             <div><span className="text-gray-500">연락처</span><p className="font-medium mt-0.5">{patient.phone ?? '—'}</p></div>
           </div>
         </div>
