@@ -16,7 +16,7 @@ export default function WorkflowLayout() {
         <div className="flex items-center gap-4">
           {patient && (
             <span className="text-sm bg-blue-600 px-3 py-1 rounded-full">
-              {patient.name} ({patient.birth_date})
+              {patient.name} ({String(patient.birth_date).slice(0, 10)})
             </span>
           )}
           <Link

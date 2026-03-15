@@ -49,7 +49,7 @@ export default function ReviewFeature() {
       {prescription && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="font-semibold text-gray-800 mb-3">처방 요약</h2>
-          <p className="text-sm text-gray-500 mb-4">{prescription.clinic_name} · {prescription.prescribed_at}</p>
+          <p className="text-sm text-gray-500 mb-4">{prescription.clinic_name} · {String(prescription.prescribed_at).slice(0, 10)}</p>
           <table className="w-full text-sm">
             <thead>
               <tr className="text-gray-400 text-xs border-b border-gray-100">

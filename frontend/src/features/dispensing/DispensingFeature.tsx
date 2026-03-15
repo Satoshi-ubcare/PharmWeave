@@ -46,7 +46,7 @@ export default function DispensingFeature() {
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-gray-800">
-            {prescription.clinic_name} — {prescription.prescribed_at}
+            {prescription.clinic_name} — {String(prescription.prescribed_at).slice(0, 10)}
           </h2>
           <span className="text-sm text-gray-500">
             {Object.values(checked).filter(Boolean).length} / {prescription.items.length} 확인
