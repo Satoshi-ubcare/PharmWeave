@@ -188,15 +188,90 @@ branches: 70%
 
 ---
 
+## Day 3 (2026-03-15 오후) — 아키텍처 정비 및 테스트 완성
+
+### 목표
+코드 품질 강화 → services 레이어 분리 → hooks 레이어 추가 → 통합 테스트 작성
+
+---
+
+### 기능 구현 완료 현황
+
+| 단계 | 페이지 | Feature 컴포넌트 | 상태 |
+|------|--------|-----------------|------|
+| 접수 | ReceptionPage | ReceptionFeature | ✅ 완료 |
+| 처방 | PrescriptionPage | PrescriptionFeature | ✅ 완료 |
+| 조제 | DispensingPage | DispensingFeature | ✅ 완료 |
+| 검토 | ReviewPage | ReviewFeature | ✅ 완료 |
+| 수납 | PaymentPage | PaymentFeature | ✅ 완료 |
+| 청구 | ClaimPage | ClaimFeature | ✅ 완료 |
+| Plugin | PluginManagePage | PluginManageFeature | ✅ 완료 |
+
+| 백엔드 | 상태 |
+|--------|------|
+| routes (8개) | ✅ HTTP 수신·검증·응답만 담당 |
+| services (6개) | ✅ 유스케이스 조율, Prisma 호출 분리 완료 |
+| domain (3개) | ✅ 순수 함수, 외부 의존 없음 |
+| plugins (2개) | ✅ medication-guide, DUR 실행 가능 |
+
+---
+
+### 의사결정 9: services 레이어 분리
+
+**배경:** routes에서 Prisma를 직접 호출하는 구조 → 아키텍처 규칙 위반
+
+**선택:** `PatientService`, `VisitService`, `PrescriptionService`, `PaymentService`, `ClaimService`, `PluginService` 6개 생성
+
+**결과:**
+- routes는 HTTP 수신·Zod 검증·응답만 담당 (평균 15줄 이하)
+- 비즈니스 로직이 services로 집중 → 단위 테스트 가능 구조
+- `VisitService.validateStageGuards()` 로 단계 전환 가드 캡슐화
+
+---
+
+### 의사결정 10: frontend hooks 레이어 추가
+
+**선택:** `usePatient`, `useVisit`, `usePrescription`, `usePayment`, `usePlugin` 5개 훅 생성
+
+**이유:**
+- CLAUDE.md 아키텍처 규칙: "API 호출은 hooks/에서만, features/에서 Axios 직접 호출 금지"
+- features 컴포넌트에서 로딩/에러 상태 관리 중복 제거
+- 각 훅이 loading, error, 실행 함수를 캡슐화
+
+---
+
+### 의사결정 11: 통합 테스트 전략 (Prisma 모킹)
+
+**선택:** `jest.mock('../../lib/prisma')` 로 Prisma 싱글톤 모킹 → 실제 DB 없이 HTTP 레이어 테스트
+
+**고려한 대안:**
+- 실제 PostgreSQL 테스트 DB 사용 (CI에서는 services로 제공)
+- in-memory DB (SQLite) 사용
+
+**결정 이유:**
+- 통합 테스트의 목적: routes → services → domain 흐름의 HTTP 계약 검증
+- Prisma 모킹으로 DB 응답을 예측 가능하게 제어 → 단위 테스트와 상호 보완
+- CI에서 실제 PostgreSQL은 unit 테스트(domain 레이어)와 migrate 검증에 활용
+
+**테스트 커버리지:**
+
+| 파일 | 테스트 수 | 검증 대상 |
+|------|-----------|-----------|
+| `auth.test.ts` | 6개 | 회원가입(201/409/400), 로그인(200/401×2) |
+| `patients.test.ts` | 8개 | GET 목록/검색, POST 등록/중복/검증, GET 단건/404 |
+| `visits.test.ts` | 9개 | POST 생성/404/Zod오류, PATCH 전환×5 |
+| **합계** | **23개** | |
+
+---
+
 ## 기술 부채 및 향후 개선 사항
 
 | 항목 | 현재 상태 | 개선 방향 |
 |------|-----------|-----------|
-| services 레이어 | routes에서 Prisma 직접 호출 | `services/` 분리로 테스트 용이성 확보 |
-| frontend hooks | features에서 API 직접 호출 | `hooks/` 레이어로 분리 |
-| 통합 테스트 | 미구현 | `__tests__/integration/` 에 API 레벨 테스트 |
-| Plugin 데이터 | 하드코딩된 약물 규칙 | 외부 데이터 소스 연동 (e.g. 의약품 안전나라 API) |
+| Plugin 데이터 | 하드코딩된 약물 규칙 (데모 수준) | 의약품 안전나라 API 연동 |
 | Role 기반 접근제어 | 미구현 | 약사/실무자/관리자 Role 분리 |
+| 에러 복구 UX | 기본 에러 메시지 수준 | 토스트 알림, 재시도 버튼 추가 |
+| 모바일 최적화 | Tailwind 반응형 기본 적용 | 태블릿/모바일 실제 사용 시나리오 테스트 |
 
 ---
 
@@ -211,3 +286,6 @@ branches: 70%
 | ADR-05 | Vercel Serverless Function | 프론트엔드와 플랫폼 일원화 | 배포 안정화에 시간 소요 |
 | ADR-06 | Plugin = 함수 파일 1개 | 오버엔지니어링 방지 | 확장성 충분, 구조 단순 |
 | ADR-07 | Repository 패턴 미사용 | 7파일 추가 대비 SoC 기여 낮음 | services에서 Prisma 직접 호출 |
+| ADR-08 | services 레이어 분리 | routes가 Prisma 직접 호출 — 아키텍처 위반 수정 | routes 평균 15줄, 관심사 명확 분리 |
+| ADR-09 | 통합 테스트에 Prisma 모킹 | DB 없이 HTTP 계약 검증 목적에 충분 | 23개 테스트, CI에서 실제 DB는 migrate 검증용 |
+| ADR-10 | frontend hooks 레이어 분리 | features 내 API 직접 호출 — 아키텍처 규칙 위반 수정 | 5개 훅으로 로딩/에러 상태 캡슐화 |
