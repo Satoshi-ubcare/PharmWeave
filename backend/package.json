@@ -8,9 +8,10 @@
     "start": "node dist/index.js",
     "lint": "eslint src --ext ts --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:unit": "jest --testPathPattern=domain/__tests__",
-    "test:integration": "jest --testPathPattern=__tests__/integration"
+    "test:integration": "jest --testPathPattern=__tests__/integration",
+    "test:all": "jest"
   },
   "dependencies": {
     "@prisma/client": "^5.16.0",

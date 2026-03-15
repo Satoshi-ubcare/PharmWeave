@@ -163,15 +163,33 @@ VITE_API_BASE_URL=http://localhost:3000/api
 
 ```bash
 # 단위 테스트 (Domain Layer — 22개)
-# WorkflowStateMachine, CopayCalculator, ClaimDataBuilder 순수 로직 검증
-npm run test:unit
+npm run test:unit --workspace=backend
 
-# 통합 테스트 (API Layer, Prisma 모킹 — 23개)
-# auth(6) · patients(8) · visits(9) HTTP 계약 검증
-npm run test:integration
+# 통합 테스트 (API Layer, Prisma mocked — 44개)
+npm run test:integration --workspace=backend
 
-# 단위 테스트 + 커버리지 리포트
-npm run test:unit -- --coverage
+# 전체 테스트 (단위 + 통합 — 66개)
+npm run test:all --workspace=backend
+
+# 커버리지 포함 전체 실행
+npm run test:all --workspace=backend -- --coverage
+```
+
+### 테스트 구조
+
+```
+backend/src/
+├── domain/__tests__/                   # 단위 테스트 (22개)
+│   ├── WorkflowStateMachine.test.ts    # 단계 전환 유효성 (7)
+│   ├── CopayCalculator.test.ts         # 본인부담금 계산 (8)
+│   └── ClaimDataBuilder.test.ts        # 청구 데이터 빌더 (7)
+└── __tests__/integration/              # 통합 테스트 (44개) — Prisma mocked
+    ├── auth.test.ts         # POST /register, POST /login (6)
+    ├── patients.test.ts     # GET /patients, POST /patients (8)
+    ├── visits.test.ts       # POST /visits, GET /today, PATCH /stage (9)
+    ├── prescriptions.test.ts# POST /prescriptions, GET /prescriptions (7)
+    ├── payments.test.ts     # POST /payment, GET /payment (7)
+    └── claims.test.ts       # POST /claim, GET /claim (7)
 ```
 
 ### 테스트 전략
@@ -179,8 +197,8 @@ npm run test:unit -- --coverage
 | 레이어 | 방식 | 목적 |
 |--------|------|------|
 | Domain | Jest 단위 테스트 | 외부 의존 없는 순수 함수 검증 |
-| API | Jest + Supertest + Prisma 모킹 | routes → services → domain HTTP 계약 검증 (실제 DB 불필요) |
-| DB 마이그레이션 | CI PostgreSQL 서비스 컨테이너 | `prisma migrate deploy` 검증 |
+| API (routes → services) | Jest + Supertest + Prisma mocked | 6개 리소스 전체 HTTP 계약 검증 |
+| DB 마이그레이션 | CI PostgreSQL 15 서비스 컨테이너 | `prisma migrate deploy` 정합성 검증 |
 
 ---
 
