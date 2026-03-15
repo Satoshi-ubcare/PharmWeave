@@ -27,6 +27,9 @@ jobs:
       - name: ESLint — Backend
         run: npm run lint --workspace=backend
 
+      - name: Prisma generate (for type inference)
+        run: npx prisma generate --schema=backend/prisma/schema.prisma
+
       - name: TypeScript type check
         run: npm run type-check --workspaces --if-present
 
