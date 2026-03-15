@@ -26,14 +26,16 @@ PharmWeave는 약사의 실제 업무 흐름을 그대로 반영한 **6단계 Wo
 |------|------|
 | **🔄 Workflow Stepper** | 6단계 업무 흐름 시각화. 현재 단계 이모지 강조, 완료/대기 단계 구분 표시 |
 | **🏥 환자 접수** | 이름/생년월일 자동완성 검색 → 기존 환자 선택 또는 신규 등록 → 방문 생성 |
-| **📋 처방 입력** | 약품 코드/이름 자동완성 검색 → 수량·투약일수 입력 → 처방 항목 upsert |
+| **📋 처방 입력** | 약품 코드/이름 자동완성 드롭다운 → 수량·투약일수 입력 → 처방 항목 upsert |
 | **💊 조제 확인** | 처방 항목 체크리스트. 전체 체크 완료 시 다음 단계 활성화 |
 | **💳 수납 처리** | 본인부담금 자동 계산 (약제비 × 30%, 1만원 미만 × 20%). 현금/카드/계좌이체 선택 |
 | **📄 청구 생성** | 처방·수납 데이터 기반 건강보험 청구 JSONB 자동 생성 |
 | **🔌 Plugin 관리** | DUR 검사 · 복약지도 생성 Plugin ON/OFF 토글. 활성화 시 해당 단계 UI에 자동 노출 |
-| **🌙 다크 모드** | 헤더 토글 버튼으로 라이트/다크 전환. `localStorage`에 설정 유지 |
+| **🌙 다크 모드** | 기본 다크 모드. 헤더 토글로 라이트/다크 전환. `localStorage`에 설정 유지 |
 | **🔔 Toast 알림** | 작업 성공·실패·정보 알림을 화면 우하단에 4초 자동 표시 |
 | **👥 단계별 대기 현황** | 접수 화면에서 전체 6단계 대기 환자를 한눈에 확인 |
+| **✅ 필드별 폼 유효성** | 이름·생년월일·전화번호·의원명 필드별 `aria-invalid` 인라인 에러 표시 |
+| **⚠️ 환자 전환 확인** | 진행 중 방문이 있을 때 다른 환자 선택 시 `ConfirmDialog`로 전환 확인 |
 
 ---
 
@@ -42,7 +44,7 @@ PharmWeave는 약사의 실제 업무 흐름을 그대로 반영한 **6단계 Wo
 ```
 Frontend (React + Vite)               Backend (Express + TypeScript)
   pages/          URL 진입점    ←→      routes/      HTTP 수신 · Zod 검증
-  features/       단계별 UI             services/    유스케이스 조율 · Prisma 호출
+  features/       단계별 UI             services/    유스케이스 조율 · Repository 호출
   hooks/          API 캡슐화            domain/      순수 비즈니스 규칙 (외부 의존 없음)
   stores/         Zustand 전역 상태     plugins/     확장 기능 실행
   api/            Axios client                        ↓
@@ -72,12 +74,12 @@ Frontend (React + Vite)               Backend (Express + TypeScript)
 
 | 구분 | 기술 |
 |------|------|
-| Frontend | React 18, TypeScript 5, Vite 8, Tailwind CSS 3, Zustand 4, Axios 1, React Router 6 |
-| Frontend 테스트 | Vitest 4 (store 단위 테스트 20개) |
+| Frontend | React 18, TypeScript 5, Vite 5, Tailwind CSS 3, Zustand 4, Axios 1, React Router 6 |
+| Frontend 테스트 | Vitest 4 (store 단위 테스트 20개), Playwright (E2E 4 spec) |
 | Backend | Node.js 20, Express 4, TypeScript 5, Prisma 5, Zod 3, jsonwebtoken 9, bcryptjs 2 |
-| Backend 테스트 | Vitest (단위 22개 + 통합 44개 = 66개), Supertest |
+| Backend 테스트 | Jest 29 (단위 22개 + 통합 61개 + 서비스 8개 = 91개), Supertest |
 | Database | PostgreSQL (Neon — Serverless) |
-| Infra | Vercel (Frontend CDN + Serverless Functions), GitHub Actions 5-stage CI/CD |
+| Infra | Vercel (Frontend CDN + Serverless Functions), GitHub Actions 9-stage CI/CD |
 
 ---
 
@@ -85,46 +87,57 @@ Frontend (React + Vite)               Backend (Express + TypeScript)
 
 ```
 pharmweave/
-├── .github/workflows/ci.yml   # CI/CD 파이프라인 (5단계)
+├── .github/workflows/ci.yml   # CI/CD 파이프라인 (9단계)
 ├── docs/
-│   ├── PRD.md                 # 제품 요구사항 문서 (TL;DR Executive Summary 포함)
-│   └── DEVLOG.md              # 개발 진행 기록 (ADR, 트레이드오프)
+│   ├── PRD.md                 # 제품 요구사항 문서 (성공 지표 포함)
+│   └── DEVLOG.md              # 개발 진행 기록 (ADR 27개, 트레이드오프)
 ├── frontend/
+│   ├── e2e/                   # Playwright E2E 테스트 (4 spec)
+│   │   ├── smoke.spec.ts      # 페이지 로딩, Stepper, 다크모드
+│   │   ├── api.spec.ts        # HTTP API 계약 검증
+│   │   ├── reception.spec.ts  # 접수 화면 E2E
+│   │   └── workflow-navigation.spec.ts  # 6단계 라우팅
 │   └── src/
 │       ├── pages/             # URL 진입점 (6단계 + PluginManage)
 │       ├── features/          # 단계별 도메인 컴포넌트
-│       │   ├── reception/     # 환자 검색·등록, 단계별 대기 현황 대시보드
-│       │   ├── prescription/  # 처방전 정보, 약품 자동완성 추가
+│       │   ├── reception/     # 환자 검색·등록, 대기 현황 대시보드, 필드별 폼 유효성
+│       │   ├── prescription/  # 처방전 정보, 약품 자동완성 드롭다운, 필드별 폼 유효성
 │       │   ├── dispensing/    # 조제 체크리스트
-│       │   ├── review/        # 처방 검토, Plugin 슬롯 (DUR·복약지도)
+│       │   ├── review/        # 처방 검토, Plugin 슬롯, 로딩 Spinner
 │       │   ├── payment/       # 본인부담금 계산, 결제 방법 선택
 │       │   ├── claim/         # 청구 데이터 생성, 업무 완료
 │       │   └── plugins/       # Plugin ON/OFF 관리
 │       ├── components/
 │       │   ├── WorkflowLayout.tsx   # 헤더(다크모드 토글), Stepper, Toast 컨테이너
 │       │   ├── WorkflowStepper.tsx  # 6단계 이모지 진행 표시
-│       │   ├── StagePatientList.tsx # 단계별 대기 환자 목록
+│       │   ├── StagePatientList.tsx # 단계별 대기 환자 목록 (환자 전환 ConfirmDialog)
 │       │   ├── PluginSlot.tsx       # Plugin 결과 렌더링
 │       │   └── ui/
 │       │       ├── Spinner.tsx      # 로딩 스피너
-│       │       └── Toast.tsx        # Toast 알림 컨테이너
+│       │       ├── Toast.tsx        # Toast 알림 컨테이너
+│       │       └── ConfirmDialog.tsx # 범용 확인 모달 (ESC·배경클릭, variant: danger/default)
 │       ├── hooks/             # API 훅 (usePatient, useVisit, usePrescription, usePayment, usePlugin, useToast)
 │       ├── stores/            # Zustand 전역 상태
 │       │   ├── workflowStore.ts    # visitId, currentStage, patient
 │       │   ├── pluginStore.ts      # Plugin 목록 및 활성화 상태
 │       │   ├── toastStore.ts       # Toast 알림 큐 (4초 자동 삭제)
-│       │   └── themeStore.ts       # 라이트/다크 테마 (localStorage 유지)
+│       │   └── themeStore.ts       # 다크/라이트 테마 (localStorage 유지, 기본 dark)
 │       └── api/               # Axios client + endpoints
 ├── backend/
 │   └── src/
 │       ├── routes/            # HTTP 라우터 (8개 리소스)
-│       ├── middlewares/       # auth (JWT), validate (Zod)
+│       ├── middlewares/       # auth (JWT), validate (Zod), errorHandler
 │       ├── services/          # 유스케이스 (PatientService, VisitService, PrescriptionService, ...)
+│       │   └── __tests__/     # 서비스 단위 테스트 (PluginService 8개)
 │       ├── domain/            # 순수 비즈니스 로직 (외부 의존 없음)
 │       │   └── __tests__/     # 단위 테스트 22개
 │       ├── plugins/           # medicationGuide.ts, durPlugin.ts
 │       ├── schemas/           # Zod 요청 스키마
-│       └── __tests__/integration/  # 통합 테스트 44개 (Prisma mocked)
+│       └── __tests__/integration/  # 통합 테스트 61개 (Prisma mocked)
+│           ├── auth.test.ts, patients.test.ts, visits.test.ts
+│           ├── prescriptions.test.ts, payments.test.ts, claims.test.ts
+│           ├── drugs.test.ts   # GET /api/drugs (4)
+│           └── plugins.test.ts # GET/PATCH/POST /api/plugins (9)
 │   └── prisma/
 │       ├── schema.prisma      # User · Patient · Visit · Prescription · Payment · Claim · Drug · PluginConfig
 │       └── seed.ts
@@ -191,13 +204,19 @@ VITE_API_BASE_URL=http://localhost:3000/api
 # Frontend 스토어 단위 테스트 (Vitest — 20개)
 npm run test --workspace=frontend
 
+# Frontend E2E 테스트 (Playwright — 4 spec, 로컬 dev 서버 필요)
+npm run test:e2e --workspace=frontend
+
+# Frontend E2E 테스트 (프로덕션 대상)
+npm run test:e2e:prod --workspace=frontend
+
 # Backend 단위 테스트 (Domain Layer — 22개)
 npm run test:unit --workspace=backend
 
-# Backend 통합 테스트 (API Layer, Prisma mocked — 44개)
+# Backend 통합 테스트 (API Layer, Prisma mocked — 61개)
 npm run test:integration --workspace=backend
 
-# Backend 전체 테스트 (단위 + 통합 — 66개)
+# Backend 전체 테스트 (단위 + 통합 + 서비스 — 91개)
 npm run test:all --workspace=backend
 
 # 커버리지 포함 전체 실행
@@ -212,45 +231,80 @@ frontend/src/stores/__tests__/          # Frontend 단위 테스트 (20개, Vite
   ├── pluginStore.test.ts               # Plugin 목록·활성화 토글 (6)
   └── toastStore.test.ts                # Toast 추가·자동삭제·수동삭제 (9)
 
-backend/src/domain/__tests__/           # Backend 단위 테스트 (22개)
+frontend/e2e/                           # Frontend E2E 테스트 (4 spec, Playwright)
+  ├── smoke.spec.ts                     # 페이지 로딩, Stepper, 다크모드, Plugin 이동
+  ├── api.spec.ts                       # /api/health, 인증, /api/drugs HTTP 계약
+  ├── reception.spec.ts                 # 접수 화면 UI, 환자 검색 폼
+  └── workflow-navigation.spec.ts       # 6단계 라우팅, 미선택 단계 disabled
+
+backend/src/domain/__tests__/           # Backend 단위 테스트 (22개, Jest)
   ├── WorkflowStateMachine.test.ts      # 단계 전환 유효성 (7)
   ├── CopayCalculator.test.ts           # 본인부담금 계산 (8)
   └── ClaimDataBuilder.test.ts          # 청구 데이터 빌더 (7)
 
-backend/src/__tests__/integration/      # Backend 통합 테스트 (44개) — Prisma mocked
+backend/src/__tests__/integration/      # Backend 통합 테스트 (61개, Jest + Supertest)
   ├── auth.test.ts                      # POST /register, POST /login (6)
   ├── patients.test.ts                  # GET /patients, POST /patients (8)
   ├── visits.test.ts                    # POST /visits, GET /today, PATCH /stage (9)
   ├── prescriptions.test.ts             # POST /prescriptions, GET /prescriptions (7)
   ├── payments.test.ts                  # POST /payment, GET /payment (7)
-  └── claims.test.ts                    # POST /claim, GET /claim (7)
+  ├── claims.test.ts                    # POST /claim, GET /claim (7)
+  ├── drugs.test.ts                     # GET /drugs?q= (4)
+  └── plugins.test.ts                   # GET/PATCH /plugins, POST /execute (9)
+
+backend/src/services/__tests__/         # Backend 서비스 단위 테스트 (8개, Jest)
+  └── PluginService.test.ts             # list·toggle·execute (8)
 ```
 
-**총 86개 테스트** (Frontend 20 + Backend 단위 22 + Backend 통합 44)
+**총 103개 테스트** (Frontend 20 + Backend 단위 22 + Backend 통합 61 + Backend 서비스 8)
+
+### 커버리지 (Backend 기준)
+
+| 지표 | 전체 | domain | routes | services |
+|------|------|--------|--------|----------|
+| Statements | **98%+** | 100% | 100% | 100% |
 
 ### 테스트 전략
 
-| 레이어 | 방식 | 목적 |
+| 레이어 | 도구 | 목적 |
 |--------|------|------|
-| Frontend Store | Vitest 단위 테스트 | Zustand 상태 전이 및 타이머 동작 검증 |
-| Domain | Vitest 단위 테스트 | 외부 의존 없는 순수 함수 검증 |
-| API (routes → services) | Vitest + Supertest + Prisma mocked | 6개 리소스 전체 HTTP 계약 검증 |
+| Frontend Store | Vitest 단위 | Zustand 상태 전이 및 타이머 동작 검증 |
+| Frontend E2E | Playwright (Chromium) | 실제 브라우저 UI·라우팅·API 통합 검증 |
+| Domain | Jest 단위 | 외부 의존 없는 순수 함수 검증 |
+| API (routes → services) | Jest + Supertest + Prisma mocked | 8개 리소스 전체 HTTP 계약 검증 |
+| Service | Jest 단위 (Repository 주입) | Plugin 비즈니스 로직 격리 검증 |
 | DB 마이그레이션 | CI PostgreSQL 15 서비스 컨테이너 | `prisma migrate deploy` 정합성 검증 |
 
 ---
 
-## 📦 CI/CD 파이프라인
+## 📦 CI/CD 파이프라인 (9단계)
 
-`main` 브랜치 push 또는 PR 시 GitHub Actions **5단계** 파이프라인 자동 실행.
+`main` 브랜치 push 또는 PR 시 GitHub Actions **9단계** 파이프라인 자동 실행.
 `workflow_dispatch`로 수동 실행 지원 → [Actions 탭에서 확인](https://github.com/Satoshi-ubcare/PharmWeave/actions/workflows/ci.yml)
 
-| 단계 | Job 이름 | 내용 | 전제 조건 |
-|------|----------|------|-----------|
+### 품질 게이트
+
+| 단계 | Job | 내용 | 전제 조건 |
+|------|-----|------|-----------|
 | 1 | `Lint & Type Check` | ESLint (max-warnings 0) + tsc --noEmit (frontend · backend) | — |
-| 2 | `Tests + Migration` | Frontend 20 + Backend 66 테스트 + prisma migrate deploy (PostgreSQL 컨테이너) | 1 통과 |
+| 2 | `Tests + Migration` | Frontend 20 + Backend 91 테스트 + prisma migrate deploy (PostgreSQL 컨테이너) | 1 통과 |
 | 3 | `Build Validation` | Vite build (frontend) + tsc compile (backend) | 2 통과 |
-| 4 | `Deploy to Vercel` | Vercel Production 배포 (main push 시에만) | 3 통과 |
-| 5 | `Smoke Test` | GET /api/health (200) + POST /api/auth/login (DB 연결 확인) · 최대 3회 재시도 | 4 통과 |
+
+### 스테이징 검증 게이트 ← 프로덕션 배포 전 필수 통과
+
+| 단계 | Job | 내용 | 전제 조건 |
+|------|-----|------|-----------|
+| 4 | `Staging Deploy` | Vercel Preview 배포 (`--prod` 없음, 격리된 스테이징 URL) | 3 통과 · main push |
+| 5 | `Staging Smoke` | 스테이징 URL: health·DB·drugs/plugins/visits API·SLO < 3000ms | 4 통과 |
+| 6 | `E2E Tests` | Playwright 4 spec (스테이징 URL 대상, Chromium) · 리포트 아티팩트 7일 보관 | 5 통과 |
+
+### 프로덕션 배포
+
+| 단계 | Job | 내용 | 전제 조건 |
+|------|-----|------|-----------|
+| 7 | `Deploy to Production` | Vercel Production 배포 (`--prod`) | 6 통과 |
+| 8 | `Production Smoke` | health·인증·API·SLO < 3000ms·동시 10요청 (80%+ 성공) | 7 통과 |
+| 9 | `Auto Rollback` | `vercel rollback` → 롤백 후 헬스 재검증 | **8 실패 시** 자동 실행 |
 
 ```yaml
 # .github/workflows/ci.yml 트리거
@@ -258,11 +312,13 @@ on:
   push:            { branches: [main] }
   pull_request:    { branches: [main] }
   workflow_dispatch:                    # 수동 실행
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true             # 동일 브랜치 이전 실행 자동 취소
 ```
 
 **배포 구성:** Frontend(React 정적 빌드)와 Backend(Express Serverless Function `api/index.ts`)를 Vercel 단일 플랫폼에 배포. `vercel.json`의 rewrites 규칙으로 `/api/*` → Serverless Function, 나머지 → `index.html` SPA 라우팅.
-
-**롤백 전략:** Smoke Test 실패 시 → Vercel 대시보드 Deployments → 이전 배포 → **Promote to Production** (또는 `git revert HEAD` 후 push)
 
 ---
 
