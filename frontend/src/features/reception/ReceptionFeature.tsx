@@ -3,7 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePatientSearch, usePatientCreate } from '@/hooks/usePatient'
 import { useVisitCreate, useWorkflowStage } from '@/hooks/useVisit'
-import type { Patient } from '@/types'
+import StagePatientList from '@/components/StagePatientList'
+import type { Patient, WorkflowStage } from '@/types'
+
+const STAGE_ROUTES: { stage: WorkflowStage; path: string }[] = [
+  { stage: 'prescription', path: '/prescription' },
+  { stage: 'dispensing',   path: '/dispensing' },
+  { stage: 'review',       path: '/review' },
+  { stage: 'payment',      path: '/payment' },
+  { stage: 'claim',        path: '/claim' },
+]
 
 export default function ReceptionFeature() {
   const navigate = useNavigate()
@@ -220,6 +229,20 @@ export default function ReceptionFeature() {
       {error && (
         <p role="alert" className="text-red-600 text-sm">{error}</p>
       )}
+
+      {/* 단계별 대기 현황 */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-800 mb-3">오늘의 단계별 대기 현황</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {STAGE_ROUTES.map(({ stage, path }) => (
+            <StagePatientList
+              key={stage}
+              stage={stage}
+              onSelect={() => navigate(path)}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

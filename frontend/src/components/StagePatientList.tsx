@@ -4,6 +4,7 @@ import type { WorkflowStage } from '@/types'
 
 interface Props {
   stage: WorkflowStage
+  onSelect?: () => void
 }
 
 const STAGE_LABEL: Record<string, string> = {
@@ -14,9 +15,15 @@ const STAGE_LABEL: Record<string, string> = {
   claim: '청구',
 }
 
-export default function StagePatientList({ stage }: Props) {
+export default function StagePatientList({ stage, onSelect }: Props) {
   const { visitId, setVisit } = useWorkflowStore()
   const { visits, loading, refresh } = useVisitsByStage(stage)
+
+  const handleSelect = (v: (typeof visits)[number]) => {
+    if (!v.patient) return
+    setVisit(v, v.patient)
+    onSelect?.()
+  }
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -38,7 +45,7 @@ export default function StagePatientList({ stage }: Props) {
       {loading && <p className="text-xs text-gray-400 py-2">불러오는 중...</p>}
 
       {!loading && visits.length === 0 && (
-        <p className="text-xs text-gray-400 py-2">대기 환자가 없습니다.</p>
+        <p className="text-xs text-gray-400 py-2">대기 환자 없음</p>
       )}
 
       {!loading && visits.length > 0 && (
@@ -46,7 +53,7 @@ export default function StagePatientList({ stage }: Props) {
           {visits.map((v) => (
             <li key={v.id}>
               <button
-                onClick={() => v.patient && setVisit(v, v.patient)}
+                onClick={() => handleSelect(v)}
                 className={[
                   'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
                   v.id === visitId
