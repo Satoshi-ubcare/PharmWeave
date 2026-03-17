@@ -39,26 +39,32 @@ export default function WorkflowStepper({ currentStage, patient }: WorkflowStepp
       <div className="max-w-5xl mx-auto flex items-center gap-6">
 
         {/* 환자 정보 */}
-        <div className="flex-shrink-0 w-28">
+        <div className="flex-shrink-0">
           {patient ? (
-            <>
-              <p className="text-[9px] font-semibold tracking-[0.14em] uppercase text-blue-600 dark:text-blue-400 mb-1">
-                현재 환자
-              </p>
-              <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
-                {patient.name}
-              </p>
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-600 mt-0.5 tabular-nums">
-                {String(patient.birth_date).slice(0, 10)}
-              </p>
-            </>
+            <div className="flex items-center gap-2.5 px-3 py-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25 rounded-xl">
+              {/* 아바타 */}
+              <div className="w-9 h-9 bg-[#246AFE] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                <span className="text-white text-base font-bold leading-none">{patient.name[0]}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-blue-600 dark:text-blue-400 mb-0.5">
+                  현재 환자
+                </p>
+                <p className="text-base font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
+                  {patient.name}
+                </p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5 tabular-nums">
+                  {String(patient.birth_date).slice(0, 10)}
+                </p>
+              </div>
+            </div>
           ) : (
-            <>
-              <p className="text-[9px] font-semibold tracking-[0.14em] uppercase text-zinc-300 dark:text-zinc-700 mb-1">
+            <div className="px-3 py-2 w-36">
+              <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-zinc-300 dark:text-zinc-700 mb-1">
                 환자 미선택
               </p>
               <p className="text-sm text-zinc-300 dark:text-zinc-700">—</p>
-            </>
+            </div>
           )}
         </div>
 
