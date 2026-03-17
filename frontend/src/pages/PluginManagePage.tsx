@@ -19,7 +19,6 @@ export default function PluginManagePage() {
         </div>
       </header>
       <main className="max-w-5xl mx-auto px-8 py-8">
-        <h1 className="text-2xl font-bold text-[#0B0A0A] dark:text-zinc-100 mb-6">Plugin 관리</h1>
         <PluginManageFeature />
       </main>
     </div>
