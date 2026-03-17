@@ -24,6 +24,38 @@
   }
 }
 
+/* ── 커스텀 스크롤바 ─────────────────────────────────────── */
+/* Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #246AFE40;
+  border-radius: 99px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #246AFE;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #246AFE30;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #246AFE99;
+}
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #246AFE40 transparent;
+}
+.dark * {
+  scrollbar-color: #246AFE30 transparent;
+}
+
 @layer utilities {
   /* 공통 섹션 레이블 스타일 */
   .label-tag {

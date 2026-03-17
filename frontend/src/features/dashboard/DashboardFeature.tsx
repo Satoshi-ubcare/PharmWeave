@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useDashboardStats } from '@/hooks/useDashboard'
 import { useWorkflowStore } from '@/stores/workflowStore'
+import { useAutoScroll } from '@/hooks/useAutoScroll'
 import Spinner from '@/components/ui/Spinner'
 import type { WorkflowStage } from '@/types'
 
@@ -82,10 +83,20 @@ function StageBadge({ stage }: { stage: WorkflowStage }) {
 }
 
 // ─── 메인 컴포넌트 ────────────────────────────────────────
+// 자동 롤링 임계값
+const VISIT_ROLL_THRESHOLD = 8
+const PIPELINE_ROLL_THRESHOLD = 6
+
 export default function DashboardFeature() {
   const navigate = useNavigate()
   const { setVisit } = useWorkflowStore()
   const { stats, loading, error, lastUpdated, refresh } = useDashboardStats()
+
+  const visitCount = stats?.recentVisits.length ?? 0
+  const pipelineCount = stats ? Object.values(stats.byStage).reduce((a, b) => a + b, 0) : 0
+
+  const visitScroll = useAutoScroll<HTMLDivElement>(visitCount, VISIT_ROLL_THRESHOLD, 0.4)
+  const pipelineScroll = useAutoScroll<HTMLDivElement>(pipelineCount, PIPELINE_ROLL_THRESHOLD, 0.3)
 
   const handleVisitClick = (visit: { id: string; patient: { name: string; birth_date: string }; workflow_stage: WorkflowStage; visited_at: string }) => {
     const stageMeta = STAGE_META.find((s) => s.stage === visit.workflow_stage)
@@ -201,7 +212,12 @@ export default function DashboardFeature() {
           <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
             단계별 대기 현황
           </p>
-          <div className="space-y-2 overflow-y-auto max-h-[280px] pr-1">
+          <div
+            ref={pipelineScroll.ref}
+            onMouseEnter={pipelineScroll.onMouseEnter}
+            onMouseLeave={pipelineScroll.onMouseLeave}
+            className="space-y-2 overflow-y-auto max-h-[280px] pr-1"
+          >
             {pipelineStages.map(({ stage, label, path }) => {
               const count = stats.byStage[stage] ?? 0
               const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0
@@ -267,7 +283,12 @@ export default function DashboardFeature() {
               오늘 방문 내역이 없습니다.
             </p>
           ) : (
-            <div className="overflow-auto max-h-[352px]">
+            <div
+              ref={visitScroll.ref}
+              onMouseEnter={visitScroll.onMouseEnter}
+              onMouseLeave={visitScroll.onMouseLeave}
+              className="overflow-auto max-h-[352px]"
+            >
               <table className="w-full text-sm">
                 <thead className="sticky top-0 z-10 bg-white dark:bg-zinc-900">
                   <tr className="text-[10px] tracking-[0.1em] uppercase text-zinc-400 dark:text-zinc-600 border-b border-zinc-100 dark:border-zinc-800">
