@@ -140,6 +140,24 @@ export default function PrescriptionFeature() {
   const inputBase = 'w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-[#0B0A0A] dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors'
   const totalCost = items.reduce((sum, item) => sum + item.unit_price * item.quantity * item.days, 0)
 
+  const [displayCost, setDisplayCost] = useState(0)
+  const prevCostRef = useRef(0)
+  useEffect(() => {
+    const start = prevCostRef.current
+    const end = totalCost
+    prevCostRef.current = end
+    if (start === end) return
+    const duration = 450
+    const startTime = performance.now()
+    const animate = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setDisplayCost(Math.round(start + (end - start) * eased))
+      if (t < 1) requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+  }, [totalCost])
+
   return (
     <div className="space-y-6">
       <div className="space-y-1">
@@ -291,9 +309,16 @@ export default function PrescriptionFeature() {
                 <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
                   처방 항목 ({items.length})
                 </p>
-                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                  합계 {totalCost.toLocaleString()}원
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
+                    합계 {displayCost.toLocaleString()}원
+                  </span>
+                  {totalCost > 0 && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                      본인부담 {totalCost >= 10000 ? 30 : 20}%
+                    </span>
+                  )}
+                </div>
               </div>
               <div
                 ref={itemsScroll.ref}

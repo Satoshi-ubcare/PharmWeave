@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
@@ -15,6 +15,8 @@ export default function DispensingFeature() {
   const { loading: submitting, error: stageError, transition } = useWorkflowStage()
   const { toast } = useToast()
   const [checked, setChecked] = useState<Record<string, boolean>>({})
+  const [justCompleted, setJustCompleted] = useState(false)
+  const justCompletedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const itemCount = prescription?.items.length ?? 0
   const checklistScroll = useAutoScroll<HTMLUListElement>(itemCount, 5)
 
@@ -26,6 +28,7 @@ export default function DispensingFeature() {
     const init: Record<string, boolean> = {}
     prescription.items.forEach((item) => { init[item.id] = false })
     setChecked(init)
+    setJustCompleted(false)
   }, [prescription])
 
   const allChecked = prescription
@@ -33,6 +36,17 @@ export default function DispensingFeature() {
     : false
 
   const checkedCount = Object.values(checked).filter(Boolean).length
+
+  useEffect(() => {
+    if (allChecked && prescription) {
+      setJustCompleted(true)
+      justCompletedTimerRef.current = setTimeout(() => setJustCompleted(false), 3000)
+    } else if (!allChecked) {
+      setJustCompleted(false)
+      if (justCompletedTimerRef.current) clearTimeout(justCompletedTimerRef.current)
+    }
+    return () => { if (justCompletedTimerRef.current) clearTimeout(justCompletedTimerRef.current) }
+  }, [allChecked, prescription])
 
   const handleComplete = async () => {
     if (!visitId || !allChecked) return
@@ -43,6 +57,16 @@ export default function DispensingFeature() {
 
   return (
     <div className="space-y-6">
+      <style>{`
+        @keyframes checkStroke {
+          from { stroke-dashoffset: 14; }
+          to   { stroke-dashoffset: 0; }
+        }
+        @keyframes bannerFade {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       <div className="space-y-1">
         <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
           Step 03
@@ -89,7 +113,7 @@ export default function DispensingFeature() {
                 {/* Progress bar */}
                 <div className="w-24 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full mt-1.5 overflow-hidden">
                   <div
-                    className="h-full bg-[#246AFE] transition-all duration-300"
+                    className={`h-full transition-all duration-500 ${allChecked ? 'bg-emerald-500' : 'bg-[#246AFE]'}`}
                     style={{ width: `${prescription.items.length > 0 ? (checkedCount / prescription.items.length) * 100 : 0}%` }}
                   />
                 </div>
@@ -122,7 +146,8 @@ export default function DispensingFeature() {
                       : 'border-zinc-300 dark:border-zinc-700',
                   ].join(' ')}>
                     {checked[item.id] && (
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5">
+                      <svg key={`chk-${item.id}`} width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5"
+                        style={{ strokeDasharray: 14, strokeDashoffset: 0, animation: 'checkStroke 0.25s ease-out both' }}>
                         <polyline points="2,6 5,9 10,3" />
                       </svg>
                     )}
@@ -144,6 +169,18 @@ export default function DispensingFeature() {
             </ul>
           </div>
 
+          {justCompleted && (
+            <div
+              className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3"
+              style={{ animation: 'bannerFade 0.3s ease-out both' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="7" stroke="#10b981" strokeWidth="1.5" />
+                <polyline points="5,8 7,10 11,6" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">모든 항목 조제 완료! 검토 단계로 이동할 수 있습니다.</span>
+            </div>
+          )}
           <div className="flex justify-end">
             <button
               onClick={handleComplete}

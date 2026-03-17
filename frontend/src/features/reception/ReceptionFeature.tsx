@@ -10,6 +10,22 @@ import Spinner from '@/components/ui/Spinner'
 import type { Patient, WorkflowStage, InsuranceType, CopayExemption } from '@/types'
 import { INSURANCE_TYPE_LABELS, COPAY_EXEMPTION_LABELS } from '@/types'
 
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>
+  const lower = text.toLowerCase()
+  const idx = lower.indexOf(query.toLowerCase())
+  if (idx === -1) return <>{text}</>
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-yellow-200 dark:bg-yellow-800/40 text-yellow-900 dark:text-yellow-200 not-italic rounded px-0.5">
+        {text.slice(idx, idx + query.length)}
+      </mark>
+      {text.slice(idx + query.length)}
+    </>
+  )
+}
+
 const STAGE_ROUTES: { stage: WorkflowStage; path: string }[] = [
   { stage: 'prescription', path: '/prescription' },
   { stage: 'dispensing',   path: '/dispensing' },
@@ -237,8 +253,12 @@ export default function ReceptionFeature() {
                       onClick={() => handleSelectPatient(p)}
                       className="w-full text-left px-4 py-3 hover:bg-blue-50/50 dark:hover:bg-zinc-800 transition-colors text-sm border-b border-zinc-100 dark:border-zinc-800 last:border-0"
                     >
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{p.name}</span>
-                      <span className="text-zinc-400 dark:text-zinc-600 ml-3 text-xs">{String(p.birth_date).slice(0, 10)}</span>
+                      <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                        <HighlightText text={p.name} query={query} />
+                      </span>
+                      <span className="text-zinc-400 dark:text-zinc-600 ml-3 text-xs">
+                        <HighlightText text={String(p.birth_date).slice(0, 10)} query={query} />
+                      </span>
                       {p.phone && <span className="text-zinc-400 dark:text-zinc-600 ml-3 text-xs">{p.phone}</span>}
                     </button>
                   </li>

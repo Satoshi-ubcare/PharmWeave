@@ -53,10 +53,36 @@ export default function ClaimFeature() {
   if (completed) {
     return (
       <div className="flex flex-col items-center justify-center py-24 space-y-6 text-center">
-        {/* Success mark */}
-        <div className="w-16 h-16 border-2 border-blue-500 rounded-full flex items-center justify-center">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#246AFE" strokeWidth="2.5">
-            <polyline points="20,6 9,17 4,12" />
+        <style>{`
+          @keyframes circleStroke {
+            from { stroke-dashoffset: 176; }
+            to   { stroke-dashoffset: 0; }
+          }
+          @keyframes checkDraw {
+            from { stroke-dashoffset: 60; }
+            to   { stroke-dashoffset: 0; }
+          }
+          @keyframes completeFadeIn {
+            from { opacity: 0; transform: scale(0.85); }
+            to   { opacity: 1; transform: scale(1); }
+          }
+        `}</style>
+        {/* Animated success mark */}
+        <div style={{ animation: 'completeFadeIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <circle
+              cx="32" cy="32" r="28"
+              stroke="#246AFE" strokeWidth="2.5"
+              strokeDasharray="176" strokeDashoffset="0"
+              transform="rotate(-90 32 32)"
+              style={{ animation: 'circleStroke 0.6s ease-out both' }}
+            />
+            <polyline
+              points="20,33 28,41 44,23"
+              stroke="#246AFE" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              strokeDasharray="60" strokeDashoffset="0"
+              style={{ animation: 'checkDraw 0.4s ease-out 0.5s both' }}
+            />
           </svg>
         </div>
         <div className="space-y-1.5">
