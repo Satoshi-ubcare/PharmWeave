@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescriptionSave, useDrugSearch } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
+import { useClinicSearch } from '@/hooks/useClinic'
 import { useToast } from '@/hooks/useToast'
 import StagePatientList from '@/components/StagePatientList'
 import Spinner from '@/components/ui/Spinner'
@@ -29,10 +30,13 @@ export default function PrescriptionFeature() {
 
   const [drugQuery, setDrugQuery] = useState('')
   const [showDrugDropdown, setShowDrugDropdown] = useState(false)
+  const [showClinicDropdown, setShowClinicDropdown] = useState(false)
   const [formErrors, setFormErrors] = useState({ clinicName: '', items: '' })
   const drugDropdownRef = useRef<HTMLDivElement>(null)
+  const clinicDropdownRef = useRef<HTMLDivElement>(null)
 
   const { results: drugResults, loading: drugSearching, error: drugError, search: searchDrug, clear: clearDrug } = useDrugSearch()
+  const { results: clinicResults, loading: clinicSearching, search: searchClinic, clear: clearClinic } = useClinicSearch()
   const { loading: saving, error: saveError, save } = usePrescriptionSave()
   const { error: stageError, transition } = useWorkflowStage()
 
@@ -47,9 +51,11 @@ export default function PrescriptionFeature() {
     setItems([])
     setDrugQuery('')
     setShowDrugDropdown(false)
+    setShowClinicDropdown(false)
     setFormErrors({ clinicName: '', items: '' })
     clearDrug()
-  }, [visitId, clearDrug])
+    clearClinic()
+  }, [visitId, clearDrug, clearClinic])
 
   useEffect(() => {
     if (drugQuery.trim().length < 1) {
@@ -69,10 +75,27 @@ export default function PrescriptionFeature() {
       if (drugDropdownRef.current && !drugDropdownRef.current.contains(e.target as Node)) {
         setShowDrugDropdown(false)
       }
+      if (clinicDropdownRef.current && !clinicDropdownRef.current.contains(e.target as Node)) {
+        setShowClinicDropdown(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // 의료기관명 자동완성
+  useEffect(() => {
+    if (clinicName.trim().length < 1) {
+      clearClinic()
+      setShowClinicDropdown(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      searchClinic(clinicName)
+      setShowClinicDropdown(true)
+    }, 250)
+    return () => clearTimeout(timer)
+  }, [clinicName, searchClinic, clearClinic])
 
   const addItem = (drug: Drug) => {
     if (items.find((i) => i.drug_code === drug.drug_code)) return
@@ -141,18 +164,53 @@ export default function PrescriptionFeature() {
               처방전 정보
             </p>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5" ref={clinicDropdownRef}>
                 <label className="block text-xs text-zinc-500 dark:text-zinc-500">의료기관명 *</label>
-                <input
-                  type="text"
-                  value={clinicName}
-                  onChange={(e) => {
-                    setClinicName(e.target.value)
-                    if (formErrors.clinicName) setFormErrors((prev) => ({ ...prev, clinicName: '' }))
-                  }}
-                  aria-invalid={!!formErrors.clinicName}
-                  className={cn(inputBase, formErrors.clinicName && 'border-red-400 dark:border-red-600')}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={clinicName}
+                    onChange={(e) => {
+                      setClinicName(e.target.value)
+                      if (formErrors.clinicName) setFormErrors((prev) => ({ ...prev, clinicName: '' }))
+                    }}
+                    onFocus={() => clinicResults.length > 0 && setShowClinicDropdown(true)}
+                    placeholder="기관명 입력 — 저장된 기관 자동완성"
+                    aria-invalid={!!formErrors.clinicName}
+                    className={cn(inputBase, formErrors.clinicName && 'border-red-400 dark:border-red-600')}
+                  />
+                  {clinicSearching && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">검색 중</span>
+                  )}
+
+                  {showClinicDropdown && clinicResults.length > 0 && (
+                    <ul className="absolute z-20 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded shadow-2xl overflow-hidden max-h-48 overflow-y-auto">
+                      {clinicResults.map((clinic) => (
+                        <li key={clinic.id}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setClinicName(clinic.name)
+                              setShowClinicDropdown(false)
+                              clearClinic()
+                              if (formErrors.clinicName) setFormErrors((prev) => ({ ...prev, clinicName: '' }))
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-sm border-b border-zinc-100 dark:border-zinc-800 last:border-0"
+                          >
+                            <span className="font-medium text-zinc-900 dark:text-zinc-100">{clinic.name}</span>
+                            {clinic.phone && (
+                              <span className="text-zinc-400 dark:text-zinc-600 ml-2 text-xs">{clinic.phone}</span>
+                            )}
+                            {clinic.address && (
+                              <span className="block text-zinc-400 dark:text-zinc-600 text-xs mt-0.5 truncate">{clinic.address}</span>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
                 {formErrors.clinicName && (
                   <p role="alert" className="text-xs text-red-400">{formErrors.clinicName}</p>
                 )}

@@ -4,6 +4,7 @@ import {
   PrismaPrescriptionRepository,
 } from '../repositories/PrescriptionRepository'
 import { IVisitRepository, PrismaVisitRepository } from '../repositories/VisitRepository'
+import { IClinicRepository, PrismaClinicRepository } from '../repositories/ClinicRepository'
 import type { PrescriptionWithItems } from '../repositories/PrescriptionRepository'
 
 interface UpsertPrescriptionInput {
@@ -23,11 +24,15 @@ export class PrescriptionService {
   constructor(
     private readonly prescriptionRepo: IPrescriptionRepository = new PrismaPrescriptionRepository(),
     private readonly visitRepo: IVisitRepository = new PrismaVisitRepository(),
+    private readonly clinicRepo: IClinicRepository = new PrismaClinicRepository(),
   ) {}
 
   async upsert(visitId: string, input: UpsertPrescriptionInput): Promise<PrescriptionWithItems> {
     const visit = await this.visitRepo.findById(visitId)
     if (!visit) throw new NotFoundError('방문 기록을 찾을 수 없습니다.')
+
+    // 의료기관 자동 저장 (처방 저장 시 clinic 테이블에 upsert)
+    await this.clinicRepo.upsert(input.clinic_name.trim())
 
     return this.prescriptionRepo.upsert(visitId, {
       ...input,

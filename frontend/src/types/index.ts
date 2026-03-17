@@ -130,6 +130,15 @@ export interface Plugin {
   enabled: boolean
 }
 
+export interface Clinic {
+  id: string
+  name: string
+  phone: string | null
+  address: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface DashboardStats {
   totalVisits: number
   activeVisits: number

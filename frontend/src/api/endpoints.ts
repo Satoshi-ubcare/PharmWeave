@@ -10,6 +10,7 @@ import type {
   Claim,
   Plugin,
   DashboardStats,
+  Clinic,
 } from '@/types'
 
 // ─── Auth ────────────────────────────────────────────────
@@ -72,6 +73,18 @@ export const claimApi = {
     apiClient.post<Claim>(`/visits/${visitId}/claim`),
   get: (visitId: string) =>
     apiClient.get<Claim>(`/visits/${visitId}/claim`),
+}
+
+// ─── Clinics ─────────────────────────────────────────────
+export const clinicApi = {
+  search: (q: string) =>
+    apiClient.get<Clinic[]>('/clinics', { params: { q } }),
+  upsert: (name: string) =>
+    apiClient.post<Clinic>('/clinics', { name }),
+  update: (id: string, data: { phone?: string | null; address?: string | null }) =>
+    apiClient.patch<Clinic>(`/clinics/${id}`, data),
+  delete: (id: string) =>
+    apiClient.delete(`/clinics/${id}`),
 }
 
 // ─── Stats ───────────────────────────────────────────────
