@@ -28,15 +28,45 @@ function getStepStatus(
 
 interface WorkflowStepperProps {
   currentStage: WorkflowStage
+  patient: { name: string; birth_date: string } | null
 }
 
-export default function WorkflowStepper({ currentStage }: WorkflowStepperProps) {
+export default function WorkflowStepper({ currentStage, patient }: WorkflowStepperProps) {
   const navigate = useNavigate()
 
   return (
     <nav data-testid="workflow-stepper" className="bg-white dark:bg-zinc-900 border-b border-blue-100 dark:border-zinc-800 px-8 py-4">
-      <div className="max-w-5xl mx-auto">
-        <ol className="flex items-start">
+      <div className="max-w-5xl mx-auto flex items-center gap-6">
+
+        {/* 환자 정보 */}
+        <div className="flex-shrink-0 w-28">
+          {patient ? (
+            <>
+              <p className="text-[9px] font-semibold tracking-[0.14em] uppercase text-blue-600 dark:text-blue-400 mb-1">
+                현재 환자
+              </p>
+              <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
+                {patient.name}
+              </p>
+              <p className="text-[11px] text-zinc-400 dark:text-zinc-600 mt-0.5 tabular-nums">
+                {String(patient.birth_date).slice(0, 10)}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[9px] font-semibold tracking-[0.14em] uppercase text-zinc-300 dark:text-zinc-700 mb-1">
+                환자 미선택
+              </p>
+              <p className="text-sm text-zinc-300 dark:text-zinc-700">—</p>
+            </>
+          )}
+        </div>
+
+        {/* 구분선 */}
+        <div className="w-px self-stretch bg-zinc-100 dark:bg-zinc-800 flex-shrink-0" />
+
+        {/* 단계 스테퍼 */}
+        <ol className="flex items-start flex-1">
           {STEPS.map((step, index) => {
             const status = getStepStatus(step.stage, currentStage)
             const isCompleted = status === 'completed'
@@ -44,7 +74,6 @@ export default function WorkflowStepper({ currentStage }: WorkflowStepperProps) 
 
             return (
               <li key={step.stage} className="flex items-start flex-1">
-                {/* Step node + label */}
                 <button
                   onClick={() => navigate(step.path)}
                   className={cn(
@@ -97,6 +126,7 @@ export default function WorkflowStepper({ currentStage }: WorkflowStepperProps) 
             )
           })}
         </ol>
+
       </div>
     </nav>
   )

@@ -68,18 +68,8 @@ export default function WorkflowLayout() {
             })}
           </nav>
 
-          {/* Right side: patient badge + theme toggle */}
+          {/* Right side: theme toggle */}
           <div className="flex items-center gap-3">
-            {patient && (
-              <div className="flex items-center gap-2 bg-blue-50 dark:bg-zinc-800 border border-blue-200 dark:border-zinc-700 px-3 py-1.5 rounded-xl">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#246AFE] flex-shrink-0" />
-                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">{patient.name}</span>
-                <span className="text-[10px] text-slate-400 dark:text-zinc-500">
-                  {String(patient.birth_date).slice(0, 10)}
-                </span>
-              </div>
-            )}
-
             <button
               onClick={toggle}
               className="w-8 h-8 flex items-center justify-center text-slate-400 dark:text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
@@ -109,7 +99,7 @@ export default function WorkflowLayout() {
       </header>
 
       {/* Workflow Stepper */}
-      <WorkflowStepper currentStage={currentStage} />
+      <WorkflowStepper currentStage={currentStage} patient={patient} />
 
       {/* Main Content */}
       <main className="flex-1 px-8 py-8">
