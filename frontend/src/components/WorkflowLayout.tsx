@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import WorkflowStepper from './WorkflowStepper'
 import ToastContainer from './ui/Toast'
+import CommandPalette from './CommandPalette'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePluginStore } from '@/stores/pluginStore'
 import { useThemeStore } from '@/stores/themeStore'
@@ -68,8 +69,19 @@ export default function WorkflowLayout() {
             })}
           </nav>
 
-          {/* Right side: theme toggle */}
+          {/* Right side: Ctrl+K + theme toggle */}
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-400 dark:text-zinc-500 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:border-zinc-300 dark:hover:border-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+              title="커맨드 팔레트 열기"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <span>검색</span>
+              <kbd className="font-mono text-[10px] px-1 bg-zinc-100 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700">Ctrl+K</kbd>
+            </button>
             <button
               onClick={toggle}
               className="w-8 h-8 flex items-center justify-center text-slate-400 dark:text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
@@ -109,6 +121,7 @@ export default function WorkflowLayout() {
       </main>
 
       <ToastContainer />
+      <CommandPalette />
     </div>
   )
 }

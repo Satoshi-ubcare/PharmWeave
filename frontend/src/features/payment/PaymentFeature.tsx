@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
 import { usePaymentCreate } from '@/hooks/usePayment'
@@ -80,8 +80,13 @@ export default function PaymentFeature() {
   const { error: stageError, transition } = useWorkflowStage()
   const { toast } = useToast()
   const [method, setMethod] = useState<'cash' | 'card' | 'transfer'>('card')
+  const [simInsurance, setSimInsurance] = useState<InsuranceType>('health_insurance')
+  const [simExemption] = useState<CopayExemption>('none')
 
   useEffect(() => { setMethod('card') }, [visitId])
+  useEffect(() => {
+    setSimInsurance((patient?.insurance_type ?? 'health_insurance') as InsuranceType)
+  }, [visitId, patient])
   useEffect(() => { if (payError) toast('error', payError) }, [payError, toast])
   useEffect(() => { if (stageError) toast('error', stageError) }, [stageError, toast])
   useEffect(() => { if (prescriptionError) toast('error', prescriptionError) }, [prescriptionError, toast])
@@ -91,9 +96,29 @@ export default function PaymentFeature() {
     0,
   ) ?? 0
 
-  const insuranceType = (patient?.insurance_type ?? 'health_insurance') as InsuranceType
+  const actualInsuranceType = (patient?.insurance_type ?? 'health_insurance') as InsuranceType
   const copayExemption = (patient?.copay_exemption ?? 'none') as CopayExemption
-  const { copayAmount, insuranceCoverage, rateLabel } = calcCopay(totalDrugCost, insuranceType, copayExemption)
+  const isSimulating = simInsurance !== actualInsuranceType
+  const { copayAmount, insuranceCoverage, rateLabel } = calcCopay(totalDrugCost, simInsurance, simExemption)
+
+  // countUp animation for copayAmount
+  const [displayCopay, setDisplayCopay] = useState(copayAmount)
+  const prevCopayRef = useRef(copayAmount)
+  useEffect(() => {
+    const start = prevCopayRef.current
+    const end = copayAmount
+    prevCopayRef.current = end
+    if (start === end) return
+    const duration = 450
+    const startTime = performance.now()
+    const animate = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setDisplayCopay(Math.round(start + (end - start) * eased))
+      if (t < 1) requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+  }, [copayAmount])
 
   const handlePay = async () => {
     if (!visitId) return
@@ -127,52 +152,79 @@ export default function PaymentFeature() {
         <>
           {/* 본인부담금 계산 */}
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
-              본인부담금 계산
-            </p>
-            <div className="space-y-0">
-              <div className="flex justify-between items-center py-3 border-b border-zinc-100 dark:border-zinc-800">
-                <span className="text-sm text-zinc-500 dark:text-zinc-500">보험 유형</span>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {INSURANCE_TYPE_LABELS[insuranceType]}
-                  {copayExemption !== 'none' && (
-                    <span className="text-blue-700 dark:text-blue-400 ml-1.5 text-xs">
-                      · {COPAY_EXEMPTION_LABELS[copayExemption]}
-                    </span>
-                  )}
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
+                본인부담금 계산
+              </p>
+              {isSimulating && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
+                  ⚡ 시뮬레이션 모드
                 </span>
+              )}
+            </div>
+
+            {/* 보험 유형 선택 (인터랙티브) */}
+            <div className="space-y-2">
+              <p className="text-xs text-zinc-400 dark:text-zinc-600">보험 유형 선택</p>
+              <div className="flex flex-wrap gap-2">
+                {(Object.entries(INSURANCE_TYPE_LABELS) as [InsuranceType, string][]).map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => setSimInsurance(val)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-xl border text-xs font-medium transition-all',
+                      simInsurance === val
+                        ? 'border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                        : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-500 hover:border-zinc-300 dark:hover:border-zinc-600',
+                      val === actualInsuranceType && simInsurance !== val
+                        ? 'border-dashed'
+                        : '',
+                    )}
+                  >
+                    {label}
+                    {val === actualInsuranceType && (
+                      <span className="ml-1 text-[9px] text-blue-500 dark:text-blue-400">●</span>
+                    )}
+                  </button>
+                ))}
               </div>
+              {isSimulating && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-500">
+                  ● 표시가 등록된 실제 보험. 결제 시 실제 보험이 적용됩니다.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-0 border-t border-zinc-100 dark:border-zinc-800 pt-3">
               <div className="flex justify-between items-center py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <span className="text-sm text-zinc-500 dark:text-zinc-500">약제비 합계</span>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 tabular-nums">
                   {totalDrugCost.toLocaleString()}원
                 </span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <span className="text-sm text-zinc-500 dark:text-zinc-500">
                   본인부담율
-                  <span className="text-xs text-zinc-400 dark:text-zinc-600 ml-1.5">
-                    ({rateLabel})
-                  </span>
+                  <span className="text-xs text-zinc-400 dark:text-zinc-600 ml-1.5">({rateLabel})</span>
                 </span>
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-400 tabular-nums">
                   {copayAmount.toLocaleString()}원
                 </span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-zinc-100 dark:border-zinc-800">
                 <span className="text-sm text-zinc-500 dark:text-zinc-500">보험/기관 부담</span>
-                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 tabular-nums">
                   {insuranceCoverage.toLocaleString()}원
                 </span>
               </div>
 
-              {/* 최종 금액 */}
+              {/* 최종 금액 — countUp */}
               <div className="flex justify-between items-center pt-4">
                 <span className="text-xs font-semibold tracking-[0.15em] uppercase text-zinc-500 dark:text-zinc-500">
                   환자 납부금액
                 </span>
-                <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
-                  {copayAmount.toLocaleString()}
+                <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400 tabular-nums transition-colors">
+                  {displayCopay.toLocaleString()}
                   <span className="text-sm font-medium ml-1">원</span>
                 </span>
               </div>
@@ -209,7 +261,7 @@ export default function PaymentFeature() {
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
             >
               {submitting && <Spinner size="sm" className="text-white" />}
-              {submitting ? '처리 중' : `${copayAmount.toLocaleString()}원 결제 — 청구로`}
+              {submitting ? '처리 중' : `${calcCopay(totalDrugCost, actualInsuranceType, copayExemption).copayAmount.toLocaleString()}원 결제 — 청구로`}
             </button>
           </div>
         </>

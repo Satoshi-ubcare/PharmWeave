@@ -72,12 +72,22 @@ export default function WorkflowStepper({ currentStage, patient }: WorkflowStepp
             const isCompleted = status === 'completed'
             const isCurrent = status === 'current'
 
+            const isUpcomingWithPatient = !!patient && status === 'upcoming'
+            const title = isUpcomingWithPatient
+              ? '아직 이 단계에 도달하지 않았습니다'
+              : isCompleted
+              ? `${step.label} 단계로 돌아가기`
+              : undefined
+
             return (
               <li key={step.stage} className="flex items-start flex-1">
                 <button
-                  onClick={() => navigate(step.path)}
+                  onClick={() => !isUpcomingWithPatient && navigate(step.path)}
+                  disabled={isUpcomingWithPatient}
+                  title={title}
                   className={cn(
-                    'flex flex-col items-center gap-2 flex-shrink-0 group cursor-pointer',
+                    'flex flex-col items-center gap-2 flex-shrink-0 group',
+                    isUpcomingWithPatient ? 'cursor-not-allowed' : 'cursor-pointer',
                   )}
                 >
                   {/* Circle */}

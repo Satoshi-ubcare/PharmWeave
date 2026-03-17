@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { useVisitsByStage } from '@/hooks/useVisit'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
-import Spinner from '@/components/ui/Spinner'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import RefreshButton from '@/components/ui/RefreshButton'
 import type { WorkflowStage } from '@/types'
@@ -62,9 +61,27 @@ export default function StagePatientList({ stage, onSelect }: Props) {
       </div>
 
       {loading && (
-        <div className="flex items-center gap-2 py-2">
-          <Spinner size="sm" className="text-zinc-400" />
-          <span className="text-xs text-zinc-400 dark:text-zinc-600">불러오는 중...</span>
+        <div className="space-y-1.5 py-1">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl overflow-hidden">
+              <div className="flex-1 space-y-1.5">
+                <div
+                  className="h-3 rounded-md bg-zinc-200 dark:bg-zinc-800"
+                  style={{ width: `${50 + (i * 17) % 35}%`, animation: `shimmer 1.4s ease-in-out ${i * 0.15}s infinite` }}
+                />
+                <div
+                  className="h-2.5 rounded-md bg-zinc-100 dark:bg-zinc-800/60"
+                  style={{ width: '30%', animation: `shimmer 1.4s ease-in-out ${i * 0.15 + 0.1}s infinite` }}
+                />
+              </div>
+            </div>
+          ))}
+          <style>{`
+            @keyframes shimmer {
+              0%, 100% { opacity: 0.5; }
+              50% { opacity: 1; }
+            }
+          `}</style>
         </div>
       )}
 

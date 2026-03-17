@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/useToast'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
 import StagePatientList from '@/components/StagePatientList'
 import Spinner from '@/components/ui/Spinner'
+import SpinInput from '@/components/ui/SpinInput'
 import { cn } from '@/lib/cn'
 import type { Drug } from '@/types'
 
@@ -344,21 +345,19 @@ export default function PrescriptionFeature() {
                         <div className="text-zinc-400 dark:text-zinc-600 text-xs mt-0.5">{item.drug_code}</div>
                       </td>
                       <td className="py-3 text-center">
-                        <input
-                          type="number"
-                          min={1}
+                        <SpinInput
                           value={item.quantity}
-                          onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))}
-                          className="w-16 text-center bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-[#0B0A0A] dark:text-zinc-100 rounded-lg px-1 py-1 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                          min={1}
+                          max={99}
+                          onChange={(v) => updateItem(idx, 'quantity', v)}
                         />
                       </td>
                       <td className="py-3 text-center">
-                        <input
-                          type="number"
-                          min={1}
+                        <SpinInput
                           value={item.days}
-                          onChange={(e) => updateItem(idx, 'days', Number(e.target.value))}
-                          className="w-16 text-center bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-[#0B0A0A] dark:text-zinc-100 rounded-lg px-1 py-1 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                          min={1}
+                          max={365}
+                          onChange={(v) => updateItem(idx, 'days', v)}
                         />
                       </td>
                       <td className="py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
