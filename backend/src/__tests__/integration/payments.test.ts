@@ -7,12 +7,14 @@ jest.mock('../../lib/prisma', () => ({
   prisma: {
     payment: { findUnique: jest.fn(), create: jest.fn() },
     prescription: { findUnique: jest.fn() },
+    visit: { findUnique: jest.fn() },
   },
 }))
 
 type MockPrisma = {
   payment: { findUnique: jest.Mock; create: jest.Mock }
   prescription: { findUnique: jest.Mock }
+  visit: { findUnique: jest.Mock }
 }
 const mock = prisma as unknown as MockPrisma
 
@@ -29,6 +31,20 @@ afterEach(() => {
 })
 
 const VISIT_ID = 'c3d4e5f6-a7b8-9012-cdef-123456789012'
+
+const mockVisit = {
+  id: VISIT_ID,
+  patient_id: 'patient-uuid-001',
+  workflow_stage: 'payment',
+  patient: {
+    id: 'patient-uuid-001',
+    name: '테스트환자',
+    birth_date: new Date('1990-01-01'),
+    phone: null,
+    insurance_type: 'health_insurance',
+    copay_exemption: 'none',
+  },
+}
 
 const mockItems = [
   { unit_price: 145, quantity: 1, days: 60 },
@@ -54,6 +70,7 @@ const mockPayment = {
 describe('POST /api/visits/:visitId/payment', () => {
   it('수납을 처리하고 본인부담금을 계산하여 201을 반환한다', async () => {
     mock.payment.findUnique.mockResolvedValue(null)
+    mock.visit.findUnique.mockResolvedValue(mockVisit)
     mock.prescription.findUnique.mockResolvedValue(mockPrescription)
     mock.payment.create.mockResolvedValue(mockPayment)
 
@@ -80,6 +97,7 @@ describe('POST /api/visits/:visitId/payment', () => {
 
   it('처방 정보가 없으면 422를 반환한다', async () => {
     mock.payment.findUnique.mockResolvedValue(null)
+    mock.visit.findUnique.mockResolvedValue(mockVisit)
     mock.prescription.findUnique.mockResolvedValue(null)
 
     const res = await request(app)
@@ -103,6 +121,7 @@ describe('POST /api/visits/:visitId/payment', () => {
     const cheapItems = [{ unit_price: 85, quantity: 1, days: 1 }]
     const cheapCost = 85
     mock.payment.findUnique.mockResolvedValue(null)
+    mock.visit.findUnique.mockResolvedValue(mockVisit)
     mock.prescription.findUnique.mockResolvedValue({ ...mockPrescription, items: cheapItems })
     mock.payment.create.mockResolvedValue({
       ...mockPayment,
