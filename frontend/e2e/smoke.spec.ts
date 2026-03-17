@@ -5,9 +5,9 @@ import { test, expect } from '@playwright/test'
  * 로그인 없이 접근 가능한 공개 UI만 검증
  */
 test.describe('Smoke', () => {
-  test('루트 접속 시 /reception으로 리다이렉트', async ({ page }) => {
+  test('루트 접속 시 /dashboard로 리다이렉트', async ({ page }) => {
     await page.goto('/')
-    await expect(page).toHaveURL(/\/reception/)
+    await expect(page).toHaveURL(/\/dashboard/)
   })
 
   test('헤더에 PharmWeave 브랜드 표시', async ({ page }) => {
