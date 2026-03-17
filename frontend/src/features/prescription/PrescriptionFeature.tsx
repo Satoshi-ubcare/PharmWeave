@@ -112,19 +112,23 @@ export default function PrescriptionFeature() {
     navigate('/dispensing')
   }
 
+  const inputBase = 'w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 rounded px-3 py-2.5 text-sm focus:outline-none focus:border-amber-400 dark:focus:border-amber-400 transition-colors'
+  const totalCost = items.reduce((sum, item) => sum + item.unit_price * item.quantity * item.days, 0)
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <span>📋</span> 처방
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">처방전 정보와 약품 항목을 입력합니다.</p>
+      <div className="space-y-1">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          Step 02
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">처방</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-500">처방전 정보와 약품 항목을 입력합니다.</p>
       </div>
 
       <StagePatientList stage="prescription" />
 
       {!visitId && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 text-sm shadow-sm">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
           먼저 접수 단계에서 방문을 시작해주세요.
         </div>
       )}
@@ -132,13 +136,13 @@ export default function PrescriptionFeature() {
       {visitId && (
         <>
           {/* 처방전 정보 */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4 shadow-sm">
-            <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-              <span>🏥</span> 처방전 정보
-            </h2>
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+              처방전 정보
+            </p>
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">의료기관명 *</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-500">의료기관명 *</label>
                 <input
                   type="text"
                   value={clinicName}
@@ -147,45 +151,38 @@ export default function PrescriptionFeature() {
                     if (formErrors.clinicName) setFormErrors((prev) => ({ ...prev, clinicName: '' }))
                   }}
                   aria-invalid={!!formErrors.clinicName}
-                  className={cn(
-                    'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
-                    formErrors.clinicName
-                      ? 'border-red-400 dark:border-red-500'
-                      : 'border-gray-300 dark:border-gray-600',
-                  )}
+                  className={cn(inputBase, formErrors.clinicName && 'border-red-400 dark:border-red-600')}
                 />
                 {formErrors.clinicName && (
-                  <p role="alert" className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
-                    <span>⚠</span>{formErrors.clinicName}
-                  </p>
+                  <p role="alert" className="text-xs text-red-400">{formErrors.clinicName}</p>
                 )}
               </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">처방 의사명</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-500">처방 의사명</label>
                 <input
                   type="text"
                   value={doctorName}
                   onChange={(e) => setDoctorName(e.target.value)}
-                  className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputBase}
                 />
               </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">처방일 *</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-500">처방일 *</label>
                 <input
                   type="date"
                   value={prescribedAt}
                   onChange={(e) => setPrescribedAt(e.target.value)}
-                  className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputBase}
                 />
               </div>
             </div>
           </div>
 
           {/* 약품 검색 */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4 shadow-sm">
-            <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-              <span>💊</span> 약품 추가
-            </h2>
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+              약품 추가
+            </p>
             <div className="relative" ref={drugDropdownRef}>
               <input
                 type="text"
@@ -193,24 +190,26 @@ export default function PrescriptionFeature() {
                 onChange={(e) => setDrugQuery(e.target.value)}
                 onFocus={() => drugResults.length > 0 && setShowDrugDropdown(true)}
                 placeholder="약품명 또는 코드 입력 시 자동 검색"
-                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputBase}
               />
               {drugSearching && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">검색 중…</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">검색 중</span>
               )}
 
               {showDrugDropdown && drugResults.length > 0 && (
-                <ul className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden divide-y divide-gray-100 dark:divide-gray-700 max-h-60 overflow-y-auto">
+                <ul className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded shadow-2xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800">
                   {drugResults.map((drug) => (
                     <li key={drug.id}>
                       <button
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => addItem(drug)}
-                        className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-sm transition-colors"
+                        className="w-full text-left px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-sm transition-colors"
                       >
-                        <span className="font-medium text-gray-900 dark:text-gray-100">💊 {drug.drug_name}</span>
-                        <span className="text-gray-500 dark:text-gray-400 ml-2">({drug.drug_code})</span>
-                        <span className="text-blue-600 dark:text-blue-400 ml-2 text-xs">{drug.unit_price.toLocaleString()}원</span>
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">{drug.drug_name}</span>
+                        <span className="text-zinc-400 dark:text-zinc-600 ml-2 text-xs">({drug.drug_code})</span>
+                        <span className="text-amber-500 dark:text-amber-400 ml-2 text-xs font-medium">
+                          {drug.unit_price.toLocaleString()}원
+                        </span>
                       </button>
                     </li>
                   ))}
@@ -218,7 +217,7 @@ export default function PrescriptionFeature() {
               )}
 
               {showDrugDropdown && !drugSearching && drugQuery.trim().length >= 1 && drugResults.length === 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded shadow-2xl px-4 py-3 text-sm text-zinc-400">
                   검색 결과가 없습니다.
                 </div>
               )}
@@ -227,50 +226,62 @@ export default function PrescriptionFeature() {
 
           {/* 처방 항목 목록 */}
           {items.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-3 shadow-sm">
-              <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                <span>📊</span> 처방 항목 ({items.length})
-              </h2>
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+                  처방 항목 ({items.length})
+                </p>
+                <span className="text-xs font-semibold text-amber-500 dark:text-amber-400">
+                  합계 {totalCost.toLocaleString()}원
+                </span>
+              </div>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-gray-500 dark:text-gray-400 text-xs border-b border-gray-100 dark:border-gray-700">
-                    <th className="text-left pb-2">약품명</th>
-                    <th className="text-center pb-2 w-20">수량</th>
-                    <th className="text-center pb-2 w-20">일수</th>
-                    <th className="text-right pb-2 w-28">금액</th>
+                  <tr className="text-[10px] tracking-[0.1em] uppercase text-zinc-400 dark:text-zinc-600 border-b border-zinc-100 dark:border-zinc-800">
+                    <th className="text-left pb-3">약품명</th>
+                    <th className="text-center pb-3 w-20">수량</th>
+                    <th className="text-center pb-3 w-20">일수</th>
+                    <th className="text-right pb-3 w-28">금액</th>
                     <th className="w-8" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
+                <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800/50">
                   {items.map((item, idx) => (
                     <tr key={item.drug_code}>
-                      <td className="py-2">
-                        <div className="font-medium text-gray-900 dark:text-gray-100">💊 {item.drug_name}</div>
-                        <div className="text-gray-400 dark:text-gray-500 text-xs">{item.drug_code}</div>
+                      <td className="py-3">
+                        <div className="font-medium text-zinc-900 dark:text-zinc-100">{item.drug_name}</div>
+                        <div className="text-zinc-400 dark:text-zinc-600 text-xs mt-0.5">{item.drug_code}</div>
                       </td>
-                      <td className="py-2 text-center">
+                      <td className="py-3 text-center">
                         <input
                           type="number"
                           min={1}
                           value={item.quantity}
                           onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))}
-                          className="w-16 text-center border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-1 py-0.5 text-sm"
+                          className="w-16 text-center bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded px-1 py-1 text-sm focus:outline-none focus:border-amber-400 transition-colors"
                         />
                       </td>
-                      <td className="py-2 text-center">
+                      <td className="py-3 text-center">
                         <input
                           type="number"
                           min={1}
                           value={item.days}
                           onChange={(e) => updateItem(idx, 'days', Number(e.target.value))}
-                          className="w-16 text-center border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-1 py-0.5 text-sm"
+                          className="w-16 text-center bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded px-1 py-1 text-sm focus:outline-none focus:border-amber-400 transition-colors"
                         />
                       </td>
-                      <td className="py-2 text-right text-gray-700 dark:text-gray-300">
+                      <td className="py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
                         {(item.unit_price * item.quantity * item.days).toLocaleString()}원
                       </td>
-                      <td className="py-2 text-center">
-                        <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600 dark:hover:text-red-300 text-xs transition-colors">✕</button>
+                      <td className="py-3 text-center">
+                        <button
+                          onClick={() => removeItem(idx)}
+                          className="text-zinc-300 dark:text-zinc-700 hover:text-red-400 dark:hover:text-red-400 transition-colors"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="1" y1="1" x2="11" y2="11" /><line x1="11" y1="1" x2="1" y2="11" />
+                          </svg>
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -280,19 +291,17 @@ export default function PrescriptionFeature() {
           )}
 
           {formErrors.items && (
-            <p role="alert" className="text-red-600 dark:text-red-400 text-sm flex items-center gap-1">
-              <span>⚠</span>{formErrors.items}
-            </p>
+            <p role="alert" className="text-red-400 text-sm">{formErrors.items}</p>
           )}
 
           <div className="flex justify-end">
             <button
               onClick={handleSave}
               disabled={saving || items.length === 0}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
             >
-              {saving && <Spinner className="text-white" />}
-              {saving ? '저장 중...' : '💾 처방 저장 → 조제'}
+              {saving && <Spinner size="sm" className="text-zinc-950" />}
+              {saving ? '저장 중' : '처방 저장 — 조제로'}
             </button>
           </div>
         </>

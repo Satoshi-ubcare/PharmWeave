@@ -2,23 +2,17 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/cn'
 import type { WorkflowStage } from '@/types'
 
-const STEPS: { stage: WorkflowStage; label: string; emoji: string; path: string }[] = [
-  { stage: 'reception', label: '접수', emoji: '🏥', path: '/reception' },
-  { stage: 'prescription', label: '처방', emoji: '📋', path: '/prescription' },
-  { stage: 'dispensing', label: '조제', emoji: '💊', path: '/dispensing' },
-  { stage: 'review', label: '검토', emoji: '🔬', path: '/review' },
-  { stage: 'payment', label: '수납', emoji: '💳', path: '/payment' },
-  { stage: 'claim', label: '청구', emoji: '📄', path: '/claim' },
+const STEPS: { stage: WorkflowStage; label: string; path: string }[] = [
+  { stage: 'reception',    label: '접수', path: '/reception' },
+  { stage: 'prescription', label: '처방', path: '/prescription' },
+  { stage: 'dispensing',   label: '조제', path: '/dispensing' },
+  { stage: 'review',       label: '검토', path: '/review' },
+  { stage: 'payment',      label: '수납', path: '/payment' },
+  { stage: 'claim',        label: '청구', path: '/claim' },
 ]
 
 const STAGE_ORDER: WorkflowStage[] = [
-  'reception',
-  'prescription',
-  'dispensing',
-  'review',
-  'payment',
-  'claim',
-  'completed',
+  'reception', 'prescription', 'dispensing', 'review', 'payment', 'claim', 'completed',
 ]
 
 function getStepStatus(
@@ -41,54 +35,65 @@ export default function WorkflowStepper({ currentStage, visitId }: WorkflowStepp
   const navigate = useNavigate()
 
   return (
-    <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 shadow-sm">
-      <div className="max-w-5xl mx-auto">
-        <ol className="flex items-center gap-1">
+    <nav className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-6 py-5">
+      <div className="max-w-4xl mx-auto">
+        <ol className="flex items-start">
           {STEPS.map((step, index) => {
             const status = getStepStatus(step.stage, currentStage)
             const isClickable = visitId && status !== 'upcoming'
+            const isCompleted = status === 'completed'
+            const isCurrent = status === 'current'
 
             return (
-              <li key={step.stage} className="flex items-center flex-1">
+              <li key={step.stage} className="flex items-start flex-1">
+                {/* Step node + label */}
                 <button
                   onClick={() => isClickable && navigate(step.path)}
                   disabled={!isClickable}
                   className={cn(
-                    'flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors',
-                    status === 'completed' && 'cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20',
-                    status === 'current' && 'cursor-default',
-                    status === 'upcoming' && 'cursor-not-allowed opacity-40',
+                    'flex flex-col items-center gap-2 flex-shrink-0 group',
+                    isClickable ? 'cursor-pointer' : 'cursor-not-allowed',
                   )}
                 >
-                  <span
+                  {/* Circle */}
+                  <div
                     className={cn(
-                      'w-9 h-9 rounded-full flex items-center justify-center text-base font-semibold transition-all',
-                      status === 'completed' && 'bg-blue-500 text-white shadow-sm',
-                      status === 'current' && 'bg-blue-600 text-white ring-2 ring-blue-300 dark:ring-blue-500 shadow-md',
-                      status === 'upcoming' && 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
+                      'w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold border transition-all',
+                      isCompleted && 'bg-amber-400 border-amber-400 text-zinc-950',
+                      isCurrent && 'bg-transparent border-amber-400 text-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.15)]',
+                      status === 'upcoming' && 'bg-transparent border-zinc-300 dark:border-zinc-700 text-zinc-400 dark:text-zinc-600',
                     )}
                   >
-                    {status === 'completed' ? '✓' : status === 'current' ? step.emoji : index + 1}
-                  </span>
+                    {isCompleted ? (
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="2,6 5,9 10,3" />
+                      </svg>
+                    ) : (
+                      index + 1
+                    )}
+                  </div>
+
+                  {/* Label */}
                   <span
                     className={cn(
-                      'text-xs font-medium',
-                      status === 'current' && 'text-blue-600 dark:text-blue-400',
-                      status === 'completed' && 'text-blue-500 dark:text-blue-400',
-                      status === 'upcoming' && 'text-gray-400 dark:text-gray-500',
+                      'text-[10px] font-medium tracking-wide transition-colors',
+                      isCurrent && 'text-amber-500 dark:text-amber-400',
+                      isCompleted && 'text-zinc-500 dark:text-zinc-400 group-hover:text-amber-500 dark:group-hover:text-amber-400',
+                      status === 'upcoming' && 'text-zinc-400 dark:text-zinc-600',
                     )}
                   >
                     {step.label}
                   </span>
                 </button>
 
+                {/* Connector line — aligned with circle center (mt-3.5 = 14px = half of 28px circle) */}
                 {index < STEPS.length - 1 && (
                   <div
                     className={cn(
-                      'h-0.5 flex-1 mx-1 transition-colors rounded-full',
+                      'h-px flex-1 mt-3.5 mx-2 transition-colors',
                       STAGE_ORDER.indexOf(step.stage) < STAGE_ORDER.indexOf(currentStage)
-                        ? 'bg-blue-400 dark:bg-blue-600'
-                        : 'bg-gray-200 dark:bg-gray-700',
+                        ? 'bg-amber-400/60'
+                        : 'bg-zinc-200 dark:bg-zinc-800',
                     )}
                   />
                 )}

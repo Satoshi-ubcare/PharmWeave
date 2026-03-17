@@ -34,105 +34,118 @@ export default function ReviewFeature() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <span>🔬</span> 검토
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">대기 환자를 선택하면 처방 내용이 표시됩니다.</p>
+      <div className="space-y-1">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          Step 04
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">검토</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-500">대기 환자를 선택하면 처방 내용이 표시됩니다.</p>
       </div>
 
       <StagePatientList stage="review" />
 
       {!visitId && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 text-sm shadow-sm">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
           위 목록에서 검토할 환자를 선택하세요.
         </div>
       )}
 
+      {/* 환자 정보 */}
       {patient && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-            <span>👤</span> 환자 정보
-          </h2>
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-3">
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+            환자 정보
+          </p>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div>
-              <span className="text-gray-500 dark:text-gray-400">이름</span>
-              <p className="font-medium mt-0.5 text-gray-900 dark:text-gray-100">{patient.name}</p>
+              <span className="text-xs text-zinc-400 dark:text-zinc-600 block mb-1">이름</span>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{patient.name}</p>
             </div>
             <div>
-              <span className="text-gray-500 dark:text-gray-400">생년월일</span>
-              <p className="font-medium mt-0.5 text-gray-900 dark:text-gray-100">{String(patient.birth_date).slice(0, 10)}</p>
+              <span className="text-xs text-zinc-400 dark:text-zinc-600 block mb-1">생년월일</span>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{String(patient.birth_date).slice(0, 10)}</p>
             </div>
             <div>
-              <span className="text-gray-500 dark:text-gray-400">연락처</span>
-              <p className="font-medium mt-0.5 text-gray-900 dark:text-gray-100">{patient.phone ?? '—'}</p>
+              <span className="text-xs text-zinc-400 dark:text-zinc-600 block mb-1">연락처</span>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{patient.phone ?? '—'}</p>
             </div>
           </div>
         </div>
       )}
 
       {visitId && prescriptionLoading && (
-        <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 text-sm py-4">
-          <Spinner size="md" className="text-gray-400" />
+        <div className="flex items-center gap-3 text-zinc-400 dark:text-zinc-600 text-sm py-4">
+          <Spinner size="md" className="text-zinc-400" />
           <span>처방 정보를 불러오는 중...</span>
         </div>
       )}
 
+      {/* 처방 요약 */}
       {prescription && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-            <span>📋</span> 처방 요약
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">🏥 {prescription.clinic_name} · {String(prescription.prescribed_at).slice(0, 10)}</p>
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+              처방 요약
+            </p>
+            <span className="text-xs text-zinc-400 dark:text-zinc-600">
+              {prescription.clinic_name} · {String(prescription.prescribed_at).slice(0, 10)}
+            </span>
+          </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-gray-400 dark:text-gray-500 text-xs border-b border-gray-100 dark:border-gray-700">
-                <th className="text-left pb-2">약품명</th>
-                <th className="text-center pb-2">수량</th>
-                <th className="text-center pb-2">일수</th>
-                <th className="text-right pb-2">금액</th>
+              <tr className="text-[10px] tracking-[0.1em] uppercase text-zinc-400 dark:text-zinc-600 border-b border-zinc-100 dark:border-zinc-800">
+                <th className="text-left pb-3">약품명</th>
+                <th className="text-center pb-3">수량</th>
+                <th className="text-center pb-3">일수</th>
+                <th className="text-right pb-3">금액</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
+            <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800/50">
               {prescription.items.map((item) => (
                 <tr key={item.id}>
-                  <td className="py-2 font-medium text-gray-900 dark:text-gray-100">💊 {item.drug_name}</td>
-                  <td className="py-2 text-center text-gray-700 dark:text-gray-300">{item.quantity}</td>
-                  <td className="py-2 text-center text-gray-700 dark:text-gray-300">{item.days}</td>
-                  <td className="py-2 text-right text-gray-700 dark:text-gray-300">{(item.unit_price * item.quantity * item.days).toLocaleString()}원</td>
+                  <td className="py-3 font-medium text-zinc-900 dark:text-zinc-100">{item.drug_name}</td>
+                  <td className="py-3 text-center text-zinc-600 dark:text-zinc-400">{item.quantity}</td>
+                  <td className="py-3 text-center text-zinc-600 dark:text-zinc-400">{item.days}</td>
+                  <td className="py-3 text-right text-zinc-600 dark:text-zinc-400">
+                    {(item.unit_price * item.quantity * item.days).toLocaleString()}원
+                  </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t border-gray-200 dark:border-gray-600 font-semibold">
-                <td colSpan={3} className="pt-3 text-gray-700 dark:text-gray-300">💰 약제비 합계</td>
-                <td className="pt-3 text-right text-blue-700 dark:text-blue-400">{totalCost.toLocaleString()}원</td>
+              <tr className="border-t border-zinc-200 dark:border-zinc-700">
+                <td colSpan={3} className="pt-4 text-xs text-zinc-400 dark:text-zinc-600 font-medium">약제비 합계</td>
+                <td className="pt-4 text-right font-bold text-amber-600 dark:text-amber-400">
+                  {totalCost.toLocaleString()}원
+                </td>
               </tr>
             </tfoot>
           </table>
         </div>
       )}
 
+      {/* Plugin 검사 */}
       {visitId && (
         <div className="space-y-3">
-          <h2 className="font-semibold text-gray-700 dark:text-gray-300 text-sm flex items-center gap-1.5">
-            <span>🔌</span> Plugin 검사
-          </h2>
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+            Plugin 검사
+          </p>
           <PluginSlot key={`dur-${visitId}`} pluginId="dur" visitId={visitId} />
           <PluginSlot key={`mg-${visitId}`} pluginId="medication-guide" visitId={visitId} />
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
-        <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
-          <span>📝</span> 검토 메모 (선택)
-        </h2>
+      {/* 검토 메모 */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-3">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          검토 메모 <span className="text-zinc-400 font-normal normal-case tracking-normal">(선택)</span>
+        </p>
         <textarea
           value={memo}
           onChange={(e) => setMemo(e.target.value)}
           rows={3}
           placeholder="특이사항 또는 주의사항을 입력하세요..."
-          className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 rounded px-3 py-2.5 text-sm focus:outline-none focus:border-amber-400 dark:focus:border-amber-400 transition-colors resize-none"
         />
       </div>
 
@@ -140,10 +153,10 @@ export default function ReviewFeature() {
         <button
           onClick={handleApprove}
           disabled={submitting}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
         >
-          {submitting && <Spinner className="text-white" />}
-          {submitting ? '처리 중...' : '✅ 검토 승인 → 수납'}
+          {submitting && <Spinner size="sm" className="text-zinc-950" />}
+          {submitting ? '처리 중' : '검토 승인 — 수납으로'}
         </button>
       </div>
     </div>

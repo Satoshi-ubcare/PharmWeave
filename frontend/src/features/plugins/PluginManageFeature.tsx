@@ -28,70 +28,98 @@ export default function PluginManageFeature() {
     }
   }
 
-  if (loading) return (
-    <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 text-sm py-8">
-      <Spinner size="md" className="text-gray-400" />
-      <span>플러그인 목록을 불러오는 중...</span>
-    </div>
-  )
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <span>🔌</span> Plugin 관리
-            </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">각 단계에서 실행할 확장 기능을 관리합니다.</p>
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-200">
+      <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+              설정
+            </p>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Plugin 관리</h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-500">각 단계에서 실행할 확장 기능을 관리합니다.</p>
           </div>
           <Link
             to="/reception"
-            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 transition-colors"
+            className="text-xs text-zinc-400 dark:text-zinc-600 hover:text-amber-500 dark:hover:text-amber-400 transition-colors flex items-center gap-1.5"
           >
-            ← 접수로 돌아가기
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15,18 9,12 15,6" />
+            </svg>
+            접수로 돌아가기
           </Link>
         </div>
 
-        {plugins.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 shadow-sm">
+        {loading && (
+          <div className="flex items-center gap-3 text-zinc-400 dark:text-zinc-600 text-sm py-8">
+            <Spinner size="md" className="text-zinc-400" />
+            <span>플러그인 목록을 불러오는 중...</span>
+          </div>
+        )}
+
+        {!loading && plugins.length === 0 && (
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
             등록된 Plugin이 없습니다.
           </div>
-        ) : (
-          <ul className="space-y-3">
+        )}
+
+        {!loading && plugins.length > 0 && (
+          <ul className="space-y-2">
             {plugins.map((plugin) => (
-              <li key={plugin.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-xl">
-                    🔌
+              <li
+                key={plugin.id}
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-5 flex items-center justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+              >
+                {/* Info */}
+                <div className="flex items-center gap-4">
+                  {/* Icon placeholder */}
+                  <div className={[
+                    'w-9 h-9 rounded border flex items-center justify-center flex-shrink-0',
+                    plugin.enabled
+                      ? 'border-amber-400/30 bg-amber-400/5'
+                      : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950',
+                  ].join(' ')}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+                      className={plugin.enabled ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-600'}>
+                      <path d="M18.5 3a2.5 2.5 0 0 1 0 5h-1v2h1a4.5 4.5 0 0 1 0 9H15v-2h3.5a2.5 2.5 0 0 0 0-5H17V9h1.5a.5.5 0 0 0 0-1H17V3h1.5zM9 3v3H7.5a.5.5 0 0 0 0 1H9v3H7.5a2.5 2.5 0 0 0 0 5H9v2H5.5a4.5 4.5 0 0 1 0-9H7V8H5.5a2.5 2.5 0 0 1 0-5H9z" />
+                    </svg>
                   </div>
+
                   <div>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">{plugin.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{plugin.description}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{plugin.name}</p>
+                      <span className={[
+                        'text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded-sm',
+                        plugin.enabled
+                          ? 'text-amber-600 dark:text-amber-400 bg-amber-400/10'
+                          : 'text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800',
+                      ].join(' ')}>
+                        {plugin.enabled ? 'ON' : 'OFF'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-0.5">{plugin.description}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${plugin.enabled ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
-                    {plugin.enabled ? '✅ 활성' : '⭕ 비활성'}
-                  </span>
-                  <button
-                    onClick={() => handleToggle(plugin)}
-                    disabled={toggling === plugin.id}
+
+                {/* Toggle switch */}
+                <button
+                  onClick={() => handleToggle(plugin)}
+                  disabled={toggling === plugin.id}
+                  className={[
+                    'relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none disabled:opacity-40',
+                    plugin.enabled ? 'bg-amber-400' : 'bg-zinc-200 dark:bg-zinc-700',
+                  ].join(' ')}
+                  role="switch"
+                  aria-checked={plugin.enabled}
+                >
+                  <span
                     className={[
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 disabled:opacity-50',
-                      plugin.enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600',
+                      'inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform',
+                      plugin.enabled ? 'translate-x-4' : 'translate-x-0.5',
                     ].join(' ')}
-                    role="switch"
-                    aria-checked={plugin.enabled}
-                  >
-                    <span
-                      className={[
-                        'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
-                        plugin.enabled ? 'translate-x-6' : 'translate-x-1',
-                      ].join(' ')}
-                    />
-                  </button>
-                </div>
+                  />
+                </button>
               </li>
             ))}
           </ul>

@@ -87,7 +87,7 @@ export default function ReceptionFeature() {
       errors.birth_date = '생년월일은 오늘 이전이어야 합니다.'
     }
     if (newPatient.phone && !/^\d{10,11}$/.test(newPatient.phone.replace(/-/g, ''))) {
-      errors.phone = '전화번호는 숫자 10~11자리로 입력하세요. (예: 01012345678)'
+      errors.phone = '전화번호는 숫자 10~11자리로 입력하세요.'
     }
     setFormErrors(errors)
     return !Object.values(errors).some(Boolean)
@@ -114,20 +114,24 @@ export default function ReceptionFeature() {
     navigate('/prescription')
   }
 
+  const inputBase = 'w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 rounded px-3 py-2.5 text-sm focus:outline-none focus:border-amber-400 dark:focus:border-amber-400 transition-colors'
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <span>🏥</span> 접수
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">환자를 검색하거나 신규 등록 후 방문을 시작합니다.</p>
+      {/* Page heading */}
+      <div className="space-y-1">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          Step 01
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">접수</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-500">환자를 검색하거나 신규 등록 후 방문을 시작합니다.</p>
       </div>
 
       {/* 환자 검색 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4 shadow-sm">
-        <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span>🔍</span> 환자 검색
-        </h2>
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          환자 검색
+        </p>
         <div className="flex gap-2">
           <div className="relative flex-1" ref={dropdownRef}>
             <input
@@ -140,24 +144,24 @@ export default function ReceptionFeature() {
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               onFocus={() => results.length > 0 && setShowDropdown(true)}
               placeholder="이름 또는 생년월일 — 입력 시 자동 검색"
-              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputBase}
             />
             {searching && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">검색 중…</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">검색 중</span>
             )}
 
             {showDropdown && results.length > 0 && (
-              <ul className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden">
+              <ul className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded shadow-2xl overflow-hidden">
                 {results.map((p) => (
                   <li key={p.id}>
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => handleSelectPatient(p)}
-                      className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-sm border-b border-gray-100 dark:border-gray-700 last:border-0"
+                      className="w-full text-left px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-sm border-b border-zinc-100 dark:border-zinc-800 last:border-0"
                     >
-                      <span className="font-medium text-gray-900 dark:text-gray-100">👤 {p.name}</span>
-                      <span className="text-gray-500 dark:text-gray-400 ml-3">{String(p.birth_date).slice(0, 10)}</span>
-                      {p.phone && <span className="text-gray-400 dark:text-gray-500 ml-3">{p.phone}</span>}
+                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{p.name}</span>
+                      <span className="text-zinc-400 dark:text-zinc-600 ml-3 text-xs">{String(p.birth_date).slice(0, 10)}</span>
+                      {p.phone && <span className="text-zinc-400 dark:text-zinc-600 ml-3 text-xs">{p.phone}</span>}
                     </button>
                   </li>
                 ))}
@@ -165,7 +169,7 @@ export default function ReceptionFeature() {
             )}
 
             {showDropdown && !searching && query.trim().length >= 1 && results.length === 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded shadow-2xl px-4 py-3 text-sm text-zinc-400">
                 검색 결과가 없습니다.
               </div>
             )}
@@ -173,28 +177,28 @@ export default function ReceptionFeature() {
           <button
             onClick={handleSearch}
             disabled={searching || query.trim().length < 1}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded text-sm font-medium disabled:opacity-40 transition-colors"
           >
             검색
           </button>
           <button
             onClick={() => setShowNewForm(true)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+            className="px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-amber-400 dark:hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400 rounded text-sm font-medium transition-colors"
           >
-            ➕ 신규 등록
+            신규 등록
           </button>
         </div>
       </div>
 
       {/* 신규 환자 등록 폼 */}
       {showNewForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4 shadow-sm">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-            <span>📝</span> 신규 환자 등록
-          </h2>
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-5">
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+            신규 환자 등록
+          </p>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">이름 *</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs text-zinc-500 dark:text-zinc-500">이름 *</label>
               <input
                 type="text"
                 value={newPatient.name}
@@ -203,21 +207,14 @@ export default function ReceptionFeature() {
                   if (formErrors.name) setFormErrors({ ...formErrors, name: '' })
                 }}
                 aria-invalid={!!formErrors.name}
-                className={cn(
-                  'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
-                  formErrors.name
-                    ? 'border-red-400 dark:border-red-500'
-                    : 'border-gray-300 dark:border-gray-600',
-                )}
+                className={cn(inputBase, formErrors.name && 'border-red-400 dark:border-red-600')}
               />
               {formErrors.name && (
-                <p role="alert" className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
-                  <span>⚠</span>{formErrors.name}
-                </p>
+                <p role="alert" className="text-xs text-red-400">{formErrors.name}</p>
               )}
             </div>
-            <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">생년월일 *</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs text-zinc-500 dark:text-zinc-500">생년월일 *</label>
               <input
                 type="date"
                 value={newPatient.birth_date}
@@ -227,21 +224,16 @@ export default function ReceptionFeature() {
                   if (formErrors.birth_date) setFormErrors({ ...formErrors, birth_date: '' })
                 }}
                 aria-invalid={!!formErrors.birth_date}
-                className={cn(
-                  'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
-                  formErrors.birth_date
-                    ? 'border-red-400 dark:border-red-500'
-                    : 'border-gray-300 dark:border-gray-600',
-                )}
+                className={cn(inputBase, formErrors.birth_date && 'border-red-400 dark:border-red-600')}
               />
               {formErrors.birth_date && (
-                <p role="alert" className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
-                  <span>⚠</span>{formErrors.birth_date}
-                </p>
+                <p role="alert" className="text-xs text-red-400">{formErrors.birth_date}</p>
               )}
             </div>
-            <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">전화번호 <span className="text-gray-400">(선택)</span></label>
+            <div className="space-y-1.5">
+              <label className="block text-xs text-zinc-500 dark:text-zinc-500">
+                전화번호 <span className="text-zinc-400">(선택)</span>
+              </label>
               <input
                 type="tel"
                 value={newPatient.phone}
@@ -251,17 +243,10 @@ export default function ReceptionFeature() {
                   if (formErrors.phone) setFormErrors({ ...formErrors, phone: '' })
                 }}
                 aria-invalid={!!formErrors.phone}
-                className={cn(
-                  'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100',
-                  formErrors.phone
-                    ? 'border-red-400 dark:border-red-500'
-                    : 'border-gray-300 dark:border-gray-600',
-                )}
+                className={cn(inputBase, formErrors.phone && 'border-red-400 dark:border-red-600')}
               />
               {formErrors.phone && (
-                <p role="alert" className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
-                  <span>⚠</span>{formErrors.phone}
-                </p>
+                <p role="alert" className="text-xs text-red-400">{formErrors.phone}</p>
               )}
             </div>
           </div>
@@ -269,14 +254,14 @@ export default function ReceptionFeature() {
             <button
               onClick={handleCreatePatient}
               disabled={creating}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
             >
-              {creating && <Spinner className="text-white" />}
-              {creating ? '등록 중...' : '✅ 등록'}
+              {creating && <Spinner size="sm" className="text-zinc-950" />}
+              {creating ? '등록 중' : '등록'}
             </button>
             <button
               onClick={() => setShowNewForm(false)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 rounded text-sm transition-colors"
             >
               취소
             </button>
@@ -286,28 +271,33 @@ export default function ReceptionFeature() {
 
       {/* 선택된 환자 + 방문 시작 */}
       {selected && (
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 border border-blue-200 dark:border-blue-700 rounded-xl p-6 flex items-center justify-between shadow-sm">
-          <div>
-            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">✔ 선택된 환자</p>
-            <p className="text-lg font-bold text-blue-900 dark:text-blue-200">👤 {selected.name}</p>
-            <p className="text-sm text-blue-700 dark:text-blue-400">{String(selected.birth_date).slice(0, 10)} {selected.phone && `· ${selected.phone}`}</p>
+        <div className="border border-amber-400/30 dark:border-amber-400/20 bg-amber-400/5 dark:bg-amber-400/5 rounded p-5 flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+              선택된 환자
+            </p>
+            <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{selected.name}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-500">
+              {String(selected.birth_date).slice(0, 10)}
+              {selected.phone && ` · ${selected.phone}`}
+            </p>
           </div>
           <button
             onClick={handleStartVisit}
             disabled={starting}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
           >
-            {starting && <Spinner className="text-white" />}
-            {starting ? '처리 중...' : '🚀 방문 시작 →'}
+            {starting && <Spinner size="sm" className="text-zinc-950" />}
+            {starting ? '처리 중' : '방문 시작'}
           </button>
         </div>
       )}
 
       {/* 단계별 대기 현황 */}
-      <div>
-        <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-          <span>📊</span> 오늘의 단계별 대기 현황
-        </h2>
+      <div className="space-y-3">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          오늘의 단계별 대기 현황
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {STAGE_ROUTES.map(({ stage, path }) => (
             <StagePatientList

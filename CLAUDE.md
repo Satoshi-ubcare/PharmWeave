@@ -1,5 +1,53 @@
 # CLAUDE.md — PharmWeave AI Context
 
+## 개발 명령어 (Common Commands)
+
+### 초기 설치
+```bash
+npm ci                        # 루트에서 실행 — npm workspaces 전체 의존성 설치
+```
+
+### 개발 서버
+```bash
+npm run dev                   # frontend (5173) + backend (3000) 동시 실행
+```
+
+### 빌드
+```bash
+npm run build                 # frontend + backend 전체 빌드
+```
+
+### 린트 / 타입 체크
+```bash
+npm run lint                  # 전체 ESLint
+npm run type-check            # 전체 TypeScript 타입 검사
+```
+
+### 테스트
+```bash
+npm test                                          # 전체 테스트
+npm run test:unit                                 # backend 단위 테스트 (Jest)
+npm run test:integration                          # backend 통합 테스트 (Jest)
+npm run test:frontend                             # frontend 테스트 (Vitest)
+npm run test:e2e                                  # E2E 테스트 (Playwright)
+
+# 단일 파일/패턴 실행
+npx jest --testPathPattern=<pattern>              # backend 단일 테스트
+npx vitest run <file>                             # frontend 단일 테스트
+
+# E2E 사전 준비 (최초 1회)
+npx playwright install chromium
+```
+
+### Prisma
+```bash
+npx prisma generate           # Prisma Client 재생성 (schema 변경 후)
+npx prisma migrate dev        # 개발 DB 마이그레이션
+npx prisma db seed            # 시드 데이터 투입
+```
+
+---
+
 ## 프로젝트 한 문장 요약
 
 PharmWeave는 **Web 기반 약국 PMS**로, 기존 WinForms 설치형 소프트웨어를 브라우저 기반으로 전환하고 **6단계 Workflow UI**(접수→처방→조제→검토→수납→청구)와 **Plugin 확장 구조**를 제공한다.
@@ -293,3 +341,12 @@ A: JWT 유효성 검사만. Role(약사/실무자/관리자) 분리는 구현하
 
 **Q: 테스트는 어디에 작성하나?**
 A: `backend/src/domain/__tests__/` (단위), `backend/src/__tests__/integration/` (통합). Frontend 테스트는 시간 여유 시.
+
+**Q: Monorepo 구조는?**
+A: 루트 `package.json`에 `"workspaces": ["frontend", "backend"]` 설정. 루트에서 `npm ci` 한 번으로 전체 의존성 설치. 각 workspace 명령은 `npm run dev -w frontend` 형태로도 실행 가능하나, 루트 스크립트 사용 권장.
+
+**Q: Frontend import 경로 alias는?**
+A: `@/*` → `src/*` 매핑 (`vite.config.ts`의 `resolve.alias` 설정). 예: `import { cn } from '@/lib/cn'`.
+
+**Q: Vercel 배포 진입점은?**
+A: `api/index.ts` — Express 앱을 Vercel Serverless Function으로 래핑. Frontend는 Vite 빌드 결과(`dist/`)를 Vercel CDN으로 서빙. `vercel.json`에서 라우팅 분리.

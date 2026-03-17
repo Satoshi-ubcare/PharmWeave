@@ -1,15 +1,33 @@
 import { useToastStore } from '@/stores/toastStore'
 
-const typeStyles = {
-  success: 'bg-green-500 dark:bg-green-600 text-white',
-  error: 'bg-red-500 dark:bg-red-600 text-white',
-  info: 'bg-gray-700 dark:bg-gray-600 text-white',
+const borderColors = {
+  success: 'border-l-emerald-500',
+  error: 'border-l-red-500',
+  info: 'border-l-zinc-500',
 }
 
-const typeIcons = {
-  success: '✅',
-  error: '❌',
-  info: 'ℹ️',
+const iconColors = {
+  success: 'text-emerald-400',
+  error: 'text-red-400',
+  info: 'text-zinc-400',
+}
+
+const icons = {
+  success: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <polyline points="20,6 9,17 4,12" />
+    </svg>
+  ),
+  error: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  ),
+  info: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  ),
 }
 
 export default function ToastContainer(): JSX.Element {
@@ -26,18 +44,24 @@ export default function ToastContainer(): JSX.Element {
           key={toast.id}
           role="alert"
           className={[
-            'flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium pointer-events-auto min-w-64 max-w-sm backdrop-blur-sm',
-            typeStyles[toast.type],
+            'flex items-start gap-3 px-4 py-3 rounded shadow-2xl text-sm pointer-events-auto',
+            'min-w-64 max-w-sm border-l-2 border border-zinc-800',
+            'bg-zinc-900 text-zinc-100',
+            borderColors[toast.type],
           ].join(' ')}
         >
-          <span className="text-base leading-none">{typeIcons[toast.type]}</span>
-          <span className="flex-1">{toast.message}</span>
+          <span className={`mt-0.5 flex-shrink-0 ${iconColors[toast.type]}`}>
+            {icons[toast.type]}
+          </span>
+          <span className="flex-1 text-zinc-200 leading-relaxed">{toast.message}</span>
           <button
             onClick={() => removeToast(toast.id)}
-            className="text-white/70 hover:text-white text-xs ml-1 shrink-0 w-5 h-5 flex items-center justify-center rounded hover:bg-white/20 transition-colors"
+            className="text-zinc-600 hover:text-zinc-300 flex-shrink-0 w-4 h-4 flex items-center justify-center transition-colors mt-0.5"
             aria-label="닫기"
           >
-            ✕
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="1" y1="1" x2="11" y2="11" /><line x1="11" y1="1" x2="1" y2="11" />
+            </svg>
           </button>
         </div>
       ))}

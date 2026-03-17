@@ -15,6 +15,12 @@ function calcCopay(totalDrugCost: number): { copayAmount: number; insuranceCover
   return { copayAmount, insuranceCoverage: totalDrugCost - copayAmount }
 }
 
+const METHOD_LABELS: Record<string, string> = {
+  card: '카드',
+  cash: '현금',
+  transfer: '계좌이체',
+}
+
 export default function PaymentFeature() {
   const navigate = useNavigate()
   const { visitId, setStage } = useWorkflowStore()
@@ -48,66 +54,85 @@ export default function PaymentFeature() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <span>💳</span> 수납
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">대기 환자를 선택하면 본인부담금이 표시됩니다.</p>
+      <div className="space-y-1">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          Step 05
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">수납</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-500">대기 환자를 선택하면 본인부담금이 표시됩니다.</p>
       </div>
 
       <StagePatientList stage="payment" />
 
       {!visitId && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 text-sm shadow-sm">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
           위 목록에서 수납할 환자를 선택하세요.
         </div>
       )}
 
       {visitId && (
         <>
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4 shadow-sm">
-            <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-              <span>💰</span> 본인부담금 계산
-            </h2>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                <span className="text-gray-500 dark:text-gray-400">약제비 합계</span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">{totalDrugCost.toLocaleString()}원</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                <span className="text-gray-500 dark:text-gray-400">
-                  본인부담율 ({totalDrugCost < 10000 ? '20%' : '30%'})
+          {/* 본인부담금 계산 */}
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+              본인부담금 계산
+            </p>
+            <div className="space-y-0">
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100 dark:border-zinc-800">
+                <span className="text-sm text-zinc-500 dark:text-zinc-500">약제비 합계</span>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {totalDrugCost.toLocaleString()}원
                 </span>
-                <span className="font-medium text-orange-600 dark:text-orange-400">{copayAmount.toLocaleString()}원</span>
               </div>
-              <div className="flex justify-between py-2">
-                <span className="text-gray-500 dark:text-gray-400">건강보험 부담</span>
-                <span className="font-medium text-blue-600 dark:text-blue-400">{insuranceCoverage.toLocaleString()}원</span>
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100 dark:border-zinc-800">
+                <span className="text-sm text-zinc-500 dark:text-zinc-500">
+                  본인부담율
+                  <span className="text-xs text-zinc-400 dark:text-zinc-600 ml-1.5">
+                    ({totalDrugCost < 10000 ? '20%' : '30%'})
+                  </span>
+                </span>
+                <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                  {copayAmount.toLocaleString()}원
+                </span>
               </div>
-              <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-600">
-                <span className="font-bold text-gray-800 dark:text-gray-200 text-base">💳 환자 납부금액</span>
-                <span className="font-bold text-blue-700 dark:text-blue-400 text-xl">{copayAmount.toLocaleString()}원</span>
+              <div className="flex justify-between items-center py-3 border-b border-zinc-100 dark:border-zinc-800">
+                <span className="text-sm text-zinc-500 dark:text-zinc-500">건강보험 부담</span>
+                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                  {insuranceCoverage.toLocaleString()}원
+                </span>
+              </div>
+
+              {/* 최종 금액 */}
+              <div className="flex justify-between items-center pt-4">
+                <span className="text-xs font-semibold tracking-[0.15em] uppercase text-zinc-500 dark:text-zinc-500">
+                  환자 납부금액
+                </span>
+                <span className="text-2xl font-bold tracking-tight text-amber-500 dark:text-amber-400">
+                  {copayAmount.toLocaleString()}
+                  <span className="text-sm font-medium ml-1">원</span>
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-3 shadow-sm">
-            <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-              <span>🏦</span> 결제 방법
-            </h2>
-            <div className="flex gap-3">
+          {/* 결제 방법 */}
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+              결제 방법
+            </p>
+            <div className="grid grid-cols-3 gap-3">
               {(['card', 'cash', 'transfer'] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMethod(m)}
                   className={cn(
-                    'flex-1 py-3 rounded-xl border text-sm font-medium transition-all',
+                    'py-3 rounded border text-sm font-medium transition-all',
                     method === m
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105'
-                      : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700',
+                      ? 'border-amber-400 bg-amber-400/10 text-amber-600 dark:text-amber-300'
+                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-500 hover:border-zinc-300 dark:hover:border-zinc-600',
                   )}
                 >
-                  {m === 'card' ? '💳 카드' : m === 'cash' ? '💵 현금' : '🏦 계좌이체'}
+                  {METHOD_LABELS[m]}
                 </button>
               ))}
             </div>
@@ -117,10 +142,10 @@ export default function PaymentFeature() {
             <button
               onClick={handlePay}
               disabled={submitting}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
             >
-              {submitting && <Spinner className="text-white" />}
-              {submitting ? '처리 중...' : `💳 ${copayAmount.toLocaleString()}원 결제 → 청구`}
+              {submitting && <Spinner size="sm" className="text-zinc-950" />}
+              {submitting ? '처리 중' : `${copayAmount.toLocaleString()}원 결제 — 청구로`}
             </button>
           </div>
         </>

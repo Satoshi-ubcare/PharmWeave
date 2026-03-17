@@ -29,6 +29,8 @@ export default function DispensingFeature() {
     ? prescription.items.every((item) => checked[item.id])
     : false
 
+  const checkedCount = Object.values(checked).filter(Boolean).length
+
   const handleComplete = async () => {
     if (!visitId || !allChecked) return
     await transition(visitId, 'review')
@@ -38,65 +40,97 @@ export default function DispensingFeature() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <span>💊</span> 조제
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">대기 환자를 선택하면 처방 항목이 표시됩니다.</p>
+      <div className="space-y-1">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          Step 03
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">조제</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-500">대기 환자를 선택하면 처방 항목이 표시됩니다.</p>
       </div>
 
       <StagePatientList stage="dispensing" />
 
       {!visitId && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 text-sm shadow-sm">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
           위 목록에서 조제할 환자를 선택하세요.
         </div>
       )}
 
       {visitId && loading && (
-        <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500 text-sm py-4">
-          <Spinner size="md" className="text-gray-400" />
+        <div className="flex items-center gap-3 text-zinc-400 dark:text-zinc-600 text-sm py-4">
+          <Spinner size="md" className="text-zinc-400" />
           <span>처방 정보를 불러오는 중...</span>
         </div>
       )}
 
       {visitId && !loading && prescription && (
         <>
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-800 dark:text-gray-200">
-                🏥 {prescription.clinic_name} — {String(prescription.prescribed_at).slice(0, 10)}
-              </h2>
-              <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                {Object.values(checked).filter(Boolean).length} / {prescription.items.length} 확인
-              </span>
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400 mb-1">
+                  조제 체크리스트
+                </p>
+                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                  {prescription.clinic_name}
+                  <span className="text-zinc-400 dark:text-zinc-600 font-normal ml-2 text-xs">
+                    {String(prescription.prescribed_at).slice(0, 10)}
+                  </span>
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-zinc-400 dark:text-zinc-600">
+                  {checkedCount} / {prescription.items.length}
+                </span>
+                {/* Progress bar */}
+                <div className="w-24 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full mt-1.5 overflow-hidden">
+                  <div
+                    className="h-full bg-amber-400 transition-all duration-300"
+                    style={{ width: `${prescription.items.length > 0 ? (checkedCount / prescription.items.length) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
             </div>
-            <ul className="space-y-3">
+
+            {/* Drug list */}
+            <ul className="space-y-2">
               {prescription.items.map((item) => (
                 <li
                   key={item.id}
-                  className={[
-                    'flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer',
-                    checked[item.id]
-                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                      : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20',
-                  ].join(' ')}
                   onClick={() => setChecked({ ...checked, [item.id]: !checked[item.id] })}
+                  className={[
+                    'flex items-center gap-4 p-4 rounded border transition-all cursor-pointer select-none',
+                    checked[item.id]
+                      ? 'bg-emerald-950/20 dark:bg-emerald-950/30 border-emerald-800/40 dark:border-emerald-800/30'
+                      : 'bg-zinc-50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700',
+                  ].join(' ')}
                 >
-                  <input
-                    type="checkbox"
-                    checked={checked[item.id] ?? false}
-                    onChange={() => {}}
-                    className="w-5 h-5 accent-blue-600"
-                  />
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">💊 {item.drug_name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{item.drug_code} · {item.quantity}개 · {item.days}일</p>
+                  {/* Custom checkbox */}
+                  <div className={[
+                    'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                    checked[item.id]
+                      ? 'bg-emerald-500 border-emerald-500'
+                      : 'border-zinc-300 dark:border-zinc-700',
+                  ].join(' ')}>
+                    {checked[item.id] && (
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5">
+                        <polyline points="2,6 5,9 10,3" />
+                      </svg>
+                    )}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-medium text-sm ${checked[item.id] ? 'text-emerald-300 line-through decoration-emerald-600' : 'text-zinc-900 dark:text-zinc-100'}`}>
+                      {item.drug_name}
+                    </p>
+                    <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-0.5">
+                      {item.drug_code} · {item.quantity}개 · {item.days}일
+                    </p>
+                  </div>
+                  <span className={`text-sm font-medium flex-shrink-0 ${checked[item.id] ? 'text-emerald-500 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}`}>
                     {(item.unit_price * item.quantity * item.days).toLocaleString()}원
                   </span>
-                  {checked[item.id] && <span className="text-green-500 dark:text-green-400">✅</span>}
                 </li>
               ))}
             </ul>
@@ -106,17 +140,17 @@ export default function DispensingFeature() {
             <button
               onClick={handleComplete}
               disabled={!allChecked || submitting}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
             >
-              {submitting && <Spinner className="text-white" />}
-              {submitting ? '처리 중...' : '✅ 조제 완료 → 검토'}
+              {submitting && <Spinner size="sm" className="text-zinc-950" />}
+              {submitting ? '처리 중' : '조제 완료 — 검토로'}
             </button>
           </div>
         </>
       )}
 
       {visitId && !loading && !prescriptionError && !prescription && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 text-sm shadow-sm">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
           처방 정보가 없습니다.
         </div>
       )}

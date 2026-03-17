@@ -22,7 +22,6 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  // ESC 키로 닫기
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
@@ -39,42 +38,42 @@ export default function ConfirmDialog({
       aria-modal="true"
       aria-labelledby="confirm-title"
     >
-      {/* 배경 오버레이 */}
+      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onCancel}
       />
 
-      {/* 다이얼로그 패널 */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-sm mx-4 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-start gap-3">
-          <span className="text-2xl mt-0.5" aria-hidden="true">
-            {variant === 'danger' ? '⚠️' : 'ℹ️'}
-          </span>
-          <div>
-            <h2 id="confirm-title" className="font-semibold text-gray-900 dark:text-gray-100 text-base">
-              {title}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-              {description}
-            </p>
-          </div>
+      {/* Panel */}
+      <div className="relative bg-zinc-900 border border-zinc-800 rounded shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4">
+        {/* Header */}
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500">
+            {variant === 'danger' ? '주의' : '확인'}
+          </p>
+          <h2 id="confirm-title" className="text-base font-semibold text-zinc-100">
+            {title}
+          </h2>
+          <p className="text-sm text-zinc-400 leading-relaxed">
+            {description}
+          </p>
         </div>
 
+        {/* Actions */}
         <div className="flex gap-2 justify-end pt-1">
           <button
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="px-4 py-2 border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 text-sm rounded transition-colors"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
             className={cn(
-              'px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors',
+              'px-4 py-2 text-sm font-medium rounded transition-colors',
               variant === 'danger'
-                ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-blue-600 hover:bg-blue-700',
+                ? 'bg-red-500/10 border border-red-700 text-red-400 hover:bg-red-500/20'
+                : 'bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold',
             )}
           >
             {confirmLabel}
