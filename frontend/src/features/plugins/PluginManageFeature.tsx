@@ -65,61 +65,65 @@ export default function PluginManageFeature() {
         )}
 
         {!loading && plugins.length > 0 && (
-          <ul className="space-y-2">
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {plugins.map((plugin) => (
               <li
                 key={plugin.id}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex items-center justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+                className={[
+                  'bg-white dark:bg-zinc-900 border rounded-xl p-5 flex flex-col gap-4 transition-colors',
+                  plugin.enabled
+                    ? 'border-blue-500/30 dark:border-blue-500/20 hover:border-blue-500/50 dark:hover:border-blue-500/40'
+                    : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700',
+                ].join(' ')}
               >
-                {/* Info */}
-                <div className="flex items-center gap-4">
-                  {/* Icon placeholder */}
+                {/* 상단: 아이콘 + 토글 */}
+                <div className="flex items-start justify-between">
                   <div className={[
-                    'w-9 h-9 rounded-lg border flex items-center justify-center flex-shrink-0',
+                    'w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0',
                     plugin.enabled
                       ? 'border-blue-500/30 bg-blue-500/5'
                       : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950',
                   ].join(' ')}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
                       className={plugin.enabled ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-600'}>
                       <path d="M18.5 3a2.5 2.5 0 0 1 0 5h-1v2h1a4.5 4.5 0 0 1 0 9H15v-2h3.5a2.5 2.5 0 0 0 0-5H17V9h1.5a.5.5 0 0 0 0-1H17V3h1.5zM9 3v3H7.5a.5.5 0 0 0 0 1H9v3H7.5a2.5 2.5 0 0 0 0 5H9v2H5.5a4.5 4.5 0 0 1 0-9H7V8H5.5a2.5 2.5 0 0 1 0-5H9z" />
                     </svg>
                   </div>
 
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{plugin.name}</p>
-                      <span className={[
-                        'text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded-lg',
-                        plugin.enabled
-                          ? 'text-blue-700 dark:text-blue-400 bg-blue-500/10'
-                          : 'text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800',
-                      ].join(' ')}>
-                        {plugin.enabled ? 'ON' : 'OFF'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-0.5">{plugin.description}</p>
-                  </div>
+                  <button
+                    onClick={() => handleToggle(plugin)}
+                    disabled={toggling === plugin.id}
+                    className={[
+                      'relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none disabled:opacity-40',
+                      plugin.enabled ? 'bg-[#246AFE]' : 'bg-zinc-200 dark:bg-zinc-700',
+                    ].join(' ')}
+                    role="switch"
+                    aria-checked={plugin.enabled}
+                  >
+                    <span
+                      className={[
+                        'inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform',
+                        plugin.enabled ? 'translate-x-4' : 'translate-x-0.5',
+                      ].join(' ')}
+                    />
+                  </button>
                 </div>
 
-                {/* Toggle switch */}
-                <button
-                  onClick={() => handleToggle(plugin)}
-                  disabled={toggling === plugin.id}
-                  className={[
-                    'relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none disabled:opacity-40',
-                    plugin.enabled ? 'bg-[#246AFE]' : 'bg-zinc-200 dark:bg-zinc-700',
-                  ].join(' ')}
-                  role="switch"
-                  aria-checked={plugin.enabled}
-                >
-                  <span
-                    className={[
-                      'inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform',
-                      plugin.enabled ? 'translate-x-4' : 'translate-x-0.5',
-                    ].join(' ')}
-                  />
-                </button>
+                {/* 하단: 이름 + 상태 뱃지 + 설명 */}
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{plugin.name}</p>
+                    <span className={[
+                      'text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded-lg',
+                      plugin.enabled
+                        ? 'text-blue-700 dark:text-blue-400 bg-blue-500/10'
+                        : 'text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800',
+                    ].join(' ')}>
+                      {plugin.enabled ? 'ON' : 'OFF'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-600 leading-relaxed">{plugin.description}</p>
+                </div>
               </li>
             ))}
           </ul>
