@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { clinicApi } from '@/api/endpoints'
 import { extractApiError } from '@/lib/apiError'
+import { matchesKoreanSearch, toApiQuery } from '@/lib/koreanSearch'
 import type { Clinic } from '@/types'
 
 export function useClinicSearch() {
@@ -8,10 +9,16 @@ export function useClinicSearch() {
   const [loading, setLoading] = useState(false)
 
   const search = useCallback(async (q: string): Promise<void> => {
+    const trimmed = q.trim()
     setLoading(true)
     try {
-      const res = await clinicApi.search(q)
-      setResults(res.data)
+      const apiQ = toApiQuery(trimmed)
+      const res = await clinicApi.search(apiQ)
+      // 초성 포함 로컬 필터 적용
+      const filtered = trimmed
+        ? res.data.filter((c) => matchesKoreanSearch(trimmed, c.name))
+        : res.data
+      setResults(filtered)
     } catch {
       setResults([])
     } finally {

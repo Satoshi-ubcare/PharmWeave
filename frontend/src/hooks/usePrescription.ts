@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { prescriptionApi, drugApi } from '@/api/endpoints'
 import { extractApiError } from '@/lib/apiError'
+import { matchesKoreanSearch, toApiQuery } from '@/lib/koreanSearch'
 import type { Prescription, PrescriptionPayload, Drug } from '@/types'
 
 export function usePrescription(visitId: string | null) {
@@ -49,12 +50,16 @@ export function useDrugSearch() {
   const [error, setError] = useState('')
 
   const search = useCallback(async (query: string): Promise<void> => {
-    if (!query.trim()) return
+    const trimmed = query.trim()
+    if (!trimmed) return
     setLoading(true)
     setError('')
     try {
-      const res = await drugApi.search(query)
-      setResults(res.data)
+      const apiQ = toApiQuery(trimmed)
+      const res = await drugApi.search(apiQ)
+      // 초성 포함 로컬 필터 적용 (drug_name 기준)
+      const filtered = res.data.filter((d) => matchesKoreanSearch(trimmed, d.drug_name))
+      setResults(filtered)
     } catch (err) {
       setError(extractApiError(err, '약품 검색에 실패했습니다.'))
       setResults([])

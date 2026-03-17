@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { patientApi } from '@/api/endpoints'
 import { extractApiError } from '@/lib/apiError'
+import { matchesKoreanSearch, toApiQuery } from '@/lib/koreanSearch'
 import type { Patient, InsuranceType, CopayExemption } from '@/types'
 
 export function usePatientSearch() {
@@ -9,12 +10,16 @@ export function usePatientSearch() {
   const [error, setError] = useState('')
 
   const search = useCallback(async (query: string): Promise<void> => {
-    if (!query.trim().length) return
+    const trimmed = query.trim()
+    if (!trimmed) return
     setLoading(true)
     setError('')
     try {
-      const res = await patientApi.search(query)
-      setResults(res.data)
+      const apiQ = toApiQuery(trimmed)
+      const res = await patientApi.search(apiQ)
+      // 초성 포함 로컬 필터 적용
+      const filtered = res.data.filter((p) => matchesKoreanSearch(trimmed, p.name))
+      setResults(filtered)
     } catch (err) {
       setError(extractApiError(err, '환자 검색에 실패했습니다.'))
     } finally {
