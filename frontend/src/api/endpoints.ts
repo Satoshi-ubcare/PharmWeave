@@ -9,6 +9,7 @@ import type {
   Payment,
   Claim,
   Plugin,
+  DashboardStats,
 } from '@/types'
 
 // ─── Auth ────────────────────────────────────────────────
@@ -69,6 +70,12 @@ export const claimApi = {
     apiClient.post<Claim>(`/visits/${visitId}/claim`),
   get: (visitId: string) =>
     apiClient.get<Claim>(`/visits/${visitId}/claim`),
+}
+
+// ─── Stats ───────────────────────────────────────────────
+export const statsApi = {
+  today: () =>
+    apiClient.get<DashboardStats>('/stats/today'),
 }
 
 // ─── Plugins ─────────────────────────────────────────────

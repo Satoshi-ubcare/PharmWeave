@@ -10,6 +10,7 @@ import paymentsRouter from './routes/payments'
 import claimsRouter from './routes/claims'
 import pluginsRouter from './routes/plugins'
 import authRouter from './routes/auth'
+import statsRouter from './routes/stats'
 
 const app = express()
 
@@ -26,6 +27,7 @@ app.use('/api/visits', paymentsRouter)
 app.use('/api/visits', claimsRouter)
 app.use('/api/drugs', drugsRouter)
 app.use('/api/plugins', pluginsRouter)
+app.use('/api/stats', statsRouter)
 
 app.use(errorHandler)
 

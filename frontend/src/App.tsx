@@ -6,14 +6,16 @@ import ReviewPage from '@/pages/ReviewPage'
 import PaymentPage from '@/pages/PaymentPage'
 import ClaimPage from '@/pages/ClaimPage'
 import PluginManagePage from '@/pages/PluginManagePage'
+import DashboardPage from '@/pages/DashboardPage'
 import WorkflowLayout from '@/components/WorkflowLayout'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/reception" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route element={<WorkflowLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/reception" element={<ReceptionPage />} />
           <Route path="/prescription" element={<PrescriptionPage />} />
           <Route path="/dispensing" element={<DispensingPage />} />

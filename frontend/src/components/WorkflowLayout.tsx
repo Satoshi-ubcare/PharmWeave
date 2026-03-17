@@ -72,6 +72,12 @@ export default function WorkflowLayout() {
             </button>
 
             <Link
+              to="/dashboard"
+              className="text-[10px] font-semibold tracking-[0.15em] uppercase text-zinc-400 dark:text-zinc-600 hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
+            >
+              Dashboard
+            </Link>
+            <Link
               to="/plugins"
               className="text-[10px] font-semibold tracking-[0.15em] uppercase text-zinc-400 dark:text-zinc-600 hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
             >

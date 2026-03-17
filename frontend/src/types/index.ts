@@ -89,3 +89,18 @@ export interface Plugin {
   description: string
   enabled: boolean
 }
+
+export interface DashboardStats {
+  totalVisits: number
+  activeVisits: number
+  completedVisits: number
+  totalRevenue: number
+  byStage: Partial<Record<WorkflowStage, number>>
+  recentVisits: Array<{
+    id: string
+    patient: { name: string; birth_date: string }
+    workflow_stage: WorkflowStage
+    visited_at: string
+    copay_amount: number | null
+  }>
+}
