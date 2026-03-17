@@ -21,9 +21,9 @@ export default function App() {
           <Route path="/dispensing" element={<DispensingPage />} />
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/payment" element={<PaymentPage />} />
-          <Route path="/claim" element={<ClaimPage />} />
+            <Route path="/claim" element={<ClaimPage />} />
+          <Route path="/plugins" element={<PluginManagePage />} />
         </Route>
-        <Route path="/plugins" element={<PluginManagePage />} />
       </Routes>
     </BrowserRouter>
   )

@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { usePluginStore } from '@/stores/pluginStore'
 import { usePluginList, usePluginToggle } from '@/hooks/usePlugin'
 import { useToast } from '@/hooks/useToast'
@@ -29,29 +28,17 @@ export default function PluginManageFeature() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-200">
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
-              설정
-            </p>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Plugin 관리</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-500">각 단계에서 실행할 확장 기능을 관리합니다.</p>
-          </div>
-          <Link
-            to="/reception"
-            className="text-xs text-zinc-400 dark:text-zinc-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="15,18 9,12 15,6" />
-            </svg>
-            접수로 돌아가기
-          </Link>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-1">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
+          설정
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Plugin 관리</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-500">각 단계에서 실행할 확장 기능을 관리합니다.</p>
+      </div>
 
-        {loading && (
+      {loading && (
           <div className="flex items-center gap-3 text-zinc-400 dark:text-zinc-600 text-sm py-8">
             <Spinner size="md" className="text-zinc-400" />
             <span>플러그인 목록을 불러오는 중...</span>
@@ -128,7 +115,6 @@ export default function PluginManageFeature() {
             ))}
           </ul>
         )}
-      </div>
     </div>
   )
 }
