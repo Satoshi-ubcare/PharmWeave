@@ -28,10 +28,9 @@ function getStepStatus(
 
 interface WorkflowStepperProps {
   currentStage: WorkflowStage
-  visitId: string | null
 }
 
-export default function WorkflowStepper({ currentStage, visitId }: WorkflowStepperProps) {
+export default function WorkflowStepper({ currentStage }: WorkflowStepperProps) {
   const navigate = useNavigate()
 
   return (
@@ -40,7 +39,6 @@ export default function WorkflowStepper({ currentStage, visitId }: WorkflowStepp
         <ol className="flex items-start">
           {STEPS.map((step, index) => {
             const status = getStepStatus(step.stage, currentStage)
-            const isClickable = visitId && status !== 'upcoming'
             const isCompleted = status === 'completed'
             const isCurrent = status === 'current'
 
@@ -48,11 +46,9 @@ export default function WorkflowStepper({ currentStage, visitId }: WorkflowStepp
               <li key={step.stage} className="flex items-start flex-1">
                 {/* Step node + label */}
                 <button
-                  onClick={() => isClickable && navigate(step.path)}
-                  disabled={!isClickable}
+                  onClick={() => navigate(step.path)}
                   className={cn(
-                    'flex flex-col items-center gap-2 flex-shrink-0 group',
-                    isClickable ? 'cursor-pointer' : 'cursor-not-allowed',
+                    'flex flex-col items-center gap-2 flex-shrink-0 group cursor-pointer',
                   )}
                 >
                   {/* Circle */}
@@ -61,7 +57,7 @@ export default function WorkflowStepper({ currentStage, visitId }: WorkflowStepp
                       'w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold border-2 transition-all',
                       isCompleted && 'bg-[#246AFE] border-[#246AFE] text-white',
                       isCurrent && 'bg-transparent border-[#246AFE] text-[#246AFE] shadow-[0_0_0_3px_rgba(36,106,254,0.15)]',
-                      status === 'upcoming' && 'bg-transparent border-slate-200 dark:border-zinc-700 text-slate-400 dark:text-zinc-600',
+                      status === 'upcoming' && 'bg-transparent border-slate-200 dark:border-zinc-700 text-slate-400 dark:text-zinc-600 group-hover:border-[#246AFE]/40 group-hover:text-[#246AFE]/60',
                     )}
                   >
                     {isCompleted ? (
@@ -79,7 +75,7 @@ export default function WorkflowStepper({ currentStage, visitId }: WorkflowStepp
                       'text-[10px] font-medium tracking-wide transition-colors',
                       isCurrent && 'text-[#246AFE]',
                       isCompleted && 'text-slate-400 dark:text-zinc-500 group-hover:text-[#246AFE]',
-                      status === 'upcoming' && 'text-slate-300 dark:text-zinc-600',
+                      status === 'upcoming' && 'text-slate-300 dark:text-zinc-600 group-hover:text-[#246AFE]/60',
                     )}
                   >
                     {step.label}

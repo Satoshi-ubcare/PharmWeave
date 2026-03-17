@@ -14,7 +14,7 @@ const NAV_LINKS = [
 ]
 
 export default function WorkflowLayout() {
-  const { currentStage, visitId, patient } = useWorkflowStore()
+  const { currentStage, patient } = useWorkflowStore()
   const { setPlugins } = usePluginStore()
   const { theme, toggle } = useThemeStore()
   const location = useLocation()
@@ -109,7 +109,7 @@ export default function WorkflowLayout() {
       </header>
 
       {/* Workflow Stepper */}
-      <WorkflowStepper currentStage={currentStage} visitId={visitId} />
+      <WorkflowStepper currentStage={currentStage} />
 
       {/* Main Content */}
       <main className="flex-1 px-8 py-8">
