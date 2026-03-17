@@ -35,7 +35,7 @@ export default function WorkflowStepper({ currentStage, visitId }: WorkflowStepp
   const navigate = useNavigate()
 
   return (
-    <nav className="bg-white dark:bg-zinc-900 border-b border-blue-100 dark:border-zinc-800 px-8 py-4">
+    <nav data-testid="workflow-stepper" className="bg-white dark:bg-zinc-900 border-b border-blue-100 dark:border-zinc-800 px-8 py-4">
       <div className="max-w-5xl mx-auto">
         <ol className="flex items-start">
           {STEPS.map((step, index) => {

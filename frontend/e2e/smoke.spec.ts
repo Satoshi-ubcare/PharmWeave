@@ -18,7 +18,7 @@ test.describe('Smoke', () => {
 
   test('워크플로우 스테퍼 6단계 모두 표시', async ({ page }) => {
     await page.goto('/')
-    const stepper = page.locator('nav')
+    const stepper = page.locator('[data-testid="workflow-stepper"]')
     for (const label of ['접수', '처방', '조제', '검토', '수납', '청구']) {
       await expect(stepper.getByText(label, { exact: true })).toBeVisible()
     }
@@ -43,8 +43,8 @@ test.describe('Smoke', () => {
 
   test('Plugin 관리 페이지 이동', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('link', { name: /Plugin/ }).click()
+    await page.getByRole('link', { name: /Plugin/i }).click()
     await expect(page).toHaveURL(/\/plugins/)
-    await expect(page.getByRole('heading', { name: /Plugin/ })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Plugin/i })).toBeVisible()
   })
 })

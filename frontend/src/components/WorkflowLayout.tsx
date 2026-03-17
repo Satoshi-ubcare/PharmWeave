@@ -4,17 +4,19 @@ import WorkflowStepper from './WorkflowStepper'
 import ToastContainer from './ui/Toast'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePluginStore } from '@/stores/pluginStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { pluginApi } from '@/api/endpoints'
 
 const NAV_LINKS = [
   { to: '/dashboard', label: '대시보드' },
   { to: '/reception', label: '접수' },
-  { to: '/plugins', label: '플러그인' },
+  { to: '/plugins', label: 'Plugins' },
 ]
 
 export default function WorkflowLayout() {
   const { currentStage, visitId, patient } = useWorkflowStore()
   const { setPlugins } = usePluginStore()
+  const { theme, toggle } = useThemeStore()
   const location = useLocation()
 
   useEffect(() => {
@@ -66,16 +68,43 @@ export default function WorkflowLayout() {
             })}
           </nav>
 
-          {/* Patient badge */}
-          {patient && (
-            <div className="flex items-center gap-2 bg-blue-50 dark:bg-zinc-800 border border-blue-200 dark:border-zinc-700 px-3 py-1.5 rounded-xl">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#246AFE] flex-shrink-0" />
-              <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">{patient.name}</span>
-              <span className="text-[10px] text-slate-400 dark:text-zinc-500">
-                {String(patient.birth_date).slice(0, 10)}
-              </span>
-            </div>
-          )}
+          {/* Right side: patient badge + theme toggle */}
+          <div className="flex items-center gap-3">
+            {patient && (
+              <div className="flex items-center gap-2 bg-blue-50 dark:bg-zinc-800 border border-blue-200 dark:border-zinc-700 px-3 py-1.5 rounded-xl">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#246AFE] flex-shrink-0" />
+                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">{patient.name}</span>
+                <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                  {String(patient.birth_date).slice(0, 10)}
+                </span>
+              </div>
+            )}
+
+            <button
+              onClick={toggle}
+              className="w-8 h-8 flex items-center justify-center text-slate-400 dark:text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+              aria-label="테마 전환"
+              title={theme === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
+            >
+              {theme === 'light' ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+                </svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
