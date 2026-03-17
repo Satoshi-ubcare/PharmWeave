@@ -28,6 +28,8 @@ export const patientApi = {
     apiClient.post<Patient>('/patients', data),
   get: (id: string) =>
     apiClient.get<Patient>(`/patients/${id}`),
+  update: (id: string, data: { name?: string; birth_date?: string; phone?: string | null }) =>
+    apiClient.patch<Patient>(`/patients/${id}`, data),
 }
 
 // ─── Visits ──────────────────────────────────────────────

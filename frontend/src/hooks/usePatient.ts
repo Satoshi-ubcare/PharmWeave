@@ -27,6 +27,30 @@ export function usePatientSearch() {
   return { results, loading, error, search, clear }
 }
 
+export function usePatientUpdate() {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const update = async (
+    id: string,
+    data: { name?: string; birth_date?: string; phone?: string | null },
+  ): Promise<Patient | null> => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await patientApi.update(id, data)
+      return res.data
+    } catch (err) {
+      setError(extractApiError(err, '환자 정보 수정에 실패했습니다.'))
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return { loading, error, update }
+}
+
 export function usePatientCreate() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

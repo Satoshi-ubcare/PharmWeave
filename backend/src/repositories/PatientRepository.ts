@@ -1,11 +1,18 @@
 import type { Patient } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 
+export interface PatientUpdateData {
+  name?: string
+  birth_date?: Date
+  phone?: string | null
+}
+
 export interface IPatientRepository {
   search(q: string): Promise<Patient[]>
   findById(id: string): Promise<Patient | null>
   findByNameAndBirthDate(name: string, birthDate: Date): Promise<Patient | null>
   create(name: string, birthDate: Date, phone?: string): Promise<Patient>
+  update(id: string, data: PatientUpdateData): Promise<Patient>
 }
 
 export class PrismaPatientRepository implements IPatientRepository {
@@ -41,5 +48,9 @@ export class PrismaPatientRepository implements IPatientRepository {
     return prisma.patient.create({
       data: { name, birth_date: birthDate, phone },
     })
+  }
+
+  async update(id: string, data: PatientUpdateData): Promise<Patient> {
+    return prisma.patient.update({ where: { id }, data })
   }
 }
