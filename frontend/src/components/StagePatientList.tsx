@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { useVisitsByStage } from '@/hooks/useVisit'
+import { useAutoScroll } from '@/hooks/useAutoScroll'
 import Spinner from '@/components/ui/Spinner'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import type { WorkflowStage } from '@/types'
@@ -18,10 +19,13 @@ const STAGE_LABEL: Record<string, string> = {
   claim: '청구',
 }
 
+const ROLL_THRESHOLD = 5
+
 export default function StagePatientList({ stage, onSelect }: Props) {
   const { visitId, patient: currentPatient, setVisit } = useWorkflowStore()
   const { visits, loading, error, refresh } = useVisitsByStage(stage)
   const [pendingVisit, setPendingVisit] = useState<(typeof visits)[number] | null>(null)
+  const scroll = useAutoScroll<HTMLUListElement>(visits.length, ROLL_THRESHOLD)
 
   const handleSelect = (v: (typeof visits)[number]) => {
     if (!v.patient) return
@@ -77,7 +81,12 @@ export default function StagePatientList({ stage, onSelect }: Props) {
       )}
 
       {!loading && visits.length > 0 && (
-        <ul className="space-y-1">
+        <ul
+          ref={scroll.ref}
+          onMouseEnter={scroll.onMouseEnter}
+          onMouseLeave={scroll.onMouseLeave}
+          className="space-y-1 overflow-y-auto max-h-[220px] pr-1"
+        >
           {visits.map((v) => (
             <li key={v.id}>
               <button

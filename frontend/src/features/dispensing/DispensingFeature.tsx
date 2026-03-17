@@ -4,6 +4,7 @@ import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
 import { useToast } from '@/hooks/useToast'
+import { useAutoScroll } from '@/hooks/useAutoScroll'
 import StagePatientList from '@/components/StagePatientList'
 import Spinner from '@/components/ui/Spinner'
 
@@ -14,6 +15,8 @@ export default function DispensingFeature() {
   const { loading: submitting, error: stageError, transition } = useWorkflowStage()
   const { toast } = useToast()
   const [checked, setChecked] = useState<Record<string, boolean>>({})
+  const itemCount = prescription?.items.length ?? 0
+  const checklistScroll = useAutoScroll<HTMLUListElement>(itemCount, 5)
 
   useEffect(() => { if (stageError) toast('error', stageError) }, [stageError, toast])
   useEffect(() => { if (prescriptionError) toast('error', prescriptionError) }, [prescriptionError, toast])
@@ -94,7 +97,12 @@ export default function DispensingFeature() {
             </div>
 
             {/* Drug list */}
-            <ul className="space-y-2">
+            <ul
+              ref={checklistScroll.ref}
+              onMouseEnter={checklistScroll.onMouseEnter}
+              onMouseLeave={checklistScroll.onMouseLeave}
+              className="space-y-2 overflow-y-auto max-h-[300px] pr-1"
+            >
               {prescription.items.map((item) => (
                 <li
                   key={item.id}

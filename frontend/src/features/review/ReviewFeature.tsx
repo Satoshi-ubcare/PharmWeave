@@ -4,6 +4,7 @@ import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePrescription } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
 import { useToast } from '@/hooks/useToast'
+import { useAutoScroll } from '@/hooks/useAutoScroll'
 import StagePatientList from '@/components/StagePatientList'
 import PluginSlot from '@/components/PluginSlot'
 import Spinner from '@/components/ui/Spinner'
@@ -15,6 +16,8 @@ export default function ReviewFeature() {
   const { loading: submitting, error: stageError, transition } = useWorkflowStage()
   const { toast } = useToast()
   const [memo, setMemo] = useState('')
+  const itemCount = prescription?.items.length ?? 0
+  const tableScroll = useAutoScroll<HTMLDivElement>(itemCount, 5)
 
   useEffect(() => { setMemo('') }, [visitId])
   useEffect(() => { if (stageError) toast('error', stageError) }, [stageError, toast])
@@ -91,13 +94,19 @@ export default function ReviewFeature() {
               {prescription.clinic_name} · {String(prescription.prescribed_at).slice(0, 10)}
             </span>
           </div>
+          <div
+            ref={tableScroll.ref}
+            onMouseEnter={tableScroll.onMouseEnter}
+            onMouseLeave={tableScroll.onMouseLeave}
+            className="overflow-y-auto max-h-[240px]"
+          >
           <table className="w-full text-sm">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-white dark:bg-zinc-900">
               <tr className="text-[10px] tracking-[0.1em] uppercase text-zinc-400 dark:text-zinc-600 border-b border-zinc-100 dark:border-zinc-800">
-                <th className="text-left pb-3">약품명</th>
-                <th className="text-center pb-3">수량</th>
-                <th className="text-center pb-3">일수</th>
-                <th className="text-right pb-3">금액</th>
+                <th className="text-left py-3">약품명</th>
+                <th className="text-center py-3">수량</th>
+                <th className="text-center py-3">일수</th>
+                <th className="text-right py-3">금액</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800/50">
@@ -112,15 +121,14 @@ export default function ReviewFeature() {
                 </tr>
               ))}
             </tbody>
-            <tfoot>
-              <tr className="border-t border-zinc-200 dark:border-zinc-700">
-                <td colSpan={3} className="pt-4 text-xs text-zinc-400 dark:text-zinc-600 font-medium">약제비 합계</td>
-                <td className="pt-4 text-right font-bold text-blue-700 dark:text-blue-400">
-                  {totalCost.toLocaleString()}원
-                </td>
-              </tr>
-            </tfoot>
           </table>
+          </div>
+          <div className="flex justify-between items-center pt-3 border-t border-zinc-100 dark:border-zinc-800">
+            <span className="text-xs text-zinc-400 dark:text-zinc-600 font-medium">약제비 합계</span>
+            <span className="font-bold text-blue-700 dark:text-blue-400">
+              {totalCost.toLocaleString()}원
+            </span>
+          </div>
         </div>
       )}
 

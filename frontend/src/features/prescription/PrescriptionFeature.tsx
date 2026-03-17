@@ -5,6 +5,7 @@ import { usePrescriptionSave, useDrugSearch } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
 import { useClinicSearch } from '@/hooks/useClinic'
 import { useToast } from '@/hooks/useToast'
+import { useAutoScroll } from '@/hooks/useAutoScroll'
 import StagePatientList from '@/components/StagePatientList'
 import Spinner from '@/components/ui/Spinner'
 import { cn } from '@/lib/cn'
@@ -38,6 +39,7 @@ export default function PrescriptionFeature() {
   const { results: drugResults, loading: drugSearching, error: drugError, search: searchDrug, clear: clearDrug } = useDrugSearch()
   const { results: clinicResults, loading: clinicSearching, search: searchClinic, clear: clearClinic } = useClinicSearch()
   const { loading: saving, error: saveError, save } = usePrescriptionSave()
+  const itemsScroll = useAutoScroll<HTMLDivElement>(items.length, 5)
   const { error: stageError, transition } = useWorkflowStage()
 
   useEffect(() => { if (saveError) toast('error', saveError) }, [saveError, toast])
@@ -293,13 +295,19 @@ export default function PrescriptionFeature() {
                   합계 {totalCost.toLocaleString()}원
                 </span>
               </div>
+              <div
+                ref={itemsScroll.ref}
+                onMouseEnter={itemsScroll.onMouseEnter}
+                onMouseLeave={itemsScroll.onMouseLeave}
+                className="overflow-y-auto max-h-[260px]"
+              >
               <table className="w-full text-sm">
-                <thead>
+                <thead className="sticky top-0 z-10 bg-white dark:bg-zinc-900">
                   <tr className="text-[10px] tracking-[0.1em] uppercase text-zinc-400 dark:text-zinc-600 border-b border-zinc-100 dark:border-zinc-800">
-                    <th className="text-left pb-3">약품명</th>
-                    <th className="text-center pb-3 w-20">수량</th>
-                    <th className="text-center pb-3 w-20">일수</th>
-                    <th className="text-right pb-3 w-28">금액</th>
+                    <th className="text-left py-3">약품명</th>
+                    <th className="text-center py-3 w-20">수량</th>
+                    <th className="text-center py-3 w-20">일수</th>
+                    <th className="text-right py-3 w-28">금액</th>
                     <th className="w-8" />
                   </tr>
                 </thead>
@@ -345,6 +353,7 @@ export default function PrescriptionFeature() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
 
