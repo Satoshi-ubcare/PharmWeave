@@ -65,7 +65,7 @@ export default function PluginManageFeature() {
         )}
 
         {!loading && plugins.length > 0 && (
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[600px] pr-1">
             {plugins.map((plugin) => (
               <li
                 key={plugin.id}

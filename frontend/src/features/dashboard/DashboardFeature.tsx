@@ -201,7 +201,7 @@ export default function DashboardFeature() {
           <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
             단계별 대기 현황
           </p>
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-y-auto max-h-[280px] pr-1">
             {pipelineStages.map(({ stage, label, path }) => {
               const count = stats.byStage[stage] ?? 0
               const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0
@@ -267,15 +267,15 @@ export default function DashboardFeature() {
               오늘 방문 내역이 없습니다.
             </p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[352px]">
               <table className="w-full text-sm">
-                <thead>
+                <thead className="sticky top-0 z-10 bg-white dark:bg-zinc-900">
                   <tr className="text-[10px] tracking-[0.1em] uppercase text-zinc-400 dark:text-zinc-600 border-b border-zinc-100 dark:border-zinc-800">
-                    <th className="text-left pb-3 font-medium">환자명</th>
-                    <th className="text-left pb-3 font-medium">생년월일</th>
-                    <th className="text-center pb-3 font-medium">단계</th>
-                    <th className="text-center pb-3 font-medium">접수 시각</th>
-                    <th className="text-right pb-3 font-medium">본인부담금</th>
+                    <th className="text-left py-3 font-medium">환자명</th>
+                    <th className="text-left py-3 font-medium">생년월일</th>
+                    <th className="text-center py-3 font-medium">단계</th>
+                    <th className="text-center py-3 font-medium">접수 시각</th>
+                    <th className="text-right py-3 font-medium">본인부담금</th>
                     <th className="w-6" />
                   </tr>
                 </thead>
