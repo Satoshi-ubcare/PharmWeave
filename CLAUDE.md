@@ -1,4 +1,9 @@
-# CLAUDE.md — PharmWeave AI Context
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+<!-- original title preserved below -->
+# PharmWeave AI Context
 
 ## 개발 명령어 (Common Commands)
 
@@ -201,6 +206,19 @@ POST   /api/visits/:id/claim      청구 생성
 GET    /api/visits/:id/claim      청구 조회
 ```
 
+### 의료기관
+```
+GET    /api/clinics?q={query}     의료기관 검색 (빈 쿼리면 최근 20개)
+POST   /api/clinics               의료기관 등록 (이름 기준 upsert)
+PATCH  /api/clinics/:id           의료기관 수정 (phone, address)
+DELETE /api/clinics/:id           의료기관 삭제
+```
+
+### 통계
+```
+GET    /api/stats/today           오늘 방문·처방·수납 집계 (Dashboard 전용)
+```
+
 ### Plugin
 ```
 GET    /api/plugins               Plugin 목록 + 활성화 상태
@@ -220,6 +238,33 @@ POST   /api/plugins/:id/execute   Plugin 실행 { visitId }
   - 약제비 합계 >= 10,000원 → 본인부담금 = 약제비 × 30%
 
 결과: { totalDrugCost, copayAmount, insuranceCoverage }
+```
+
+---
+
+## 도메인 에러 계층 (`domain/errors.ts`)
+
+서비스/도메인에서 아래 에러를 throw하면 `middlewares/errorHandler.ts`가 HTTP 상태로 매핑한다.
+도메인 레이어는 HTTP에 의존하지 않으므로 에러 클래스만 throw — HTTP 코드는 errorHandler에서 결정.
+
+| 클래스 | HTTP | 사용 상황 |
+|--------|------|-----------|
+| `NotFoundError` | 404 | 리소스 없음 |
+| `ConflictError` | 409 | 중복·충돌 |
+| `WorkflowTransitionError` | 422 | 단계 전환 불가 |
+| `PreconditionError` | 422 | 전제조건 미충족 |
+| `DomainValidationError` | 400 | 도메인 입력 오류 |
+| `UnauthorizedError` | 401 | 인증 실패 |
+
+---
+
+## 한국어 초성 검색 (`frontend/src/lib/koreanSearch.ts`)
+
+클라이언트 사이드 검색 필터에서 사용. 서버로 전송하기 전 `toApiQuery()`로 단독 자음 제거.
+
+```ts
+matchesKoreanSearch(query, target)  // 초성 포함 부분 일치 검사
+toApiQuery(query)                   // "ㅇ" → ""  /  "연ㅅ" → "연" (API 전송용)
 ```
 
 ---
@@ -300,10 +345,10 @@ pharmweave/
 ├── docs/DEVLOG.md
 ├── frontend/
 │   ├── src/
-│   │   ├── pages/          # URL 진입점 (6단계 + PluginManage)
-│   │   ├── features/       # 단계별 컴포넌트 (reception/, prescription/, ...)
-│   │   ├── components/     # WorkflowStepper, PluginSlot, ui/
-│   │   ├── hooks/          # API 훅 (usePatient, useVisit, usePrescription, usePayment, usePlugin)
+│   │   ├── pages/          # URL 진입점 (6단계 + Dashboard + PluginManage)
+│   │   ├── features/       # 단계별 컴포넌트 (reception/, prescription/, ..., dashboard/)
+│   │   ├── components/     # WorkflowStepper, PluginSlot, StagePatientList, ui/
+│   │   ├── hooks/          # API 훅 (usePatient, useVisit, usePrescription, usePayment, usePlugin, useClinic, useDashboard, useAutoScroll)
 │   │   ├── stores/         # Zustand (workflowStore, pluginStore)
 │   │   └── api/            # Axios client + endpoints
 │   ├── vite.config.ts
@@ -312,7 +357,7 @@ pharmweave/
 │   ├── src/
 │   │   ├── routes/         # HTTP 라우터
 │   │   ├── middlewares/    # auth, validate
-│   │   ├── services/       # 유스케이스 (PatientService, VisitService, PrescriptionService, PaymentService, ClaimService, PluginService)
+│   │   ├── services/       # 유스케이스 (PatientService, VisitService, PrescriptionService, PaymentService, ClaimService, PluginService, ClinicService, StatsService)
 │   │   ├── domain/         # 순수 비즈니스 로직 (외부 의존 없음)
 │   │   ├── plugins/        # Plugin 실행 함수
 │   │   └── schemas/        # Zod 요청 스키마

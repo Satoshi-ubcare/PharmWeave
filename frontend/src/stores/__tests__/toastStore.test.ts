@@ -36,18 +36,26 @@ describe('toastStore', () => {
       expect(toasts[0].id).not.toBe(toasts[1].id)
     })
 
-    it('4초 후 자동으로 제거된다', () => {
+    it('success는 3초 후 자동으로 제거된다', () => {
       useToastStore.getState().addToast('success', '자동 제거 테스트')
+      expect(useToastStore.getState().toasts).toHaveLength(1)
+
+      vi.advanceTimersByTime(3000)
+      expect(useToastStore.getState().toasts).toHaveLength(0)
+    })
+
+    it('info는 4초 후 자동으로 제거된다', () => {
+      useToastStore.getState().addToast('info', '자동 제거 테스트')
       expect(useToastStore.getState().toasts).toHaveLength(1)
 
       vi.advanceTimersByTime(4000)
       expect(useToastStore.getState().toasts).toHaveLength(0)
     })
 
-    it('4초 전에는 제거되지 않는다', () => {
-      useToastStore.getState().addToast('error', '아직 있어야 함')
+    it('error는 시간이 지나도 자동으로 제거되지 않는다', () => {
+      useToastStore.getState().addToast('error', '수동 닫기 필요')
 
-      vi.advanceTimersByTime(3999)
+      vi.advanceTimersByTime(10000)
       expect(useToastStore.getState().toasts).toHaveLength(1)
     })
   })

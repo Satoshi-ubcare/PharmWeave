@@ -53,7 +53,12 @@ export default function ToastContainer(): JSX.Element {
           <span className={`mt-0.5 flex-shrink-0 ${iconColors[toast.type]}`}>
             {icons[toast.type]}
           </span>
-          <span className="flex-1 text-zinc-200 leading-relaxed">{toast.message}</span>
+          <span className="flex-1 leading-relaxed">
+            <span className="text-zinc-200">{toast.message}</span>
+            {toast.type === 'error' && (
+              <span className="block mt-1 text-xs text-red-400/70">닫기 버튼을 눌러 확인하세요</span>
+            )}
+          </span>
           <button
             onClick={() => removeToast(toast.id)}
             className="text-zinc-600 hover:text-zinc-300 flex-shrink-0 w-4 h-4 flex items-center justify-center transition-colors mt-0.5"
