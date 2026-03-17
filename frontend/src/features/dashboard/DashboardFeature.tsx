@@ -139,7 +139,7 @@ export default function DashboardFeature() {
   const maxCount = Math.max(1, ...pipelineStages.map((s) => stats.byStage[s.stage] ?? 0))
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* 페이지 헤딩 */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
@@ -168,7 +168,7 @@ export default function DashboardFeature() {
         </button>
       </div>
 
-      {/* KPI 카드 4개 */}
+      {/* KPI 카드 4개 — 모바일 2열 / 데스크탑 4열 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
           label="오늘 총 방문"
@@ -193,131 +193,137 @@ export default function DashboardFeature() {
         />
       </div>
 
-      {/* 단계별 파이프라인 */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-5">
-        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
-          단계별 대기 현황
-        </p>
-        <div className="space-y-3">
-          {pipelineStages.map(({ stage, label, path }) => {
-            const count = stats.byStage[stage] ?? 0
-            const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0
-            return (
-              <button
-                key={stage}
-                onClick={() => navigate(path)}
-                className="w-full group text-left"
-              >
-                <div className="flex items-center gap-3 mb-1.5">
-                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-500 w-8 text-right flex-shrink-0">
-                    {count}
-                  </span>
-                  <span className="text-xs text-zinc-400 dark:text-zinc-600 w-14 flex-shrink-0 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {label}
-                  </span>
-                  <div className="flex-1 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <div
-                      className={[
-                        'h-full rounded-full transition-all duration-500',
-                        count > 0 ? 'bg-[#246AFE]' : 'bg-zinc-200 dark:bg-zinc-700',
-                      ].join(' ')}
-                      style={{ width: `${barWidth}%` }}
-                    />
-                  </div>
-                  <svg
-                    width="12" height="12" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" strokeWidth="2"
-                    className="text-zinc-300 dark:text-zinc-700 group-hover:text-blue-500 transition-colors flex-shrink-0"
-                  >
-                    <polyline points="9,18 15,12 9,6" />
-                  </svg>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-        {/* 완료 */}
-        <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-          <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-emerald-500 dark:text-emerald-400">
-            완료
-          </span>
-          <span className="text-sm font-semibold text-emerald-500 dark:text-emerald-400">
-            {stats.completedVisits}건
-          </span>
-        </div>
-      </div>
+      {/* 하단 2단 그리드: 파이프라인(2/5) + 방문 목록(3/5) */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
 
-      {/* 최근 방문 목록 */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
+        {/* 단계별 파이프라인 — lg:col-span-2 */}
+        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-5">
           <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
-            오늘 방문 목록
+            단계별 대기 현황
           </p>
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-600">
-            최근 15건
-          </span>
+          <div className="space-y-2">
+            {pipelineStages.map(({ stage, label, path }) => {
+              const count = stats.byStage[stage] ?? 0
+              const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0
+              return (
+                <button
+                  key={stage}
+                  onClick={() => navigate(path)}
+                  className="w-full group text-left"
+                >
+                  {/* 4-열 그리드: 숫자 | 단계명 | 진행바 | 화살표 */}
+                  <div className="grid grid-cols-[2rem_4rem_1fr_1rem] items-center gap-2 py-1">
+                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 text-right tabular-nums">
+                      {count}
+                    </span>
+                    <span className="text-xs text-zinc-400 dark:text-zinc-600 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      {label}
+                    </span>
+                    <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div
+                        className={[
+                          'h-full rounded-full transition-all duration-500',
+                          count > 0 ? 'bg-[#246AFE]' : 'bg-zinc-200 dark:bg-zinc-700',
+                        ].join(' ')}
+                        style={{ width: `${barWidth}%` }}
+                      />
+                    </div>
+                    <svg
+                      width="12" height="12" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="2"
+                      className="text-zinc-300 dark:text-zinc-700 group-hover:text-blue-500 transition-colors justify-self-end"
+                    >
+                      <polyline points="9,18 15,12 9,6" />
+                    </svg>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+          {/* 완료 */}
+          <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+            <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-emerald-500 dark:text-emerald-400">
+              완료
+            </span>
+            <span className="text-sm font-semibold text-emerald-500 dark:text-emerald-400">
+              {stats.completedVisits}건
+            </span>
+          </div>
         </div>
 
-        {stats.recentVisits.length === 0 ? (
-          <p className="text-sm text-zinc-400 dark:text-zinc-600 py-6 text-center">
-            오늘 방문 내역이 없습니다.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-[10px] tracking-[0.1em] uppercase text-zinc-400 dark:text-zinc-600 border-b border-zinc-100 dark:border-zinc-800">
-                  <th className="text-left pb-3 font-medium">환자명</th>
-                  <th className="text-left pb-3 font-medium">생년월일</th>
-                  <th className="text-center pb-3 font-medium">단계</th>
-                  <th className="text-center pb-3 font-medium">접수 시각</th>
-                  <th className="text-right pb-3 font-medium">본인부담금</th>
-                  <th className="w-6" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800/50">
-                {stats.recentVisits.map((visit) => (
-                  <tr
-                    key={visit.id}
-                    onClick={() => handleVisitClick(visit)}
-                    className="cursor-pointer hover:bg-blue-50/50 dark:hover:bg-zinc-800/50 transition-colors group"
-                  >
-                    <td className="py-3 font-medium text-zinc-900 dark:text-zinc-100">
-                      {visit.patient.name}
-                    </td>
-                    <td className="py-3 text-zinc-400 dark:text-zinc-600 text-xs">
-                      {String(visit.patient.birth_date).slice(0, 10)}
-                    </td>
-                    <td className="py-3 text-center">
-                      <StageBadge stage={visit.workflow_stage} />
-                    </td>
-                    <td className="py-3 text-center text-xs text-zinc-400 dark:text-zinc-600">
-                      {new Date(visit.visited_at).toLocaleTimeString('ko-KR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </td>
-                    <td className="py-3 text-right text-xs font-medium">
-                      {visit.copay_amount !== null
-                        ? <span className="text-blue-700 dark:text-blue-400">{visit.copay_amount.toLocaleString()}원</span>
-                        : <span className="text-zinc-300 dark:text-zinc-700">—</span>
-                      }
-                    </td>
-                    <td className="py-3 text-center">
-                      <svg
-                        width="12" height="12" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="2"
-                        className="text-zinc-200 dark:text-zinc-700 group-hover:text-blue-500 transition-colors mx-auto"
-                      >
-                        <polyline points="9,18 15,12 9,6" />
-                      </svg>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* 최근 방문 목록 — lg:col-span-3 */}
+        <div className="lg:col-span-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
+              오늘 방문 목록
+            </p>
+            <span className="text-[10px] text-zinc-400 dark:text-zinc-600">
+              최근 15건
+            </span>
           </div>
-        )}
+
+          {stats.recentVisits.length === 0 ? (
+            <p className="text-sm text-zinc-400 dark:text-zinc-600 py-6 text-center">
+              오늘 방문 내역이 없습니다.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-[10px] tracking-[0.1em] uppercase text-zinc-400 dark:text-zinc-600 border-b border-zinc-100 dark:border-zinc-800">
+                    <th className="text-left pb-3 font-medium">환자명</th>
+                    <th className="text-left pb-3 font-medium">생년월일</th>
+                    <th className="text-center pb-3 font-medium">단계</th>
+                    <th className="text-center pb-3 font-medium">접수 시각</th>
+                    <th className="text-right pb-3 font-medium">본인부담금</th>
+                    <th className="w-6" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800/50">
+                  {stats.recentVisits.map((visit) => (
+                    <tr
+                      key={visit.id}
+                      onClick={() => handleVisitClick(visit)}
+                      className="cursor-pointer hover:bg-blue-50/50 dark:hover:bg-zinc-800/50 transition-colors group"
+                    >
+                      <td className="py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                        {visit.patient.name}
+                      </td>
+                      <td className="py-3 text-zinc-400 dark:text-zinc-600 text-xs">
+                        {String(visit.patient.birth_date).slice(0, 10)}
+                      </td>
+                      <td className="py-3 text-center">
+                        <StageBadge stage={visit.workflow_stage} />
+                      </td>
+                      <td className="py-3 text-center text-xs text-zinc-400 dark:text-zinc-600">
+                        {new Date(visit.visited_at).toLocaleTimeString('ko-KR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+                      <td className="py-3 text-right text-xs font-medium">
+                        {visit.copay_amount !== null
+                          ? <span className="text-blue-700 dark:text-blue-400">{visit.copay_amount.toLocaleString()}원</span>
+                          : <span className="text-zinc-300 dark:text-zinc-700">—</span>
+                        }
+                      </td>
+                      <td className="py-3 text-center">
+                        <svg
+                          width="12" height="12" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" strokeWidth="2"
+                          className="text-zinc-200 dark:text-zinc-700 group-hover:text-blue-500 transition-colors mx-auto"
+                        >
+                          <polyline points="9,18 15,12 9,6" />
+                        </svg>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   )
