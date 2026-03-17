@@ -7,12 +7,14 @@ jest.mock('../../lib/prisma', () => ({
   prisma: {
     visit: { findUnique: jest.fn() },
     prescription: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+    clinic: { upsert: jest.fn() },
   },
 }))
 
 type MockPrisma = {
   visit: { findUnique: jest.Mock }
   prescription: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock }
+  clinic: { upsert: jest.Mock }
 }
 const mock = prisma as unknown as MockPrisma
 
@@ -55,6 +57,7 @@ describe('POST /api/visits/:visitId/prescriptions', () => {
     mock.visit.findUnique.mockResolvedValue(mockVisit)
     mock.prescription.findUnique.mockResolvedValue(null)
     mock.prescription.create.mockResolvedValue(mockPrescription)
+    mock.clinic.upsert.mockResolvedValue({ id: 'clinic-uuid-1', name: '서울내과', phone: null, address: null, created_at: new Date(), updated_at: new Date() })
 
     const res = await request(app)
       .post(`/api/visits/${VISIT_ID}/prescriptions`)
@@ -69,6 +72,7 @@ describe('POST /api/visits/:visitId/prescriptions', () => {
     mock.visit.findUnique.mockResolvedValue(mockVisit)
     mock.prescription.findUnique.mockResolvedValue(mockPrescription)
     mock.prescription.update.mockResolvedValue({ ...mockPrescription, clinic_name: '강남이비인후과' })
+    mock.clinic.upsert.mockResolvedValue({ id: 'clinic-uuid-2', name: '강남이비인후과', phone: null, address: null, created_at: new Date(), updated_at: new Date() })
 
     const res = await request(app)
       .post(`/api/visits/${VISIT_ID}/prescriptions`)
