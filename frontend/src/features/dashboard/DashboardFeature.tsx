@@ -4,6 +4,7 @@ import { useWorkflowStore } from '@/stores/workflowStore'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
 import Spinner from '@/components/ui/Spinner'
 import RefreshButton from '@/components/ui/RefreshButton'
+import DonutChart from '@/components/ui/DonutChart'
 import type { WorkflowStage } from '@/types'
 
 // ─── 상수 ──────────────────────────────────────────────────
@@ -54,89 +55,6 @@ const STAGE_BADGE_COLOR: Record<WorkflowStage, string> = {
   completed:    'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400',
 }
 
-// ─── SVG 도넛 차트 ─────────────────────────────────────────
-interface DonutChartProps {
-  completed: number
-  active: number
-  total: number
-}
-
-function DonutChart({ completed, active, total }: DonutChartProps): JSX.Element {
-  const R  = 52
-  const cx = 68
-  const cy = 68
-  const C  = 2 * Math.PI * R   // 둘레 ≈ 326.7
-
-  const completedArc = total > 0 ? (completed / total) * C : 0
-  const activeArc    = total > 0 ? (active    / total) * C : 0
-  const pct          = total > 0 ? Math.round((completed / total) * 100) : 0
-
-  return (
-    <div className="flex flex-col items-center gap-5">
-      {/* SVG 도넛 */}
-      <div className="relative">
-        <svg width="136" height="136" viewBox="0 0 136 136" aria-hidden="true">
-          {/* 트랙 */}
-          <circle
-            cx={cx} cy={cy} r={R}
-            fill="none" stroke="currentColor" strokeWidth="13"
-            className="text-zinc-100 dark:text-zinc-800"
-          />
-          {/* 진행중 — blue */}
-          {active > 0 && (
-            <circle
-              cx={cx} cy={cy} r={R}
-              fill="none" stroke="#3b82f6" strokeWidth="13"
-              strokeDasharray={`${activeArc} ${C}`}
-              strokeDashoffset={-completedArc}
-              transform={`rotate(-90 ${cx} ${cy})`}
-              style={{ transition: 'stroke-dasharray 0.7s ease' }}
-            />
-          )}
-          {/* 완료 — emerald */}
-          {completed > 0 && (
-            <circle
-              cx={cx} cy={cy} r={R}
-              fill="none" stroke="#10b981" strokeWidth="13"
-              strokeDasharray={`${completedArc} ${C}`}
-              strokeDashoffset={0}
-              transform={`rotate(-90 ${cx} ${cy})`}
-              style={{ transition: 'stroke-dasharray 0.7s ease' }}
-            />
-          )}
-        </svg>
-
-        {/* 가운데 텍스트 */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
-          <span className="text-3xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100 leading-none">
-            {pct}<span className="text-lg font-semibold">%</span>
-          </span>
-          <span className="text-[10px] tracking-widest uppercase text-zinc-400 dark:text-zinc-600 mt-1">완료율</span>
-          {total > 0 && (
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">총 {total}건</span>
-          )}
-        </div>
-      </div>
-
-      {/* 범례 */}
-      <div className="flex gap-5 text-xs">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0" />
-          <span className="text-zinc-500 dark:text-zinc-500">
-            완료&nbsp;<strong className="font-semibold text-zinc-700 dark:text-zinc-300">{completed}건</strong>
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0" />
-          <span className="text-zinc-500 dark:text-zinc-500">
-            진행중&nbsp;<strong className="font-semibold text-zinc-700 dark:text-zinc-300">{active}건</strong>
-          </span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ─── KPI 카드 ──────────────────────────────────────────────
 interface KpiCardProps {
   label: string
@@ -145,20 +63,27 @@ interface KpiCardProps {
   icon: JSX.Element
   iconBg: string
   highlight?: boolean
+  onClick?: () => void
 }
 
-function KpiCard({ label, value, sub, icon, iconBg, highlight = false }: KpiCardProps): JSX.Element {
+function KpiCard({ label, value, sub, icon, iconBg, highlight = false, onClick }: KpiCardProps): JSX.Element {
   return (
-    <div className={[
-      'bg-white dark:bg-zinc-900 border rounded-xl p-4 flex items-start gap-3',
-      highlight
-        ? 'border-blue-500/40 dark:border-blue-500/30'
-        : 'border-zinc-200 dark:border-zinc-800',
-    ].join(' ')}>
+    <div
+      onClick={onClick}
+      className={[
+        'bg-white dark:bg-zinc-900 border rounded-xl p-4 flex items-start gap-3 transition-all duration-150',
+        highlight
+          ? 'border-blue-500/40 dark:border-blue-500/30'
+          : 'border-zinc-200 dark:border-zinc-800',
+        onClick
+          ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-blue-400/60 dark:hover:border-blue-500/40'
+          : '',
+      ].join(' ')}
+    >
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
         {icon}
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-zinc-400 dark:text-zinc-600">
           {label}
         </p>
@@ -170,6 +95,12 @@ function KpiCard({ label, value, sub, icon, iconBg, highlight = false }: KpiCard
         </p>
         {sub && <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1">{sub}</p>}
       </div>
+      {onClick && (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+          className="text-zinc-300 dark:text-zinc-700 flex-shrink-0 mt-1 self-start">
+          <polyline points="9,18 15,12 9,6" />
+        </svg>
+      )}
     </div>
   )
 }
@@ -283,6 +214,7 @@ export default function DashboardFeature(): JSX.Element {
           value={stats.totalVisits}
           sub="접수 이후 전체"
           iconBg="bg-zinc-100 dark:bg-zinc-800"
+          onClick={() => navigate('/dashboard/detail?view=total')}
           icon={
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
               className="text-zinc-500 dark:text-zinc-400">
@@ -298,6 +230,7 @@ export default function DashboardFeature(): JSX.Element {
           value={stats.activeVisits}
           sub="완료 전 모든 단계"
           iconBg="bg-blue-50 dark:bg-blue-950/40"
+          onClick={() => navigate('/dashboard/detail?view=active')}
           icon={
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
               className="text-blue-500">
@@ -311,6 +244,7 @@ export default function DashboardFeature(): JSX.Element {
           value={stats.completedVisits}
           sub={`완료율 ${completionRate}%`}
           iconBg="bg-emerald-50 dark:bg-emerald-950/40"
+          onClick={() => navigate('/dashboard/detail?view=completed')}
           icon={
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
               className="text-emerald-500">
@@ -325,6 +259,7 @@ export default function DashboardFeature(): JSX.Element {
           sub="본인부담금 기준"
           highlight
           iconBg="bg-blue-500/10 dark:bg-blue-500/20"
+          onClick={() => navigate('/dashboard/detail?view=revenue')}
           icon={
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
               className="text-blue-600 dark:text-blue-400">
@@ -339,10 +274,19 @@ export default function DashboardFeature(): JSX.Element {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-stretch">
 
         {/* 처리 현황 도넛 차트 — 2 cols */}
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 flex flex-col gap-4">
-          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
-            처리 현황
-          </p>
+        <div
+          onClick={() => navigate('/dashboard/detail?view=status')}
+          className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 hover:border-blue-400/60 dark:hover:border-blue-500/40"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
+              처리 현황
+            </p>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              className="text-zinc-300 dark:text-zinc-700">
+              <polyline points="9,18 15,12 9,6" />
+            </svg>
+          </div>
           <div className="flex-1 flex items-center justify-center py-2">
             {stats.totalVisits === 0 ? (
               <p className="text-sm text-zinc-400 dark:text-zinc-600">오늘 방문 내역이 없습니다.</p>

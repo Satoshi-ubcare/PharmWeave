@@ -7,6 +7,7 @@ import PaymentPage from '@/pages/PaymentPage'
 import ClaimPage from '@/pages/ClaimPage'
 import PluginManagePage from '@/pages/PluginManagePage'
 import DashboardPage from '@/pages/DashboardPage'
+import DashboardDetailPage from '@/pages/DashboardDetailPage'
 import WorkflowLayout from '@/components/WorkflowLayout'
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route element={<WorkflowLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard/detail" element={<DashboardDetailPage />} />
           <Route path="/reception" element={<ReceptionPage />} />
           <Route path="/prescription" element={<PrescriptionPage />} />
           <Route path="/dispensing" element={<DispensingPage />} />
