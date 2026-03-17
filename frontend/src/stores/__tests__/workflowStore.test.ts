@@ -7,6 +7,10 @@ const mockPatient: Patient = {
   name: '홍길동',
   birth_date: '1990-01-01',
   phone: '01012345678',
+  gender: null,
+  allergies: null,
+  insurance_type: 'health_insurance',
+  copay_exemption: 'none',
   created_at: '2026-03-16T00:00:00.000Z',
 }
 

@@ -104,6 +104,10 @@ export default function DashboardFeature() {
         name: visit.patient.name,
         birth_date: visit.patient.birth_date,
         phone: null,
+        gender: null,
+        allergies: null,
+        insurance_type: 'health_insurance' as const,
+        copay_exemption: 'none' as const,
         created_at: visit.visited_at,
       },
     )

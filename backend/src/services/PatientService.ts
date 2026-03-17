@@ -3,12 +3,26 @@ import {
   IPatientRepository,
   PrismaPatientRepository,
 } from '../repositories/PatientRepository'
-import type { Patient } from '@prisma/client'
+import type { Patient, InsuranceType, CopayExemption } from '@prisma/client'
+
+export interface PatientCreateInput {
+  name: string
+  birth_date: string
+  phone?: string
+  gender?: string
+  allergies?: string
+  insurance_type?: InsuranceType
+  copay_exemption?: CopayExemption
+}
 
 export interface PatientUpdateInput {
   name?: string
   birth_date?: string
   phone?: string | null
+  gender?: string | null
+  allergies?: string | null
+  insurance_type?: InsuranceType
+  copay_exemption?: CopayExemption
 }
 
 export class PatientService {
@@ -20,11 +34,19 @@ export class PatientService {
     return this.patientRepo.search(q)
   }
 
-  async create(name: string, birth_date: string, phone?: string): Promise<Patient> {
-    const existing = await this.patientRepo.findByNameAndBirthDate(name, new Date(birth_date))
+  async create(input: PatientCreateInput): Promise<Patient> {
+    const existing = await this.patientRepo.findByNameAndBirthDate(input.name, new Date(input.birth_date))
     if (existing) throw new ConflictError('동일한 이름과 생년월일의 환자가 이미 존재합니다.')
 
-    return this.patientRepo.create(name, new Date(birth_date), phone)
+    return this.patientRepo.create({
+      name: input.name,
+      birthDate: new Date(input.birth_date),
+      phone: input.phone,
+      gender: input.gender,
+      allergies: input.allergies,
+      insurance_type: input.insurance_type,
+      copay_exemption: input.copay_exemption,
+    })
   }
 
   async getById(id: string): Promise<Patient> {
@@ -47,10 +69,14 @@ export class PatientService {
       }
     }
 
-    const data: { name?: string; birth_date?: Date; phone?: string | null } = {}
+    const data: Parameters<typeof this.patientRepo.update>[1] = {}
     if (input.name !== undefined) data.name = input.name
     if (input.birth_date !== undefined) data.birth_date = new Date(input.birth_date)
     if ('phone' in input) data.phone = input.phone ?? null
+    if ('gender' in input) data.gender = input.gender ?? null
+    if ('allergies' in input) data.allergies = input.allergies ?? null
+    if (input.insurance_type !== undefined) data.insurance_type = input.insurance_type
+    if (input.copay_exemption !== undefined) data.copay_exemption = input.copay_exemption
 
     return this.patientRepo.update(id, data)
   }

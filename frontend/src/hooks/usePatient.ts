@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { patientApi } from '@/api/endpoints'
 import { extractApiError } from '@/lib/apiError'
-import type { Patient } from '@/types'
+import type { Patient, InsuranceType, CopayExemption } from '@/types'
 
 export function usePatientSearch() {
   const [results, setResults] = useState<Patient[]>([])
@@ -33,7 +33,15 @@ export function usePatientUpdate() {
 
   const update = async (
     id: string,
-    data: { name?: string; birth_date?: string; phone?: string | null },
+    data: {
+      name?: string
+      birth_date?: string
+      phone?: string | null
+      gender?: string | null
+      allergies?: string | null
+      insurance_type?: InsuranceType
+      copay_exemption?: CopayExemption
+    },
   ): Promise<Patient | null> => {
     setLoading(true)
     setError('')
@@ -59,6 +67,10 @@ export function usePatientCreate() {
     name: string
     birth_date: string
     phone?: string
+    gender?: string
+    allergies?: string
+    insurance_type?: InsuranceType
+    copay_exemption?: CopayExemption
   }): Promise<Patient | null> => {
     setLoading(true)
     setError('')

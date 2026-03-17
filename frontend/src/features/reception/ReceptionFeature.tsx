@@ -7,7 +7,8 @@ import { useVisitCreate, useWorkflowStage } from '@/hooks/useVisit'
 import { useToast } from '@/hooks/useToast'
 import StagePatientList from '@/components/StagePatientList'
 import Spinner from '@/components/ui/Spinner'
-import type { Patient, WorkflowStage } from '@/types'
+import type { Patient, WorkflowStage, InsuranceType, CopayExemption } from '@/types'
+import { INSURANCE_TYPE_LABELS, COPAY_EXEMPTION_LABELS } from '@/types'
 
 const STAGE_ROUTES: { stage: WorkflowStage; path: string }[] = [
   { stage: 'prescription', path: '/prescription' },
@@ -26,12 +27,24 @@ export default function ReceptionFeature() {
   const [selected, setSelected] = useState<Patient | null>(null)
   const [showNewForm, setShowNewForm] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
-  const [newPatient, setNewPatient] = useState({ name: '', birth_date: '', phone: '' })
+  const [newPatient, setNewPatient] = useState({
+    name: '', birth_date: '', phone: '',
+    gender: '' as '' | 'M' | 'F',
+    insurance_type: 'health_insurance' as InsuranceType,
+    copay_exemption: 'none' as CopayExemption,
+    allergies: '',
+  })
   const [formErrors, setFormErrors] = useState({ name: '', birth_date: '', phone: '' })
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editForm, setEditForm] = useState({ name: '', birth_date: '', phone: '' })
+  const [editForm, setEditForm] = useState({
+    name: '', birth_date: '', phone: '',
+    gender: '' as '' | 'M' | 'F',
+    insurance_type: 'health_insurance' as InsuranceType,
+    copay_exemption: 'none' as CopayExemption,
+    allergies: '',
+  })
   const [editErrors, setEditErrors] = useState({ name: '', birth_date: '', phone: '' })
 
   const { results, loading: searching, search, clear: clearResults } = usePatientSearch()
@@ -101,7 +114,15 @@ export default function ReceptionFeature() {
 
   const handleCreatePatient = async () => {
     if (!validateNewPatient()) return
-    const patient = await createPatient(newPatient)
+    const patient = await createPatient({
+      name: newPatient.name,
+      birth_date: newPatient.birth_date,
+      phone: newPatient.phone || undefined,
+      gender: newPatient.gender || undefined,
+      insurance_type: newPatient.insurance_type,
+      copay_exemption: newPatient.copay_exemption,
+      allergies: newPatient.allergies || undefined,
+    })
     if (patient) {
       setSelected(patient)
       setShowNewForm(false)
@@ -117,6 +138,10 @@ export default function ReceptionFeature() {
       name: selected.name,
       birth_date: String(selected.birth_date).slice(0, 10),
       phone: selected.phone ?? '',
+      gender: (selected.gender as '' | 'M' | 'F') ?? '',
+      insurance_type: selected.insurance_type ?? 'health_insurance',
+      copay_exemption: selected.copay_exemption ?? 'none',
+      allergies: selected.allergies ?? '',
     })
     setEditErrors({ name: '', birth_date: '', phone: '' })
     setShowEditModal(true)
@@ -145,6 +170,10 @@ export default function ReceptionFeature() {
       name: editForm.name.trim(),
       birth_date: editForm.birth_date,
       phone: editForm.phone.trim() || null,
+      gender: editForm.gender || null,
+      insurance_type: editForm.insurance_type,
+      copay_exemption: editForm.copay_exemption,
+      allergies: editForm.allergies.trim() || null,
     })
     if (updated) {
       setSelected(updated)
@@ -298,6 +327,56 @@ export default function ReceptionFeature() {
                 <p role="alert" className="text-xs text-red-400">{formErrors.phone}</p>
               )}
             </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs text-zinc-500 dark:text-zinc-500">
+                성별 <span className="text-zinc-400">(선택)</span>
+              </label>
+              <select
+                value={newPatient.gender}
+                onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value as '' | 'M' | 'F' })}
+                className={inputBase}
+              >
+                <option value="">선택 안 함</option>
+                <option value="M">남성</option>
+                <option value="F">여성</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs text-zinc-500 dark:text-zinc-500">보험 유형</label>
+              <select
+                value={newPatient.insurance_type}
+                onChange={(e) => setNewPatient({ ...newPatient, insurance_type: e.target.value as InsuranceType })}
+                className={inputBase}
+              >
+                {(Object.entries(INSURANCE_TYPE_LABELS) as [InsuranceType, string][]).map(([val, label]) => (
+                  <option key={val} value={val}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs text-zinc-500 dark:text-zinc-500">경감 대상</label>
+              <select
+                value={newPatient.copay_exemption}
+                onChange={(e) => setNewPatient({ ...newPatient, copay_exemption: e.target.value as CopayExemption })}
+                className={inputBase}
+              >
+                {(Object.entries(COPAY_EXEMPTION_LABELS) as [CopayExemption, string][]).map(([val, label]) => (
+                  <option key={val} value={val}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <label className="block text-xs text-zinc-500 dark:text-zinc-500">
+                알레르기 / 주요 이력 <span className="text-zinc-400">(선택)</span>
+              </label>
+              <textarea
+                value={newPatient.allergies}
+                onChange={(e) => setNewPatient({ ...newPatient, allergies: e.target.value })}
+                placeholder="예: 페니실린 알레르기, 고혈압 약 복용 중"
+                rows={2}
+                className={cn(inputBase, 'resize-none')}
+              />
+            </div>
           </div>
           <div className="flex gap-2">
             <button
@@ -328,8 +407,20 @@ export default function ReceptionFeature() {
             <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{selected.name}</p>
             <p className="text-xs text-zinc-500 dark:text-zinc-500">
               {String(selected.birth_date).slice(0, 10)}
+              {selected.gender && ` · ${selected.gender === 'M' ? '남' : '여'}`}
               {selected.phone && ` · ${selected.phone}`}
             </p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-500">
+              {INSURANCE_TYPE_LABELS[selected.insurance_type ?? 'health_insurance']}
+              {selected.copay_exemption && selected.copay_exemption !== 'none' && (
+                <span className="ml-1.5 text-amber-600 dark:text-amber-400">
+                  · {COPAY_EXEMPTION_LABELS[selected.copay_exemption]}
+                </span>
+              )}
+            </p>
+            {selected.allergies && (
+              <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">알레르기: {selected.allergies}</p>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
@@ -425,6 +516,62 @@ export default function ReceptionFeature() {
                   className={cn(inputBase, editErrors.phone && 'border-red-400 dark:border-red-600')}
                 />
                 {editErrors.phone && <p role="alert" className="text-xs text-red-400">{editErrors.phone}</p>}
+              </div>
+
+              {/* 성별 */}
+              <div className="space-y-1.5">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-500">성별</label>
+                <select
+                  value={editForm.gender}
+                  onChange={(e) => setEditForm({ ...editForm, gender: e.target.value as '' | 'M' | 'F' })}
+                  className={inputBase}
+                >
+                  <option value="">선택 안 함</option>
+                  <option value="M">남성</option>
+                  <option value="F">여성</option>
+                </select>
+              </div>
+
+              {/* 보험 유형 */}
+              <div className="space-y-1.5">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-500">보험 유형</label>
+                <select
+                  value={editForm.insurance_type}
+                  onChange={(e) => setEditForm({ ...editForm, insurance_type: e.target.value as InsuranceType })}
+                  className={inputBase}
+                >
+                  {(Object.entries(INSURANCE_TYPE_LABELS) as [InsuranceType, string][]).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 경감 대상 */}
+              <div className="space-y-1.5">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-500">경감 대상</label>
+                <select
+                  value={editForm.copay_exemption}
+                  onChange={(e) => setEditForm({ ...editForm, copay_exemption: e.target.value as CopayExemption })}
+                  className={inputBase}
+                >
+                  {(Object.entries(COPAY_EXEMPTION_LABELS) as [CopayExemption, string][]).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 알레르기 */}
+              <div className="space-y-1.5">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-500">
+                  알레르기 / 주요 이력 <span className="text-zinc-400">(선택)</span>
+                </label>
+                <textarea
+                  value={editForm.allergies}
+                  onChange={(e) => setEditForm({ ...editForm, allergies: e.target.value })}
+                  placeholder="예: 페니실린 알레르기"
+                  rows={2}
+                  className={cn(inputBase, 'resize-none')}
+                />
               </div>
             </div>
 

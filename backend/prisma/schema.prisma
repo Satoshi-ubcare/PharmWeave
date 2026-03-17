@@ -31,6 +31,25 @@ enum ClaimStatus {
   rejected
 }
 
+enum InsuranceType {
+  health_insurance    // 건강보험
+  medical_aid_1       // 의료급여 1종
+  medical_aid_2       // 의료급여 2종
+  veterans            // 보훈
+  industrial_accident // 산재보험
+  auto_insurance      // 자동차보험
+  self_pay            // 비급여
+}
+
+enum CopayExemption {
+  none          // 없음
+  elderly       // 노인 (65세 이상)
+  disabled      // 장애인
+  rare_disease  // 희귀·중증난치질환
+  pregnant      // 임산부
+  infant        // 영유아 (만 1세 미만)
+}
+
 model User {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   username      String   @unique @db.VarChar(50)
@@ -43,11 +62,15 @@ model User {
 }
 
 model Patient {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String   @db.VarChar(50)
-  birth_date DateTime @db.Date
-  phone      String?  @db.VarChar(11)
-  created_at DateTime @default(now()) @db.Timestamptz
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String         @db.VarChar(50)
+  birth_date      DateTime       @db.Date
+  phone           String?        @db.VarChar(11)
+  gender          String?        @db.Char(1)
+  allergies       String?        @db.VarChar(500)
+  insurance_type  InsuranceType  @default(health_insurance)
+  copay_exemption CopayExemption @default(none)
+  created_at      DateTime       @default(now()) @db.Timestamptz
 
   visits Visit[]
 

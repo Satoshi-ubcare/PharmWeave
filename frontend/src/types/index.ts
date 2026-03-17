@@ -7,11 +7,51 @@ export type WorkflowStage =
   | 'claim'
   | 'completed'
 
+export type InsuranceType =
+  | 'health_insurance'
+  | 'medical_aid_1'
+  | 'medical_aid_2'
+  | 'veterans'
+  | 'industrial_accident'
+  | 'auto_insurance'
+  | 'self_pay'
+
+export type CopayExemption =
+  | 'none'
+  | 'elderly'
+  | 'disabled'
+  | 'rare_disease'
+  | 'pregnant'
+  | 'infant'
+
+export const INSURANCE_TYPE_LABELS: Record<InsuranceType, string> = {
+  health_insurance: '건강보험',
+  medical_aid_1: '의료급여 1종',
+  medical_aid_2: '의료급여 2종',
+  veterans: '보훈',
+  industrial_accident: '산재보험',
+  auto_insurance: '자동차보험',
+  self_pay: '비급여',
+}
+
+export const COPAY_EXEMPTION_LABELS: Record<CopayExemption, string> = {
+  none: '해당 없음',
+  elderly: '노인 (65세 이상)',
+  disabled: '장애인',
+  rare_disease: '희귀·중증난치질환',
+  pregnant: '임산부',
+  infant: '영유아 (만 1세 미만)',
+}
+
 export interface Patient {
   id: string
   name: string
   birth_date: string
   phone: string | null
+  gender: string | null
+  allergies: string | null
+  insurance_type: InsuranceType
+  copay_exemption: CopayExemption
   created_at: string
 }
 

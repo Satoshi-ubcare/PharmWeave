@@ -1,17 +1,31 @@
-import type { Patient } from '@prisma/client'
+import type { Patient, InsuranceType, CopayExemption } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 
 export interface PatientUpdateData {
   name?: string
   birth_date?: Date
   phone?: string | null
+  gender?: string | null
+  allergies?: string | null
+  insurance_type?: InsuranceType
+  copay_exemption?: CopayExemption
+}
+
+export interface PatientCreateData {
+  name: string
+  birthDate: Date
+  phone?: string
+  gender?: string
+  allergies?: string
+  insurance_type?: InsuranceType
+  copay_exemption?: CopayExemption
 }
 
 export interface IPatientRepository {
   search(q: string): Promise<Patient[]>
   findById(id: string): Promise<Patient | null>
   findByNameAndBirthDate(name: string, birthDate: Date): Promise<Patient | null>
-  create(name: string, birthDate: Date, phone?: string): Promise<Patient>
+  create(data: PatientCreateData): Promise<Patient>
   update(id: string, data: PatientUpdateData): Promise<Patient>
 }
 
@@ -44,9 +58,17 @@ export class PrismaPatientRepository implements IPatientRepository {
     })
   }
 
-  async create(name: string, birthDate: Date, phone?: string): Promise<Patient> {
+  async create(data: PatientCreateData): Promise<Patient> {
     return prisma.patient.create({
-      data: { name, birth_date: birthDate, phone },
+      data: {
+        name: data.name,
+        birth_date: data.birthDate,
+        phone: data.phone,
+        gender: data.gender,
+        allergies: data.allergies,
+        insurance_type: data.insurance_type,
+        copay_exemption: data.copay_exemption,
+      },
     })
   }
 
