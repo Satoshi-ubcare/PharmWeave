@@ -108,7 +108,7 @@ export default function PaymentFeature() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
           Step 05
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">수납</h1>
@@ -118,7 +118,7 @@ export default function PaymentFeature() {
       <StagePatientList stage="payment" />
 
       {!visitId && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
           위 목록에서 수납할 환자를 선택하세요.
         </div>
       )}
@@ -126,8 +126,8 @@ export default function PaymentFeature() {
       {visitId && (
         <>
           {/* 본인부담금 계산 */}
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
               본인부담금 계산
             </p>
             <div className="space-y-0">
@@ -136,7 +136,7 @@ export default function PaymentFeature() {
                 <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   {INSURANCE_TYPE_LABELS[insuranceType]}
                   {copayExemption !== 'none' && (
-                    <span className="text-amber-600 dark:text-amber-400 ml-1.5 text-xs">
+                    <span className="text-blue-700 dark:text-blue-400 ml-1.5 text-xs">
                       · {COPAY_EXEMPTION_LABELS[copayExemption]}
                     </span>
                   )}
@@ -155,7 +155,7 @@ export default function PaymentFeature() {
                     ({rateLabel})
                   </span>
                 </span>
-                <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
                   {copayAmount.toLocaleString()}원
                 </span>
               </div>
@@ -171,7 +171,7 @@ export default function PaymentFeature() {
                 <span className="text-xs font-semibold tracking-[0.15em] uppercase text-zinc-500 dark:text-zinc-500">
                   환자 납부금액
                 </span>
-                <span className="text-2xl font-bold tracking-tight text-amber-500 dark:text-amber-400">
+                <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
                   {copayAmount.toLocaleString()}
                   <span className="text-sm font-medium ml-1">원</span>
                 </span>
@@ -180,8 +180,8 @@ export default function PaymentFeature() {
           </div>
 
           {/* 결제 방법 */}
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
               결제 방법
             </p>
             <div className="grid grid-cols-3 gap-3">
@@ -190,9 +190,9 @@ export default function PaymentFeature() {
                   key={m}
                   onClick={() => setMethod(m)}
                   className={cn(
-                    'py-3 rounded border text-sm font-medium transition-all',
+                    'py-3 rounded-xl border text-sm font-medium transition-all',
                     method === m
-                      ? 'border-amber-400 bg-amber-400/10 text-amber-600 dark:text-amber-300'
+                      ? 'border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300'
                       : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-500 hover:border-zinc-300 dark:hover:border-zinc-600',
                   )}
                 >
@@ -206,9 +206,9 @@ export default function PaymentFeature() {
             <button
               onClick={handlePay}
               disabled={submitting}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
             >
-              {submitting && <Spinner size="sm" className="text-zinc-950" />}
+              {submitting && <Spinner size="sm" className="text-white" />}
               {submitting ? '처리 중' : `${copayAmount.toLocaleString()}원 결제 — 청구로`}
             </button>
           </div>

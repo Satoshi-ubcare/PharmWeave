@@ -54,13 +54,13 @@ export default function ClaimFeature() {
     return (
       <div className="flex flex-col items-center justify-center py-24 space-y-6 text-center">
         {/* Success mark */}
-        <div className="w-16 h-16 border-2 border-amber-400 rounded-full flex items-center justify-center">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.5">
+        <div className="w-16 h-16 border-2 border-blue-500 rounded-full flex items-center justify-center">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#246AFE" strokeWidth="2.5">
             <polyline points="20,6 9,17 4,12" />
           </svg>
         </div>
         <div className="space-y-1.5">
-          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
             완료
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">업무 완료</h1>
@@ -70,7 +70,7 @@ export default function ClaimFeature() {
         </div>
         <button
           onClick={handleNewVisit}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors"
         >
           새 환자 접수
         </button>
@@ -81,7 +81,7 @@ export default function ClaimFeature() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
           Step 06
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">청구</h1>
@@ -91,14 +91,14 @@ export default function ClaimFeature() {
       <StagePatientList stage="claim" />
 
       {!visitId && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
           위 목록에서 청구할 환자를 선택하세요.
         </div>
       )}
 
       {visitId && !claim && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-10 text-center space-y-5">
-          <div className="w-12 h-12 border border-zinc-200 dark:border-zinc-800 rounded mx-auto flex items-center justify-center">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-10 text-center space-y-5">
+          <div className="w-12 h-12 border border-zinc-200 dark:border-zinc-800 rounded-xl mx-auto flex items-center justify-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
               className="text-zinc-400 dark:text-zinc-600">
               <path d="M14,2 L6,2 C4.89,2 4,2.9 4,4 L4,20 C4,21.1 4.89,22 6,22 L18,22 C19.1,22 20,21.1 20,20 L20,8 L14,2 Z" />
@@ -117,9 +117,9 @@ export default function ClaimFeature() {
           <button
             onClick={handleCreateClaim}
             disabled={claiming}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
           >
-            {claiming && <Spinner size="sm" className="text-zinc-950" />}
+            {claiming && <Spinner size="sm" className="text-white" />}
             {claiming ? '생성 중' : '청구 데이터 생성'}
           </button>
         </div>
@@ -127,16 +127,16 @@ export default function ClaimFeature() {
 
       {visitId && claim && (
         <div className="space-y-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
                 청구 데이터
               </p>
-              <span className="text-[10px] font-medium tracking-wide px-2 py-0.5 border border-amber-400/30 text-amber-500 dark:text-amber-400 rounded-sm">
+              <span className="text-[10px] font-medium tracking-wide px-2 py-0.5 border border-blue-500/30 text-blue-600 dark:text-blue-400 rounded-lg">
                 {claim.claim_status}
               </span>
             </div>
-            <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded p-4 overflow-auto">
+            <div className="bg-blue-500/5 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-xl p-4 overflow-auto">
               <pre className="text-xs text-zinc-600 dark:text-zinc-400 font-mono leading-relaxed">
                 {JSON.stringify(claim.claim_data, null, 2)}
               </pre>
@@ -147,9 +147,9 @@ export default function ClaimFeature() {
             <button
               onClick={handleComplete}
               disabled={submitting}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
             >
-              {submitting && <Spinner size="sm" className="text-zinc-950" />}
+              {submitting && <Spinner size="sm" className="text-white" />}
               {submitting ? '처리 중' : '청구 완료 — 업무 종료'}
             </button>
           </div>

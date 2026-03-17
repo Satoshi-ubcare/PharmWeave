@@ -41,21 +41,21 @@ export default function StagePatientList({ stage, onSelect }: Props) {
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-4">
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
             {STAGE_LABEL[stage]} 대기
           </span>
           {!loading && (
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-sm">
+            <span className="text-[10px] text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-lg">
               {visits.length}명
             </span>
           )}
         </div>
         <button
           onClick={refresh}
-          className="text-[10px] text-zinc-400 dark:text-zinc-600 hover:text-amber-500 dark:hover:text-amber-400 transition-colors tracking-wide uppercase"
+          className="text-[10px] text-zinc-400 dark:text-zinc-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors tracking-wide uppercase"
         >
           새로고침
         </button>
@@ -83,10 +83,10 @@ export default function StagePatientList({ stage, onSelect }: Props) {
               <button
                 onClick={() => handleSelect(v)}
                 className={[
-                  'w-full text-left px-3 py-2 rounded text-sm transition-colors',
+                  'w-full text-left px-3 py-2 rounded-xl text-sm transition-colors',
                   v.id === visitId
-                    ? 'bg-amber-400/10 border border-amber-400/30 text-amber-600 dark:text-amber-300'
-                    : 'hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent',
+                    ? 'bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-300'
+                    : 'hover:bg-blue-50/50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent',
                 ].join(' ')}
               >
                 <span className="font-medium">{v.patient?.name ?? '—'}</span>
@@ -94,7 +94,7 @@ export default function StagePatientList({ stage, onSelect }: Props) {
                   {new Date(v.visited_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
                 {v.id === visitId && (
-                  <span className="ml-2 text-[10px] text-amber-500 font-medium tracking-wide">진행 중</span>
+                  <span className="ml-2 text-[10px] text-blue-600 font-medium tracking-wide">진행 중</span>
                 )}
               </button>
             </li>

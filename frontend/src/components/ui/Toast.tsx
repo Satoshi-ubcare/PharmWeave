@@ -3,13 +3,13 @@ import { useToastStore } from '@/stores/toastStore'
 const borderColors = {
   success: 'border-l-emerald-500',
   error: 'border-l-red-500',
-  info: 'border-l-zinc-500',
+  info: 'border-l-blue-500',
 }
 
 const iconColors = {
   success: 'text-emerald-400',
   error: 'text-red-400',
-  info: 'text-zinc-400',
+  info: 'text-blue-500',
 }
 
 const icons = {
@@ -44,7 +44,7 @@ export default function ToastContainer(): JSX.Element {
           key={toast.id}
           role="alert"
           className={[
-            'flex items-start gap-3 px-4 py-3 rounded shadow-2xl text-sm pointer-events-auto',
+            'flex items-start gap-3 px-4 py-3 rounded-xl shadow-2xl text-sm pointer-events-auto',
             'min-w-64 max-w-sm border-l-2 border border-zinc-800',
             'bg-zinc-900 text-zinc-100',
             borderColors[toast.type],

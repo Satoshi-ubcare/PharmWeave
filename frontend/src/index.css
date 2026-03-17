@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,13 +6,13 @@
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Onest', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
-    @apply bg-zinc-50 text-zinc-900;
+    @apply bg-[#EBFEFE] text-[#0B0A0A];
   }
 
   .dark body {
@@ -27,20 +27,20 @@
 @layer utilities {
   /* 공통 섹션 레이블 스타일 */
   .label-tag {
-    @apply text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400;
+    @apply text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400;
   }
 
   /* 카드 */
   .card {
-    @apply bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded;
+    @apply bg-white dark:bg-zinc-900 border border-blue-100 dark:border-zinc-800 rounded-2xl;
   }
 
   /* 기본 입력 */
   .input-base {
-    @apply w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800
-           text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600
-           rounded px-3 py-2.5 text-sm focus:outline-none
-           focus:border-amber-400 dark:focus:border-amber-400 transition-colors;
+    @apply w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800
+           text-[#0B0A0A] dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-600
+           rounded-xl px-3 py-2.5 text-sm focus:outline-none
+           focus:border-blue-500 dark:focus:border-blue-500 transition-colors;
   }
 
   .input-error {
@@ -50,24 +50,24 @@
   /* 버튼 */
   .btn-primary {
     @apply inline-flex items-center gap-2 px-5 py-2.5
-           bg-amber-400 hover:bg-amber-300 text-zinc-950
-           text-sm font-semibold rounded transition-colors
+           bg-[#246AFE] hover:bg-blue-500 text-white
+           text-sm font-semibold rounded-xl transition-colors
            disabled:opacity-40 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
     @apply inline-flex items-center gap-2 px-4 py-2
-           border border-zinc-300 dark:border-zinc-700
-           text-zinc-600 dark:text-zinc-400
-           hover:border-zinc-400 dark:hover:border-zinc-600
-           hover:text-zinc-900 dark:hover:text-zinc-200
-           text-sm rounded transition-colors
+           border border-slate-200 dark:border-zinc-700
+           text-slate-600 dark:text-zinc-400
+           hover:border-blue-300 dark:hover:border-zinc-600
+           hover:text-blue-600 dark:hover:text-zinc-200
+           text-sm rounded-xl transition-colors
            disabled:opacity-40 disabled:cursor-not-allowed;
   }
 
   .btn-danger {
     @apply inline-flex items-center gap-2 px-4 py-2
-           border border-red-800/60 text-red-400
-           hover:bg-red-950/50 text-sm rounded transition-colors;
+           border border-red-300 text-red-500
+           hover:bg-red-50 text-sm rounded-xl transition-colors;
   }
 }

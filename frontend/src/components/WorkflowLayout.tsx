@@ -1,16 +1,21 @@
 import { useEffect } from 'react'
-import { Outlet, Link } from 'react-router-dom'
+import { Outlet, Link, useLocation } from 'react-router-dom'
 import WorkflowStepper from './WorkflowStepper'
 import ToastContainer from './ui/Toast'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { usePluginStore } from '@/stores/pluginStore'
-import { useThemeStore } from '@/stores/themeStore'
 import { pluginApi } from '@/api/endpoints'
+
+const NAV_LINKS = [
+  { to: '/dashboard', label: '대시보드' },
+  { to: '/reception', label: '접수' },
+  { to: '/plugins', label: '플러그인' },
+]
 
 export default function WorkflowLayout() {
   const { currentStage, visitId, patient } = useWorkflowStore()
   const { setPlugins } = usePluginStore()
-  const { theme, toggle } = useThemeStore()
+  const location = useLocation()
 
   useEffect(() => {
     pluginApi.list()
@@ -19,71 +24,58 @@ export default function WorkflowLayout() {
   }, [setPlugins])
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#EBFEFE] dark:bg-zinc-950 transition-colors duration-200">
       {/* Header */}
-      <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <header className="bg-white dark:bg-zinc-900 border-b border-blue-100 dark:border-zinc-800 px-8 py-4 shadow-sm">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 bg-amber-400 rounded-sm flex-shrink-0" />
-            <div className="flex items-baseline gap-2">
-              <span className="text-xs font-semibold tracking-[0.2em] uppercase text-zinc-900 dark:text-zinc-100">
-                PharmWeave
-              </span>
-              <span className="text-[10px] text-zinc-400 dark:text-zinc-600 tracking-wide">약국 PMS</span>
+          <Link to="/dashboard" className="flex items-center gap-3 group">
+            <div className="w-8 h-8 bg-[#246AFE] rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
             </div>
-          </div>
-
-          {/* Right side */}
-          <div className="flex items-center gap-4">
-            {patient && (
-              <div className="flex items-center gap-2 border border-zinc-200 dark:border-zinc-800 px-3 py-1 rounded-sm">
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-600 tracking-widest uppercase">환자</span>
-                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{patient.name}</span>
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-600">
-                  {String(patient.birth_date).slice(0, 10)}
-                </span>
+            <div>
+              <div className="text-sm font-bold tracking-tight text-[#0B0A0A] dark:text-zinc-100">
+                PharmWeave
               </div>
-            )}
+              <div className="text-[10px] text-slate-400 dark:text-zinc-600 tracking-wide">약국 PMS</div>
+            </div>
+          </Link>
 
-            <button
-              onClick={toggle}
-              className="w-7 h-7 flex items-center justify-center text-zinc-400 dark:text-zinc-600 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-              aria-label="테마 전환"
-              title={theme === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
-            >
-              {theme === 'light' ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
-                </svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" />
-                  <line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
-              )}
-            </button>
+          {/* Navigation */}
+          <nav className="flex items-center gap-1">
+            {NAV_LINKS.map(({ to, label }) => {
+              const isActive = location.pathname === to || (to !== '/dashboard' && location.pathname.startsWith(to))
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  className={[
+                    'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-[#246AFE] text-white'
+                      : 'text-slate-500 dark:text-zinc-400 hover:bg-blue-50 dark:hover:bg-zinc-800 hover:text-blue-600 dark:hover:text-blue-400',
+                  ].join(' ')}
+                >
+                  {label}
+                </Link>
+              )
+            })}
+          </nav>
 
-            <Link
-              to="/dashboard"
-              className="text-[10px] font-semibold tracking-[0.15em] uppercase text-zinc-400 dark:text-zinc-600 hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
-            >
-              Dashboard
-            </Link>
-            <Link
-              to="/plugins"
-              className="text-[10px] font-semibold tracking-[0.15em] uppercase text-zinc-400 dark:text-zinc-600 hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
-            >
-              Plugins
-            </Link>
-          </div>
+          {/* Patient badge */}
+          {patient && (
+            <div className="flex items-center gap-2 bg-blue-50 dark:bg-zinc-800 border border-blue-200 dark:border-zinc-700 px-3 py-1.5 rounded-xl">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#246AFE] flex-shrink-0" />
+              <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">{patient.name}</span>
+              <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                {String(patient.birth_date).slice(0, 10)}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 
@@ -91,8 +83,8 @@ export default function WorkflowLayout() {
       <WorkflowStepper currentStage={currentStage} visitId={visitId} />
 
       {/* Main Content */}
-      <main className="flex-1 px-6 py-8">
-        <div className="max-w-4xl mx-auto">
+      <main className="flex-1 px-8 py-8">
+        <div className="max-w-5xl mx-auto">
           <Outlet />
         </div>
       </main>

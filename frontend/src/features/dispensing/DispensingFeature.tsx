@@ -41,7 +41,7 @@ export default function DispensingFeature() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
           Step 03
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">조제</h1>
@@ -51,7 +51,7 @@ export default function DispensingFeature() {
       <StagePatientList stage="dispensing" />
 
       {!visitId && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
           위 목록에서 조제할 환자를 선택하세요.
         </div>
       )}
@@ -65,11 +65,11 @@ export default function DispensingFeature() {
 
       {visitId && !loading && prescription && (
         <>
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400 mb-1">
+                <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400 mb-1">
                   조제 체크리스트
                 </p>
                 <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -86,7 +86,7 @@ export default function DispensingFeature() {
                 {/* Progress bar */}
                 <div className="w-24 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full mt-1.5 overflow-hidden">
                   <div
-                    className="h-full bg-amber-400 transition-all duration-300"
+                    className="h-full bg-[#246AFE] transition-all duration-300"
                     style={{ width: `${prescription.items.length > 0 ? (checkedCount / prescription.items.length) * 100 : 0}%` }}
                   />
                 </div>
@@ -100,7 +100,7 @@ export default function DispensingFeature() {
                   key={item.id}
                   onClick={() => setChecked({ ...checked, [item.id]: !checked[item.id] })}
                   className={[
-                    'flex items-center gap-4 p-4 rounded border transition-all cursor-pointer select-none',
+                    'flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer select-none',
                     checked[item.id]
                       ? 'bg-emerald-950/20 dark:bg-emerald-950/30 border-emerald-800/40 dark:border-emerald-800/30'
                       : 'bg-zinc-50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700',
@@ -140,9 +140,9 @@ export default function DispensingFeature() {
             <button
               onClick={handleComplete}
               disabled={!allChecked || submitting}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
             >
-              {submitting && <Spinner size="sm" className="text-zinc-950" />}
+              {submitting && <Spinner size="sm" className="text-white" />}
               {submitting ? '처리 중' : '조제 완료 — 검토로'}
             </button>
           </div>
@@ -150,7 +150,7 @@ export default function DispensingFeature() {
       )}
 
       {visitId && !loading && !prescriptionError && !prescription && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
           처방 정보가 없습니다.
         </div>
       )}

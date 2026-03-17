@@ -35,7 +35,7 @@ export default function ReviewFeature() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
           Step 04
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">검토</h1>
@@ -45,15 +45,15 @@ export default function ReviewFeature() {
       <StagePatientList stage="review" />
 
       {!visitId && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
           위 목록에서 검토할 환자를 선택하세요.
         </div>
       )}
 
       {/* 환자 정보 */}
       {patient && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-3">
-          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-3">
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
             환자 정보
           </p>
           <div className="grid grid-cols-3 gap-4 text-sm">
@@ -82,9 +82,9 @@ export default function ReviewFeature() {
 
       {/* 처방 요약 */}
       {prescription && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
               처방 요약
             </p>
             <span className="text-xs text-zinc-400 dark:text-zinc-600">
@@ -115,7 +115,7 @@ export default function ReviewFeature() {
             <tfoot>
               <tr className="border-t border-zinc-200 dark:border-zinc-700">
                 <td colSpan={3} className="pt-4 text-xs text-zinc-400 dark:text-zinc-600 font-medium">약제비 합계</td>
-                <td className="pt-4 text-right font-bold text-amber-600 dark:text-amber-400">
+                <td className="pt-4 text-right font-bold text-blue-700 dark:text-blue-400">
                   {totalCost.toLocaleString()}원
                 </td>
               </tr>
@@ -127,7 +127,7 @@ export default function ReviewFeature() {
       {/* Plugin 검사 */}
       {visitId && (
         <div className="space-y-3">
-          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
             Plugin 검사
           </p>
           <PluginSlot key={`dur-${visitId}`} pluginId="dur" visitId={visitId} />
@@ -136,8 +136,8 @@ export default function ReviewFeature() {
       )}
 
       {/* 검토 메모 */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-3">
-        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-3">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
           검토 메모 <span className="text-zinc-400 font-normal normal-case tracking-normal">(선택)</span>
         </p>
         <textarea
@@ -145,7 +145,7 @@ export default function ReviewFeature() {
           onChange={(e) => setMemo(e.target.value)}
           rows={3}
           placeholder="특이사항 또는 주의사항을 입력하세요..."
-          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 rounded px-3 py-2.5 text-sm focus:outline-none focus:border-amber-400 dark:focus:border-amber-400 transition-colors resize-none"
+          className="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-[#0B0A0A] dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors resize-none"
         />
       </div>
 
@@ -153,9 +153,9 @@ export default function ReviewFeature() {
         <button
           onClick={handleApprove}
           disabled={submitting}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 text-sm font-semibold rounded transition-colors disabled:opacity-40"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
         >
-          {submitting && <Spinner size="sm" className="text-zinc-950" />}
+          {submitting && <Spinner size="sm" className="text-white" />}
           {submitting ? '처리 중' : '검토 승인 — 수납으로'}
         </button>
       </div>

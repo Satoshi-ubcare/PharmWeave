@@ -34,7 +34,7 @@ export default function PluginManageFeature() {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
               설정
             </p>
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Plugin 관리</h1>
@@ -42,7 +42,7 @@ export default function PluginManageFeature() {
           </div>
           <Link
             to="/reception"
-            className="text-xs text-zinc-400 dark:text-zinc-600 hover:text-amber-500 dark:hover:text-amber-400 transition-colors flex items-center gap-1.5"
+            className="text-xs text-zinc-400 dark:text-zinc-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="15,18 9,12 15,6" />
@@ -59,7 +59,7 @@ export default function PluginManageFeature() {
         )}
 
         {!loading && plugins.length === 0 && (
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
             등록된 Plugin이 없습니다.
           </div>
         )}
@@ -69,19 +69,19 @@ export default function PluginManageFeature() {
             {plugins.map((plugin) => (
               <li
                 key={plugin.id}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-5 flex items-center justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex items-center justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
               >
                 {/* Info */}
                 <div className="flex items-center gap-4">
                   {/* Icon placeholder */}
                   <div className={[
-                    'w-9 h-9 rounded border flex items-center justify-center flex-shrink-0',
+                    'w-9 h-9 rounded-lg border flex items-center justify-center flex-shrink-0',
                     plugin.enabled
-                      ? 'border-amber-400/30 bg-amber-400/5'
+                      ? 'border-blue-500/30 bg-blue-500/5'
                       : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950',
                   ].join(' ')}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
-                      className={plugin.enabled ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-600'}>
+                      className={plugin.enabled ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-600'}>
                       <path d="M18.5 3a2.5 2.5 0 0 1 0 5h-1v2h1a4.5 4.5 0 0 1 0 9H15v-2h3.5a2.5 2.5 0 0 0 0-5H17V9h1.5a.5.5 0 0 0 0-1H17V3h1.5zM9 3v3H7.5a.5.5 0 0 0 0 1H9v3H7.5a2.5 2.5 0 0 0 0 5H9v2H5.5a4.5 4.5 0 0 1 0-9H7V8H5.5a2.5 2.5 0 0 1 0-5H9z" />
                     </svg>
                   </div>
@@ -90,9 +90,9 @@ export default function PluginManageFeature() {
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{plugin.name}</p>
                       <span className={[
-                        'text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded-sm',
+                        'text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded-lg',
                         plugin.enabled
-                          ? 'text-amber-600 dark:text-amber-400 bg-amber-400/10'
+                          ? 'text-blue-700 dark:text-blue-400 bg-blue-500/10'
                           : 'text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800',
                       ].join(' ')}>
                         {plugin.enabled ? 'ON' : 'OFF'}
@@ -108,7 +108,7 @@ export default function PluginManageFeature() {
                   disabled={toggling === plugin.id}
                   className={[
                     'relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none disabled:opacity-40',
-                    plugin.enabled ? 'bg-amber-400' : 'bg-zinc-200 dark:bg-zinc-700',
+                    plugin.enabled ? 'bg-[#246AFE]' : 'bg-zinc-200 dark:bg-zinc-700',
                   ].join(' ')}
                   role="switch"
                   aria-checked={plugin.enabled}

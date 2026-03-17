@@ -40,18 +40,18 @@ interface KpiCardProps {
 function KpiCard({ label, value, sub, highlight }: KpiCardProps) {
   return (
     <div className={[
-      'bg-white dark:bg-zinc-900 border rounded p-5 space-y-2',
+      'bg-white dark:bg-zinc-900 border rounded-xl p-5 space-y-2',
       highlight
-        ? 'border-amber-400/40 dark:border-amber-400/30'
+        ? 'border-blue-500/40 dark:border-blue-500/30'
         : 'border-zinc-200 dark:border-zinc-800',
     ].join(' ')}>
-      <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+      <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
         {label}
       </p>
       <p className={[
         'text-3xl font-bold tracking-tight',
         highlight
-          ? 'text-amber-500 dark:text-amber-400'
+          ? 'text-blue-600 dark:text-blue-400'
           : 'text-zinc-900 dark:text-zinc-100',
       ].join(' ')}>
         {value}
@@ -70,12 +70,12 @@ function StageBadge({ stage }: { stage: WorkflowStage }) {
     prescription: 'bg-blue-50  dark:bg-blue-950/40 text-blue-600 dark:text-blue-400',
     dispensing:   'bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400',
     review:       'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400',
-    payment:      'bg-amber-50  dark:bg-amber-950/40 text-amber-600 dark:text-amber-400',
+    payment:      'bg-blue-50  dark:bg-blue-950/40 text-blue-600 dark:text-blue-400',
     claim:        'bg-rose-50   dark:bg-rose-950/40 text-rose-600 dark:text-rose-400',
     completed:    'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400',
   }
   return (
-    <span className={`text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-sm ${colors[stage]}`}>
+    <span className={`text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-lg ${colors[stage]}`}>
       {STAGE_LABEL[stage]}
     </span>
   )
@@ -127,7 +127,7 @@ export default function DashboardFeature() {
     return (
       <div className="py-20 text-center space-y-3">
         <p className="text-sm text-red-400">{error ?? '알 수 없는 오류가 발생했습니다.'}</p>
-        <button onClick={refresh} className="text-xs text-amber-500 underline underline-offset-2">
+        <button onClick={refresh} className="text-xs text-blue-600 underline underline-offset-2">
           다시 시도
         </button>
       </div>
@@ -143,7 +143,7 @@ export default function DashboardFeature() {
       {/* 페이지 헤딩 */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
             Today
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -158,7 +158,7 @@ export default function DashboardFeature() {
         </div>
         <button
           onClick={refresh}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-600 hover:text-amber-500 dark:hover:text-amber-400 transition-colors border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 rounded"
+          className="flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 rounded-xl"
         >
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <polyline points="23,4 23,10 17,10" />
@@ -194,8 +194,8 @@ export default function DashboardFeature() {
       </div>
 
       {/* 단계별 파이프라인 */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-5">
-        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-5">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
           단계별 대기 현황
         </p>
         <div className="space-y-3">
@@ -212,14 +212,14 @@ export default function DashboardFeature() {
                   <span className="text-xs font-medium text-zinc-500 dark:text-zinc-500 w-8 text-right flex-shrink-0">
                     {count}
                   </span>
-                  <span className="text-xs text-zinc-400 dark:text-zinc-600 w-14 flex-shrink-0 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">
+                  <span className="text-xs text-zinc-400 dark:text-zinc-600 w-14 flex-shrink-0 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {label}
                   </span>
                   <div className="flex-1 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                     <div
                       className={[
                         'h-full rounded-full transition-all duration-500',
-                        count > 0 ? 'bg-amber-400' : 'bg-zinc-200 dark:bg-zinc-700',
+                        count > 0 ? 'bg-[#246AFE]' : 'bg-zinc-200 dark:bg-zinc-700',
                       ].join(' ')}
                       style={{ width: `${barWidth}%` }}
                     />
@@ -227,7 +227,7 @@ export default function DashboardFeature() {
                   <svg
                     width="12" height="12" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" strokeWidth="2"
-                    className="text-zinc-300 dark:text-zinc-700 group-hover:text-amber-400 transition-colors flex-shrink-0"
+                    className="text-zinc-300 dark:text-zinc-700 group-hover:text-blue-500 transition-colors flex-shrink-0"
                   >
                     <polyline points="9,18 15,12 9,6" />
                   </svg>
@@ -248,9 +248,9 @@ export default function DashboardFeature() {
       </div>
 
       {/* 최근 방문 목록 */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 space-y-4">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-amber-500 dark:text-amber-400">
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
             오늘 방문 목록
           </p>
           <span className="text-[10px] text-zinc-400 dark:text-zinc-600">
@@ -280,7 +280,7 @@ export default function DashboardFeature() {
                   <tr
                     key={visit.id}
                     onClick={() => handleVisitClick(visit)}
-                    className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
+                    className="cursor-pointer hover:bg-blue-50/50 dark:hover:bg-zinc-800/50 transition-colors group"
                   >
                     <td className="py-3 font-medium text-zinc-900 dark:text-zinc-100">
                       {visit.patient.name}
@@ -299,7 +299,7 @@ export default function DashboardFeature() {
                     </td>
                     <td className="py-3 text-right text-xs font-medium">
                       {visit.copay_amount !== null
-                        ? <span className="text-amber-600 dark:text-amber-400">{visit.copay_amount.toLocaleString()}원</span>
+                        ? <span className="text-blue-700 dark:text-blue-400">{visit.copay_amount.toLocaleString()}원</span>
                         : <span className="text-zinc-300 dark:text-zinc-700">—</span>
                       }
                     </td>
@@ -307,7 +307,7 @@ export default function DashboardFeature() {
                       <svg
                         width="12" height="12" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" strokeWidth="2"
-                        className="text-zinc-200 dark:text-zinc-700 group-hover:text-amber-400 transition-colors mx-auto"
+                        className="text-zinc-200 dark:text-zinc-700 group-hover:text-blue-500 transition-colors mx-auto"
                       >
                         <polyline points="9,18 15,12 9,6" />
                       </svg>
