@@ -24,10 +24,12 @@ test.describe('Workflow 단계 페이지 — visitId 없는 상태', () => {
     })
   }
 
-  test('스테퍼에서 완료 단계 클릭 불가 (미방문 단계)', async ({ page }) => {
+  test('스테퍼 모든 단계 버튼 항상 클릭 가능', async ({ page }) => {
     await page.goto('/reception')
-    // visitId 없을 때 처방 단계 버튼은 disabled
-    const prescriptionBtn = page.getByRole('button', { name: '처방' })
-    await expect(prescriptionBtn).toBeDisabled()
+    // visitId 없어도 모든 단계 버튼은 활성화 — 단계 페이지 조회 허용
+    for (const label of ['접수', '처방', '조제', '검토', '수납', '청구']) {
+      const btn = page.getByRole('button', { name: label }).first()
+      await expect(btn).toBeEnabled()
+    }
   })
 })
