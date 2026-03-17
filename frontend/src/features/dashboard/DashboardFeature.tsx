@@ -3,6 +3,7 @@ import { useDashboardStats } from '@/hooks/useDashboard'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
 import Spinner from '@/components/ui/Spinner'
+import RefreshButton from '@/components/ui/RefreshButton'
 import type { WorkflowStage } from '@/types'
 
 // ─── 상수 ──────────────────────────────────────────────────
@@ -272,16 +273,7 @@ export default function DashboardFeature(): JSX.Element {
             </p>
           )}
         </div>
-        <button
-          onClick={refresh}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 rounded-xl"
-        >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <polyline points="23,4 23,10 17,10" />
-            <path d="M20.49,15a9,9,0,1,1-2.12-9.36L23,10" />
-          </svg>
-          새로고침
-        </button>
+        <RefreshButton onClick={refresh} />
       </div>
 
       {/* ── KPI 카드 4개 ─────────────────────────────────── */}

@@ -4,6 +4,7 @@ import { useVisitsByStage } from '@/hooks/useVisit'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
 import Spinner from '@/components/ui/Spinner'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import RefreshButton from '@/components/ui/RefreshButton'
 import type { WorkflowStage } from '@/types'
 
 interface Props {
@@ -57,12 +58,7 @@ export default function StagePatientList({ stage, onSelect }: Props) {
             </span>
           )}
         </div>
-        <button
-          onClick={refresh}
-          className="text-[10px] text-zinc-400 dark:text-zinc-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors tracking-wide uppercase"
-        >
-          새로고침
-        </button>
+        <RefreshButton onClick={refresh} size="sm" />
       </div>
 
       {loading && (
