@@ -32,7 +32,7 @@ export default function SortableSection({ id, children }: Props) {
           {...listeners}
           tabIndex={-1}
           title="드래그하여 순서 변경"
-          className="absolute top-3 right-3 z-20 p-1.5 opacity-0 group-hover/section:opacity-100 text-zinc-300 dark:text-zinc-700 hover:text-zinc-500 dark:hover:text-zinc-400 cursor-grab active:cursor-grabbing rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+          className="absolute top-3 right-3 z-20 p-1.5 opacity-30 group-hover/section:opacity-100 text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 cursor-grab active:cursor-grabbing rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
         >
           {/* 6-dot grip icon */}
           <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">

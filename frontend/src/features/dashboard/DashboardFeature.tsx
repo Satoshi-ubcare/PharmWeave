@@ -6,6 +6,7 @@ import Spinner from '@/components/ui/Spinner'
 import RefreshButton from '@/components/ui/RefreshButton'
 import DonutChart from '@/components/ui/DonutChart'
 import SortableLayout from '@/components/SortableLayout'
+import SortableGrid from '@/components/SortableGrid'
 import type { WorkflowStage } from '@/types'
 
 // ─── 상수 ──────────────────────────────────────────────────
@@ -188,67 +189,80 @@ export default function DashboardFeature(): JSX.Element {
 
   // ── 섹션 정의 ─────────────────────────────────────────
   const kpiSection = (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard
-          label="오늘 총 방문"
-          value={stats.totalVisits}
-          sub="접수 이후 전체"
-          iconBg="bg-zinc-100 dark:bg-zinc-800"
-          onClick={() => navigate('/dashboard/detail?view=total')}
-          icon={
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              className="text-zinc-500 dark:text-zinc-400">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          }
-        />
-        <KpiCard
-          label="진행 중"
-          value={stats.activeVisits}
-          sub="완료 전 모든 단계"
-          iconBg="bg-blue-50 dark:bg-blue-950/40"
-          onClick={() => navigate('/dashboard/detail?view=active')}
-          icon={
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              className="text-blue-500">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12,6 12,12 16,14" />
-            </svg>
-          }
-        />
-        <KpiCard
-          label="처리 완료"
-          value={stats.completedVisits}
-          sub={`완료율 ${completionRate}%`}
-          iconBg="bg-emerald-50 dark:bg-emerald-950/40"
-          onClick={() => navigate('/dashboard/detail?view=completed')}
-          icon={
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              className="text-emerald-500">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22,4 12,14.01 9,11.01" />
-            </svg>
-          }
-        />
-        <KpiCard
-          label="오늘 수납 합계"
-          value={`${stats.totalRevenue.toLocaleString()}원`}
-          sub="본인부담금 기준"
-          highlight
-          iconBg="bg-blue-500/10 dark:bg-blue-500/20"
-          onClick={() => navigate('/dashboard/detail?view=revenue')}
-          icon={
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              className="text-blue-600 dark:text-blue-400">
-              <line x1="12" y1="1" x2="12" y2="23" />
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-          }
-        />
-    </div>
+    <SortableGrid
+      pageId="dashboard-kpi"
+      defaultOrder={['total', 'active', 'completed', 'revenue']}
+      className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+      items={{
+        total: (
+          <KpiCard
+            label="오늘 총 방문"
+            value={stats.totalVisits}
+            sub="접수 이후 전체"
+            iconBg="bg-zinc-100 dark:bg-zinc-800"
+            onClick={() => navigate('/dashboard/detail?view=total')}
+            icon={
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                className="text-zinc-500 dark:text-zinc-400">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            }
+          />
+        ),
+        active: (
+          <KpiCard
+            label="진행 중"
+            value={stats.activeVisits}
+            sub="완료 전 모든 단계"
+            iconBg="bg-blue-50 dark:bg-blue-950/40"
+            onClick={() => navigate('/dashboard/detail?view=active')}
+            icon={
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                className="text-blue-500">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12,6 12,12 16,14" />
+              </svg>
+            }
+          />
+        ),
+        completed: (
+          <KpiCard
+            label="처리 완료"
+            value={stats.completedVisits}
+            sub={`완료율 ${completionRate}%`}
+            iconBg="bg-emerald-50 dark:bg-emerald-950/40"
+            onClick={() => navigate('/dashboard/detail?view=completed')}
+            icon={
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                className="text-emerald-500">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22,4 12,14.01 9,11.01" />
+              </svg>
+            }
+          />
+        ),
+        revenue: (
+          <KpiCard
+            label="오늘 수납 합계"
+            value={`${stats.totalRevenue.toLocaleString()}원`}
+            sub="본인부담금 기준"
+            highlight
+            iconBg="bg-blue-500/10 dark:bg-blue-500/20"
+            onClick={() => navigate('/dashboard/detail?view=revenue')}
+            icon={
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                className="text-blue-600 dark:text-blue-400">
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            }
+          />
+        ),
+      }}
+    />
   )
 
   const chartsSection = (

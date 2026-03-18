@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/useToast'
 import StagePatientList from '@/components/StagePatientList'
 import PatientInfoModal from '@/components/PatientInfoModal'
 import SortableLayout from '@/components/SortableLayout'
+import SortableGrid from '@/components/SortableGrid'
 import Spinner from '@/components/ui/Spinner'
 import type { Patient, WorkflowStage, InsuranceType, CopayExemption } from '@/types'
 import { INSURANCE_TYPE_LABELS, COPAY_EXEMPTION_LABELS } from '@/types'
@@ -419,15 +420,17 @@ export default function ReceptionFeature() {
       <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
         오늘의 단계별 대기 현황
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {STAGE_ROUTES.map(({ stage, path }) => (
-          <StagePatientList
-            key={stage}
-            stage={stage}
-            onSelect={() => navigate(path)}
-          />
-        ))}
-      </div>
+      <SortableGrid
+        pageId="reception-stages"
+        defaultOrder={STAGE_ROUTES.map((r) => r.stage)}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+        items={Object.fromEntries(
+          STAGE_ROUTES.map(({ stage, path }) => [
+            stage,
+            <StagePatientList stage={stage} onSelect={() => navigate(path)} />,
+          ])
+        )}
+      />
     </div>
   )
 
