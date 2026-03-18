@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWorkflowStore } from '@/stores/workflowStore'
+import SortableLayout from '@/components/SortableLayout'
 import { usePrescriptionSave, useDrugSearch } from '@/hooks/usePrescription'
 import { useWorkflowStage } from '@/hooks/useVisit'
 import { useClinicSearch } from '@/hooks/useClinic'
@@ -179,7 +180,11 @@ export default function PrescriptionFeature() {
 
       {visitId && (
         <>
-          {/* 처방전 정보 */}
+          <SortableLayout
+            pageId="prescription"
+            defaultOrder={['info', 'drug']}
+            sections={{
+              info: (
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
             <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
               처방전 정보
@@ -257,7 +262,8 @@ export default function PrescriptionFeature() {
             </div>
           </div>
 
-          {/* 약품 검색 */}
+              ),
+              drug: (
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
             <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
               약품 추가
@@ -303,7 +309,11 @@ export default function PrescriptionFeature() {
             </div>
           </div>
 
-          {/* 처방 항목 목록 */}
+              ),
+            }}
+          />
+
+          {/* 처방 항목 목록 (조건부 — 항상 하단에 위치) */}
           {items.length > 0 && (
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
               <div className="flex items-center justify-between">

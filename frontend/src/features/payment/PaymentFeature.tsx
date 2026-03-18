@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import { useWorkflowStore } from '@/stores/workflowStore'
+import SortableLayout from '@/components/SortableLayout'
 import { usePrescription } from '@/hooks/usePrescription'
 import { usePaymentCreate } from '@/hooks/usePayment'
 import { useWorkflowStage } from '@/hooks/useVisit'
@@ -149,8 +150,11 @@ export default function PaymentFeature() {
       )}
 
       {visitId && (
-        <>
-          {/* 본인부담금 계산 */}
+        <SortableLayout
+          pageId="payment"
+          defaultOrder={['copay', 'method']}
+          sections={{
+            copay: (
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
@@ -231,7 +235,8 @@ export default function PaymentFeature() {
             </div>
           </div>
 
-          {/* 결제 방법 */}
+            ),
+            method: (
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
             <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
               결제 방법
@@ -253,18 +258,22 @@ export default function PaymentFeature() {
               ))}
             </div>
           </div>
+            ),
+          }}
+        />
+      )}
 
-          <div className="flex justify-end">
-            <button
-              onClick={handlePay}
-              disabled={submitting}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
-            >
-              {submitting && <Spinner size="sm" className="text-white" />}
-              {submitting ? '처리 중' : `${calcCopay(totalDrugCost, actualInsuranceType, copayExemption).copayAmount.toLocaleString()}원 결제 — 청구로`}
-            </button>
-          </div>
-        </>
+      {visitId && (
+        <div className="flex justify-end">
+          <button
+            onClick={handlePay}
+            disabled={submitting}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
+          >
+            {submitting && <Spinner size="sm" className="text-white" />}
+            {submitting ? '처리 중' : `${calcCopay(totalDrugCost, actualInsuranceType, copayExemption).copayAmount.toLocaleString()}원 결제 — 청구로`}
+          </button>
+        </div>
       )}
     </div>
   )

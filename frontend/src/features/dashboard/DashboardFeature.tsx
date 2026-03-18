@@ -5,6 +5,7 @@ import { useAutoScroll } from '@/hooks/useAutoScroll'
 import Spinner from '@/components/ui/Spinner'
 import RefreshButton from '@/components/ui/RefreshButton'
 import DonutChart from '@/components/ui/DonutChart'
+import SortableLayout from '@/components/SortableLayout'
 import type { WorkflowStage } from '@/types'
 
 // ─── 상수 ──────────────────────────────────────────────────
@@ -185,30 +186,9 @@ export default function DashboardFeature(): JSX.Element {
     ? Math.round((stats.completedVisits / stats.totalVisits) * 100)
     : 0
 
-  return (
-    <div className="space-y-5">
-
-      {/* ── 페이지 헤딩 ──────────────────────────────────── */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
-            Today
-          </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-            대시보드
-          </h1>
-          {lastUpdated && (
-            <p className="text-xs text-zinc-400 dark:text-zinc-600">
-              마지막 업데이트: {lastUpdated.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              <span className="ml-1 text-zinc-300 dark:text-zinc-700">· 30초마다 자동 갱신</span>
-            </p>
-          )}
-        </div>
-        <RefreshButton onClick={refresh} />
-      </div>
-
-      {/* ── KPI 카드 4개 ─────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+  // ── 섹션 정의 ─────────────────────────────────────────
+  const kpiSection = (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
           label="오늘 총 방문"
           value={stats.totalVisits}
@@ -268,10 +248,11 @@ export default function DashboardFeature(): JSX.Element {
             </svg>
           }
         />
-      </div>
+    </div>
+  )
 
-      {/* ── 차트 영역 (도넛 + 단계 막대) ─────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-stretch">
+  const chartsSection = (
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-stretch">
 
         {/* 처리 현황 도넛 차트 — 2 cols */}
         <div
@@ -378,10 +359,11 @@ export default function DashboardFeature(): JSX.Element {
           </div>
         </div>
 
-      </div>
+    </div>
+  )
 
-      {/* ── 오늘 방문 목록 ───────────────────────────────── */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
+  const visitsSection = (
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
             오늘 방문 목록
@@ -454,8 +436,36 @@ export default function DashboardFeature(): JSX.Element {
             </table>
           </div>
         )}
+    </div>
+  )
+
+  return (
+    <div className="space-y-5">
+      {/* ── 페이지 헤딩 ──────────────────────────────────── */}
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
+            Today
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+            대시보드
+          </h1>
+          {lastUpdated && (
+            <p className="text-xs text-zinc-400 dark:text-zinc-600">
+              마지막 업데이트: {lastUpdated.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              <span className="ml-1 text-zinc-300 dark:text-zinc-700">· 30초마다 자동 갱신</span>
+            </p>
+          )}
+        </div>
+        <RefreshButton onClick={refresh} />
       </div>
 
+      <SortableLayout
+        pageId="dashboard"
+        defaultOrder={['kpi', 'charts', 'visits']}
+        sections={{ kpi: kpiSection, charts: chartsSection, visits: visitsSection }}
+        className="space-y-5"
+      />
     </div>
   )
 }

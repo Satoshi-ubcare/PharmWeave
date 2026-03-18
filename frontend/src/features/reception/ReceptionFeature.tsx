@@ -7,6 +7,7 @@ import { useVisitCreate, useWorkflowStage } from '@/hooks/useVisit'
 import { useToast } from '@/hooks/useToast'
 import StagePatientList from '@/components/StagePatientList'
 import PatientInfoModal from '@/components/PatientInfoModal'
+import SortableLayout from '@/components/SortableLayout'
 import Spinner from '@/components/ui/Spinner'
 import type { Patient, WorkflowStage, InsuranceType, CopayExemption } from '@/types'
 import { INSURANCE_TYPE_LABELS, COPAY_EXEMPTION_LABELS } from '@/types'
@@ -150,17 +151,8 @@ export default function ReceptionFeature() {
 
   const inputBase = 'w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-[#0B0A0A] dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors'
 
-  return (
-    <div className="space-y-6">
-      {/* Page heading */}
-      <div className="space-y-1">
-        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
-          Step 01
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">접수</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-500">환자를 검색하거나 신규 등록 후 방문을 시작합니다.</p>
-      </div>
-
+  const searchSection = (
+    <>
       {/* 환자 검색 */}
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
         <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
@@ -419,22 +411,42 @@ export default function ReceptionFeature() {
           }}
         />
       )}
+    </>
+  )
 
-      {/* 단계별 대기 현황 */}
-      <div className="space-y-3">
-        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
-          오늘의 단계별 대기 현황
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {STAGE_ROUTES.map(({ stage, path }) => (
-            <StagePatientList
-              key={stage}
-              stage={stage}
-              onSelect={() => navigate(path)}
-            />
-          ))}
-        </div>
+  const stageListSection = (
+    <div className="space-y-3">
+      <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
+        오늘의 단계별 대기 현황
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {STAGE_ROUTES.map(({ stage, path }) => (
+          <StagePatientList
+            key={stage}
+            stage={stage}
+            onSelect={() => navigate(path)}
+          />
+        ))}
       </div>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+      {/* Page heading */}
+      <div className="space-y-1">
+        <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
+          Step 01
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">접수</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-500">환자를 검색하거나 신규 등록 후 방문을 시작합니다.</p>
+      </div>
+
+      <SortableLayout
+        pageId="reception"
+        defaultOrder={['search', 'stage-list']}
+        sections={{ search: searchSection, 'stage-list': stageListSection }}
+      />
     </div>
   )
 }
