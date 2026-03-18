@@ -36,7 +36,7 @@ interface WorkflowStepperProps {
 
 export default function WorkflowStepper({ currentStage, patient }: WorkflowStepperProps) {
   const navigate = useNavigate()
-  const { setPatient } = useWorkflowStore()
+  const { setPatient, reset } = useWorkflowStore()
   const [modalOpen, setModalOpen] = useState(false)
 
   return (
@@ -47,6 +47,7 @@ export default function WorkflowStepper({ currentStage, patient }: WorkflowStepp
         <div className="flex-shrink-0">
           {patient ? (
             <>
+              <div className="relative group/card">
               <button
                 onClick={() => setModalOpen(true)}
                 title="환자 정보 확인/수정"
@@ -67,6 +68,17 @@ export default function WorkflowStepper({ currentStage, patient }: WorkflowStepp
                     {String(patient.birth_date).slice(0, 10)}
                   </p>
                 </div>
+              </button>
+              </div>
+              {/* 선택 해제 버튼 */}
+              <button
+                onClick={reset}
+                title="환자 선택 초기화"
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-zinc-400 dark:bg-zinc-600 hover:bg-red-500 dark:hover:bg-red-500 text-white rounded-full items-center justify-center hidden group-hover/card:flex transition-colors z-10"
+              >
+                <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="1" y1="1" x2="9" y2="9" /><line x1="9" y1="1" x2="1" y2="9" />
+                </svg>
               </button>
               <PatientInfoModal
                 patient={patient}

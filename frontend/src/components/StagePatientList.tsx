@@ -22,14 +22,19 @@ const STAGE_LABEL: Record<string, string> = {
 const ROLL_THRESHOLD = 5
 
 export default function StagePatientList({ stage, onSelect }: Props) {
-  const { visitId, patient: currentPatient, setVisit } = useWorkflowStore()
+  const { visitId, patient: currentPatient, setVisit, reset } = useWorkflowStore()
   const { visits, loading, error, refresh } = useVisitsByStage(stage)
   const [pendingVisit, setPendingVisit] = useState<(typeof visits)[number] | null>(null)
   const scroll = useAutoScroll<HTMLUListElement>(visits.length, ROLL_THRESHOLD)
 
   const handleSelect = (v: (typeof visits)[number]) => {
     if (!v.patient) return
-    if (visitId && visitId !== v.id) {
+    // 이미 선택된 환자 클릭 → 선택 해제
+    if (v.id === visitId) {
+      reset()
+      return
+    }
+    if (visitId) {
       setPendingVisit(v)
       return
     }
