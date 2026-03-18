@@ -69,7 +69,6 @@ export default function WorkflowStepper({ currentStage, patient }: WorkflowStepp
                   </p>
                 </div>
               </button>
-              </div>
               {/* 선택 해제 버튼 */}
               <button
                 onClick={reset}
@@ -80,6 +79,7 @@ export default function WorkflowStepper({ currentStage, patient }: WorkflowStepp
                   <line x1="1" y1="1" x2="9" y2="9" /><line x1="9" y1="1" x2="1" y2="9" />
                 </svg>
               </button>
+              </div>
               <PatientInfoModal
                 patient={patient}
                 open={modalOpen}
