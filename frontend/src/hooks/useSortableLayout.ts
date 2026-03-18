@@ -19,7 +19,7 @@ export function useSortableLayout(pageId: string, defaultIds: string[]) {
           if (ordered.length > 0) return ordered
         }
       }
-    } catch {}
+    } catch (_) { /* localStorage 접근 불가 시 기본값 사용 */ }
     return defaultIds
   })
 
@@ -33,7 +33,7 @@ export function useSortableLayout(pageId: string, defaultIds: string[]) {
           const next = arrayMove(prev, oldIndex, newIndex)
           try {
             localStorage.setItem(storageKey, JSON.stringify(next))
-          } catch {}
+          } catch (_) { /* localStorage 접근 불가 시 무시 */ }
           return next
         })
       }
