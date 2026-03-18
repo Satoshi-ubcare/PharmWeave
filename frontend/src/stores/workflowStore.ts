@@ -17,6 +17,7 @@ interface WorkflowState {
   visit: Visit | null
   setVisit: (visit: Visit, patient: Patient) => void
   setStage: (stage: WorkflowStage) => void
+  setPatient: (patient: Patient) => void
   reset: () => void
 }
 
@@ -39,6 +40,8 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       currentStage: stage,
       visit: state.visit ? { ...state.visit, workflow_stage: stage } : null,
     })),
+
+  setPatient: (patient) => set({ patient }),
 
   reset: () =>
     set({

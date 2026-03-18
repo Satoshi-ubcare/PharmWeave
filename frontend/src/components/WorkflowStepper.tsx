@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/cn'
-import type { WorkflowStage } from '@/types'
+import { useWorkflowStore } from '@/stores/workflowStore'
+import PatientInfoModal from './PatientInfoModal'
+import type { WorkflowStage, Patient } from '@/types'
 
 const STEPS: { stage: WorkflowStage; label: string; path: string }[] = [
   { stage: 'reception',    label: '접수', path: '/reception' },
@@ -28,11 +31,13 @@ function getStepStatus(
 
 interface WorkflowStepperProps {
   currentStage: WorkflowStage
-  patient: { name: string; birth_date: string } | null
+  patient: Patient | null
 }
 
 export default function WorkflowStepper({ currentStage, patient }: WorkflowStepperProps) {
   const navigate = useNavigate()
+  const { setPatient } = useWorkflowStore()
+  const [modalOpen, setModalOpen] = useState(false)
 
   return (
     <nav data-testid="workflow-stepper" className="bg-white dark:bg-zinc-900 border-b border-blue-100 dark:border-zinc-800 px-8 py-4">
@@ -41,23 +46,35 @@ export default function WorkflowStepper({ currentStage, patient }: WorkflowStepp
         {/* 환자 정보 */}
         <div className="flex-shrink-0">
           {patient ? (
-            <div className="flex items-center gap-2.5 px-3 py-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25 rounded-xl">
-              {/* 아바타 */}
-              <div className="w-9 h-9 bg-[#246AFE] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
-                <span className="text-white text-base font-bold leading-none">{patient.name[0]}</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-blue-600 dark:text-blue-400 mb-0.5">
-                  현재 환자
-                </p>
-                <p className="text-base font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
-                  {patient.name}
-                </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5 tabular-nums">
-                  {String(patient.birth_date).slice(0, 10)}
-                </p>
-              </div>
-            </div>
+            <>
+              <button
+                onClick={() => setModalOpen(true)}
+                title="환자 정보 확인/수정"
+                className="flex items-center gap-2.5 px-3 py-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25 rounded-xl cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-500/20 hover:border-blue-300 dark:hover:border-blue-500/40 transition-colors"
+              >
+                {/* 아바타 */}
+                <div className="w-9 h-9 bg-[#246AFE] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <span className="text-white text-base font-bold leading-none">{patient.name[0]}</span>
+                </div>
+                <div className="min-w-0 text-left">
+                  <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-blue-600 dark:text-blue-400 mb-0.5">
+                    현재 환자
+                  </p>
+                  <p className="text-base font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
+                    {patient.name}
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5 tabular-nums">
+                    {String(patient.birth_date).slice(0, 10)}
+                  </p>
+                </div>
+              </button>
+              <PatientInfoModal
+                patient={patient}
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+                onUpdated={(updated) => { setPatient(updated); setModalOpen(false) }}
+              />
+            </>
           ) : (
             <div className="px-3 py-2 w-36">
               <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-zinc-300 dark:text-zinc-700 mb-1">

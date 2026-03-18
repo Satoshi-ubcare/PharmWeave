@@ -18,13 +18,7 @@ export interface DashboardStats {
 
 export class StatsService {
   async getToday(): Promise<DashboardStats> {
-    const start = new Date()
-    start.setHours(0, 0, 0, 0)
-    const end = new Date()
-    end.setHours(23, 59, 59, 999)
-
     const visits = await prisma.visit.findMany({
-      where: { visited_at: { gte: start, lte: end } },
       include: { patient: true, payment: true },
       orderBy: { visited_at: 'desc' },
     })

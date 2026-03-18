@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/cn'
 import { useWorkflowStore } from '@/stores/workflowStore'
-import { usePatientSearch, usePatientCreate, usePatientUpdate } from '@/hooks/usePatient'
+import { usePatientSearch, usePatientCreate } from '@/hooks/usePatient'
 import { useVisitCreate, useWorkflowStage } from '@/hooks/useVisit'
 import { useToast } from '@/hooks/useToast'
 import StagePatientList from '@/components/StagePatientList'
+import PatientInfoModal from '@/components/PatientInfoModal'
 import Spinner from '@/components/ui/Spinner'
 import type { Patient, WorkflowStage, InsuranceType, CopayExemption } from '@/types'
 import { INSURANCE_TYPE_LABELS, COPAY_EXEMPTION_LABELS } from '@/types'
@@ -54,23 +55,13 @@ export default function ReceptionFeature() {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editForm, setEditForm] = useState({
-    name: '', birth_date: '', phone: '',
-    gender: '' as '' | 'M' | 'F',
-    insurance_type: 'health_insurance' as InsuranceType,
-    copay_exemption: 'none' as CopayExemption,
-    allergies: '',
-  })
-  const [editErrors, setEditErrors] = useState({ name: '', birth_date: '', phone: '' })
 
   const { results, loading: searching, search, clear: clearResults } = usePatientSearch()
   const { loading: creating, error: createError, create: createPatient } = usePatientCreate()
-  const { loading: updating, error: updateError, update: updatePatient } = usePatientUpdate()
   const { loading: starting, error: visitError, create: createVisit } = useVisitCreate()
   const { error: stageError, transition } = useWorkflowStage()
 
   useEffect(() => { if (createError) toast('error', createError) }, [createError, toast])
-  useEffect(() => { if (updateError) toast('error', updateError) }, [updateError, toast])
   useEffect(() => { if (visitError) toast('error', visitError) }, [visitError, toast])
   useEffect(() => { if (stageError) toast('error', stageError) }, [stageError, toast])
 
@@ -145,57 +136,6 @@ export default function ReceptionFeature() {
       setFormErrors({ name: '', birth_date: '', phone: '' })
       clearResults()
       toast('success', `${patient.name}님이 등록되었습니다.`)
-    }
-  }
-
-  const openEditModal = () => {
-    if (!selected) return
-    setEditForm({
-      name: selected.name,
-      birth_date: String(selected.birth_date).slice(0, 10),
-      phone: selected.phone ?? '',
-      gender: (selected.gender as '' | 'M' | 'F') ?? '',
-      insurance_type: selected.insurance_type ?? 'health_insurance',
-      copay_exemption: selected.copay_exemption ?? 'none',
-      allergies: selected.allergies ?? '',
-    })
-    setEditErrors({ name: '', birth_date: '', phone: '' })
-    setShowEditModal(true)
-  }
-
-  const validateEditForm = (): boolean => {
-    const errors = { name: '', birth_date: '', phone: '' }
-    if (!editForm.name.trim() || editForm.name.trim().length < 2) {
-      errors.name = '이름은 2자 이상 입력해야 합니다.'
-    }
-    if (!editForm.birth_date) {
-      errors.birth_date = '생년월일을 입력해야 합니다.'
-    } else if (new Date(editForm.birth_date) > new Date()) {
-      errors.birth_date = '생년월일은 오늘 이전이어야 합니다.'
-    }
-    if (editForm.phone && !/^\d{10,11}$/.test(editForm.phone.replace(/-/g, ''))) {
-      errors.phone = '전화번호는 숫자 10~11자리로 입력하세요.'
-    }
-    setEditErrors(errors)
-    return !Object.values(errors).some(Boolean)
-  }
-
-  const handleEditSave = async () => {
-    if (!selected || !validateEditForm()) return
-    const updated = await updatePatient(selected.id, {
-      name: editForm.name.trim(),
-      birth_date: editForm.birth_date,
-      phone: editForm.phone.trim() || null,
-      gender: editForm.gender || null,
-      insurance_type: editForm.insurance_type,
-      copay_exemption: editForm.copay_exemption,
-      allergies: editForm.allergies.trim() || null,
-    })
-    if (updated) {
-      setSelected(updated)
-      setQuery(updated.name)
-      setShowEditModal(false)
-      toast('success', `${updated.name}님의 정보가 수정되었습니다.`)
     }
   }
 
@@ -444,7 +384,7 @@ export default function ReceptionFeature() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={openEditModal}
+              onClick={() => setShowEditModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-2 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 text-xs rounded-xl transition-colors"
               title="환자 정보 수정"
             >
@@ -467,152 +407,17 @@ export default function ReceptionFeature() {
       )}
 
       {/* 환자 정보 수정 모달 */}
-      {showEditModal && selected && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-patient-title"
-        >
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowEditModal(false)} />
-          <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-5">
-            <div className="space-y-1">
-              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
-                환자 정보 수정
-              </p>
-              <h2 id="edit-patient-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                {selected.name}
-              </h2>
-            </div>
-
-            <div className="space-y-4">
-              {/* 이름 */}
-              <div className="space-y-1.5">
-                <label className="block text-xs text-zinc-500 dark:text-zinc-500">이름 *</label>
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(e) => {
-                    setEditForm({ ...editForm, name: e.target.value })
-                    if (editErrors.name) setEditErrors({ ...editErrors, name: '' })
-                  }}
-                  aria-invalid={!!editErrors.name}
-                  className={cn(inputBase, editErrors.name && 'border-red-400 dark:border-red-600')}
-                />
-                {editErrors.name && <p role="alert" className="text-xs text-red-400">{editErrors.name}</p>}
-              </div>
-
-              {/* 생년월일 */}
-              <div className="space-y-1.5">
-                <label className="block text-xs text-zinc-500 dark:text-zinc-500">생년월일 *</label>
-                <input
-                  type="date"
-                  value={editForm.birth_date}
-                  max={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => {
-                    setEditForm({ ...editForm, birth_date: e.target.value })
-                    if (editErrors.birth_date) setEditErrors({ ...editErrors, birth_date: '' })
-                  }}
-                  aria-invalid={!!editErrors.birth_date}
-                  className={cn(inputBase, editErrors.birth_date && 'border-red-400 dark:border-red-600')}
-                />
-                {editErrors.birth_date && <p role="alert" className="text-xs text-red-400">{editErrors.birth_date}</p>}
-              </div>
-
-              {/* 전화번호 */}
-              <div className="space-y-1.5">
-                <label className="block text-xs text-zinc-500 dark:text-zinc-500">
-                  전화번호 <span className="text-zinc-400">(선택 — 비워두면 삭제)</span>
-                </label>
-                <input
-                  type="tel"
-                  value={editForm.phone}
-                  placeholder="01012345678"
-                  onChange={(e) => {
-                    setEditForm({ ...editForm, phone: e.target.value })
-                    if (editErrors.phone) setEditErrors({ ...editErrors, phone: '' })
-                  }}
-                  aria-invalid={!!editErrors.phone}
-                  className={cn(inputBase, editErrors.phone && 'border-red-400 dark:border-red-600')}
-                />
-                {editErrors.phone && <p role="alert" className="text-xs text-red-400">{editErrors.phone}</p>}
-              </div>
-
-              {/* 성별 */}
-              <div className="space-y-1.5">
-                <label className="block text-xs text-zinc-500 dark:text-zinc-500">성별</label>
-                <select
-                  value={editForm.gender}
-                  onChange={(e) => setEditForm({ ...editForm, gender: e.target.value as '' | 'M' | 'F' })}
-                  className={inputBase}
-                >
-                  <option value="">선택 안 함</option>
-                  <option value="M">남성</option>
-                  <option value="F">여성</option>
-                </select>
-              </div>
-
-              {/* 보험 유형 */}
-              <div className="space-y-1.5">
-                <label className="block text-xs text-zinc-500 dark:text-zinc-500">보험 유형</label>
-                <select
-                  value={editForm.insurance_type}
-                  onChange={(e) => setEditForm({ ...editForm, insurance_type: e.target.value as InsuranceType })}
-                  className={inputBase}
-                >
-                  {(Object.entries(INSURANCE_TYPE_LABELS) as [InsuranceType, string][]).map(([val, label]) => (
-                    <option key={val} value={val}>{label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 경감 대상 */}
-              <div className="space-y-1.5">
-                <label className="block text-xs text-zinc-500 dark:text-zinc-500">경감 대상</label>
-                <select
-                  value={editForm.copay_exemption}
-                  onChange={(e) => setEditForm({ ...editForm, copay_exemption: e.target.value as CopayExemption })}
-                  className={inputBase}
-                >
-                  {(Object.entries(COPAY_EXEMPTION_LABELS) as [CopayExemption, string][]).map(([val, label]) => (
-                    <option key={val} value={val}>{label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 알레르기 */}
-              <div className="space-y-1.5">
-                <label className="block text-xs text-zinc-500 dark:text-zinc-500">
-                  알레르기 / 주요 이력 <span className="text-zinc-400">(선택)</span>
-                </label>
-                <textarea
-                  value={editForm.allergies}
-                  onChange={(e) => setEditForm({ ...editForm, allergies: e.target.value })}
-                  placeholder="예: 페니실린 알레르기"
-                  rows={2}
-                  className={cn(inputBase, 'resize-none')}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2 justify-end pt-1">
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 text-sm rounded-xl transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleEditSave}
-                disabled={updating}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
-              >
-                {updating && <Spinner size="sm" className="text-white" />}
-                {updating ? '저장 중' : '저장'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {selected && (
+        <PatientInfoModal
+          patient={selected}
+          open={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onUpdated={(updated) => {
+            setSelected(updated)
+            setQuery(updated.name)
+            setShowEditModal(false)
+          }}
+        />
       )}
 
       {/* 단계별 대기 현황 */}
