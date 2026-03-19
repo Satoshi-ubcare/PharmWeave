@@ -39,8 +39,11 @@ const STAGE_ROUTES: { stage: WorkflowStage; path: string }[] = [
 
 export default function ReceptionFeature() {
   const navigate = useNavigate()
-  const { setVisit } = useWorkflowStore()
+  const { visitId, currentStage, patient: storePatient, setVisit, setStage } = useWorkflowStore()
   const { toast } = useToast()
+
+  // 대시보드에서 접수 단계 환자를 클릭해 넘어온 경우 (visitId 존재 + reception 단계)
+  const isDashboardVisit = Boolean(visitId && currentStage === 'reception')
 
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)
@@ -57,6 +60,7 @@ export default function ReceptionFeature() {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const [showEditModal, setShowEditModal] = useState(false)
+  const [movingToPrescription, setMovingToPrescription] = useState(false)
 
   const { results, loading: searching, search, clear: clearResults } = usePatientSearch()
   const { loading: creating, error: createError, create: createPatient } = usePatientCreate()
@@ -150,10 +154,42 @@ export default function ReceptionFeature() {
     navigate('/prescription')
   }
 
+  const handleMoveToPrescription = async () => {
+    if (!visitId) return
+    setMovingToPrescription(true)
+    await transition(visitId, 'prescription')
+    setStage('prescription')
+    setMovingToPrescription(false)
+    navigate('/prescription')
+  }
+
   const inputBase = 'w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-[#0B0A0A] dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors'
 
   const searchSection = (
     <>
+      {/* 대시보드에서 접수 단계 환자로 진입한 경우 */}
+      {isDashboardVisit && storePatient && (
+        <div className="border border-blue-500/30 dark:border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/5 rounded-xl p-5 flex items-center justify-between gap-4">
+          <div className="space-y-1 min-w-0">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
+              접수 대기 중인 환자
+            </p>
+            <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{storePatient.name}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-500">
+              {String(storePatient.birth_date).slice(0, 10)}
+            </p>
+          </div>
+          <button
+            onClick={() => void handleMoveToPrescription()}
+            disabled={movingToPrescription}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246AFE] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
+          >
+            {movingToPrescription && <Spinner size="sm" className="text-white" />}
+            {movingToPrescription ? '처리 중' : '처방 단계로 이동'}
+          </button>
+        </div>
+      )}
+
       {/* 환자 검색 */}
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4">
         <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-blue-600 dark:text-blue-400">
