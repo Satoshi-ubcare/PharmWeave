@@ -30,6 +30,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
 }
 
 const STAGE_ROUTES: { stage: WorkflowStage; path: string }[] = [
+  { stage: 'reception',    path: '/reception' },
   { stage: 'prescription', path: '/prescription' },
   { stage: 'dispensing',   path: '/dispensing' },
   { stage: 'review',       path: '/review' },
